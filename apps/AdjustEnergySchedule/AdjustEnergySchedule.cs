@@ -93,7 +93,7 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
 
             // Set the temperature values
             _temperatureHeat = 58;
-            _temperatureIdle = 30;
+            _temperatureIdle = 35;
             _temperatureLegionalla = 63;
 
             // Read the Home assistant services and entities
