@@ -135,8 +135,7 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
             var timeStamp = DateTime.Now;
             if (_isHeaterOn == false && timeStamp.TimeOfDay >= startTime.TimeOfDay && timeStamp.TimeOfDay <= endTime.TimeOfDay)
             {
-                _logger.LogInformation($"Started water heating program");
-                _logger.LogInformation($"Start time: {startTime}, End time: {endTime}"); ;
+                _logger.LogInformation($"Started water heating program from: {startTime}, to: {endTime}");
 
                 heater.SetOperationMode("Manual");
                 heater.SetTemperature(58);
@@ -201,8 +200,7 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
                 heater.SetTemperature(65);
                 heater.TurnOn();
 
-                _logger.LogInformation($"Started legionella protection program");
-                _logger.LogInformation($"Start time: {startTime}, End time: {endTime}");
+                _logger.LogInformation($"Started legionella protection program from: {startTime}, to: {endTime}");
 
                 _ha.SendEvent("Energy schedule assistant", new { heater = "On", legionella_protection = "On" });
                 _services.PersistentNotification.Create(message: "Started Legionella Protection", title: "Energy schedule assistant");
