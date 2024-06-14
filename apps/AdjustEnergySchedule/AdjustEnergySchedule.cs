@@ -45,6 +45,21 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
         private IDictionary<DateTime, double>? _pricesTommorow;
 
         /// <summary>
+        /// The temperature heat
+        /// </summary>
+        private readonly int _temperatureHeat;
+
+        /// <summary>
+        /// The temperature idle
+        /// </summary>
+        private readonly int _temperatureIdle;
+
+        /// <summary>
+        /// The temperature legionalla
+        /// </summary>
+        private readonly int _temperatureLegionalla;
+
+        /// <summary>
         /// The is heater on indication
         /// </summary>
         private bool _isHeaterOn;
@@ -53,6 +68,16 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
         /// The is legionella protection on indication
         /// </summary>
         private bool _isLegionellaProtectionOn;
+
+        /// <summary>
+        /// The heating day
+        /// </summary>
+        private DateTime _heatingDay;
+
+        /// <summary>
+        /// The protection day
+        /// </summary>
+        private DateTime _protectionDay;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="AdjustEnergySchedule"/> class
@@ -64,6 +89,11 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
         {
             _ha = ha;
             _logger = logger;
+
+            // Set the temperature values
+            _temperatureHeat = 58;
+            _temperatureIdle = 30;
+            _temperatureLegionalla = 63;
 
             // Read the Home assistant services and entities
             _services = new Services(ha);
@@ -78,7 +108,8 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
             {
                 // Application started
                 _services.PersistentNotification.Create(message: "Succesfully started!", title: "Energy schedule assistant");
-                _logger.LogInformation("Succesfully started Energy schedule assistant");
+
+                _services.Logbook.Log("Energy schedule assistant", "Succesfully started");
 
                 // Run every 5 minutes
                 scheduler.RunEvery(TimeSpan.FromMinutes(5), RunChecks);
@@ -128,11 +159,22 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
             }
 
             // Get the start time for the lowest price after 11:00
+            var timeStamp = DateTime.Now;
             var startTime = _pricesToday.Where(p => p.Key.TimeOfDay > TimeSpan.FromHours(11)).OrderBy(p => p.Value).First().Key;
             var endTime = startTime.AddHours(2);
 
+            // Set notification for the start of the heating period
+            if (startTime.Date != _heatingDay)
+            {
+                _heatingDay = startTime;
+
+                if (startTime < timeStamp)
+                {
+                    _services.PersistentNotification.Create(message: $"Heating planned at: {startTime} ", title: "Energy schedule assistant");
+                }
+            }
+
             // Check if the heater is off and the current timestamp is within the schedule
-            var timeStamp = DateTime.Now;
             if (timeStamp.TimeOfDay >= startTime.TimeOfDay && timeStamp.TimeOfDay <= endTime.TimeOfDay)
             {
                 if (_isHeaterOn == false)
@@ -142,7 +184,7 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
                     try
                     {
                         heater.SetOperationMode("Manual");
-                        heater.SetTemperature(58);
+                        heater.SetTemperature(_temperatureHeat);
                     }
                     catch (Exception ex)
                     {
@@ -156,7 +198,7 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
             }
             else
             {
-                heater.SetTemperature(50);
+                heater.SetTemperature(_temperatureIdle);
 
                 _ha.SendEvent("Energy schedule assistant", new { heater = "Off" });
 
@@ -199,6 +241,17 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
                 startTime = startTime.AddMinutes(-30);
             }
 
+            // Set notification for the start of the protection period
+            if (startTime.Date != _protectionDay)
+            {
+                _protectionDay = startTime;
+
+                if (startTime < timeStamp)
+                {
+                    _services.PersistentNotification.Create(message: $"Legionella protection planned at: {startTime} ", title: "Energy schedule assistant");
+                }
+            }
+
             var endTime = startTime.AddHours(2);
 
             // Check if the heater is off and the current timestamp is within the schedule
@@ -209,7 +262,7 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
                     try
                     {
                         heater.SetOperationMode("Manual");
-                        heater.SetTemperature(64);
+                        heater.SetTemperature(_temperatureLegionalla);
                     }
                     catch (Exception ex)
                     {
@@ -227,7 +280,7 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
             }
             else
             {
-                heater.SetTemperature(50);
+                heater.SetTemperature(_temperatureIdle);
 
                 _ha.SendEvent("Energy schedule assistant", new { heater = "Off", legionella_protection = "Off" });
 
