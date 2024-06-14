@@ -133,22 +133,30 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
 
             // Check if the heater is off and the current timestamp is within the schedule
             var timeStamp = DateTime.Now;
-            if (_isHeaterOn == false && timeStamp.TimeOfDay >= startTime.TimeOfDay && timeStamp.TimeOfDay <= endTime.TimeOfDay)
+            if (timeStamp.TimeOfDay >= startTime.TimeOfDay && timeStamp.TimeOfDay <= endTime.TimeOfDay)
             {
-                _logger.LogInformation($"Started water heating program from: {startTime}, to: {endTime}");
+                if (_isHeaterOn == false)
+                {
+                    _logger.LogInformation($"Started water heating program from: {startTime}, to: {endTime}");
 
-                heater.SetOperationMode("Manual");
-                heater.SetTemperature(58);
-                heater.TurnOn();
+                    try
+                    {
+                        heater.SetOperationMode("Manual");
+                        heater.SetTemperature(58);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Failed to start water heating program");
+                    }
 
-                _ha.SendEvent("Energy schedule assistant", new { heater = "On" });
+                    _ha.SendEvent("Energy schedule assistant", new { heater = "On" });
 
-                _isHeaterOn = true;
+                    _isHeaterOn = true;
+                }
             }
             else
             {
-                heater.SetTemperature(55);
-                heater.TurnOff();
+                heater.SetTemperature(50);
 
                 _ha.SendEvent("Energy schedule assistant", new { heater = "Off" });
 
@@ -194,24 +202,32 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
             var endTime = startTime.AddHours(2);
 
             // Check if the heater is off and the current timestamp is within the schedule
-            if (_isLegionellaProtectionOn == false && timeStamp.TimeOfDay >= startTime.TimeOfDay && timeStamp.TimeOfDay <= endTime.TimeOfDay)
+            if (timeStamp.TimeOfDay >= startTime.TimeOfDay && timeStamp.TimeOfDay <= endTime.TimeOfDay)
             {
-                heater.SetOperationMode("Manual");
-                heater.SetTemperature(65);
-                heater.TurnOn();
+                if (_isLegionellaProtectionOn == false)
+                {
+                    try
+                    {
+                        heater.SetOperationMode("Manual");
+                        heater.SetTemperature(64);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Failed to start legionella protection program");
+                    }
 
-                _logger.LogInformation($"Started legionella protection program from: {startTime}, to: {endTime}");
+                    _logger.LogInformation($"Started legionella protection program from: {startTime}, to: {endTime}");
 
-                _ha.SendEvent("Energy schedule assistant", new { heater = "On", legionella_protection = "On" });
-                _services.PersistentNotification.Create(message: "Started Legionella Protection", title: "Energy schedule assistant");
+                    _ha.SendEvent("Energy schedule assistant", new { heater = "On", legionella_protection = "On" });
+                    _services.PersistentNotification.Create(message: "Started Legionella Protection", title: "Energy schedule assistant");
 
-                _isHeaterOn = true;
-                _isLegionellaProtectionOn = true;
+                    _isHeaterOn = true;
+                    _isLegionellaProtectionOn = true;
+                }
             }
             else
             {
-                heater.SetTemperature(55);
-                heater.TurnOff();
+                heater.SetTemperature(50);
 
                 _ha.SendEvent("Energy schedule assistant", new { heater = "Off", legionella_protection = "Off" });
 
