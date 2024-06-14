@@ -183,8 +183,15 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
                 return;
             }
 
-            // Get the start time for the lowest price after 06:00
-            var startTime = _pricesToday.Where(p => p.Key.TimeOfDay > TimeSpan.FromHours(6)).OrderBy(p => p.Value).First().Key;
+            // Get the start time for the lowest price after 07:00
+            var startTime = _pricesToday.Where(p => p.Key.TimeOfDay > TimeSpan.FromHours(7)).OrderBy(p => p.Value).First().Key;
+
+            // Set the start time 30 minutes earlier
+            if (startTime.Hour > 2)
+            {
+                startTime = startTime.AddMinutes(-30);
+            }
+
             var endTime = startTime.AddHours(2);
 
             // Check if the heater is off and the current timestamp is within the schedule
