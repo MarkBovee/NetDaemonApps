@@ -165,14 +165,10 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
             var endTime = startTime.AddHours(2);
 
             // Set notification for the start of the heating period
-            if (startTime.Date != _heatingDay)
+            if (_heatingDay.Date < startTime.Date)
             {
                 _heatingDay = startTime;
-
-                if (startTime < timeStamp)
-                {
-                    _services.PersistentNotification.Create(message: $"Heating planned at: {startTime} ", title: "Energy schedule assistant");
-                }
+                _services.PersistentNotification.Create(message: $"Next heating planned at: {startTime} ", title: "Energy schedule assistant");
             }
 
             // Check if the heater is off and the current timestamp is within the schedule
@@ -243,14 +239,10 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
             }
 
             // Set notification for the start of the protection period
-            if (startTime.Date != _protectionDay)
+            if (_protectionDay.Date < startTime.Date)
             {
                 _protectionDay = startTime;
-
-                if (startTime < timeStamp)
-                {
-                    _services.PersistentNotification.Create(message: $"Legionella protection planned at: {startTime} ", title: "Energy schedule assistant");
-                }
+                _services.PersistentNotification.Create(message: $"Next legionella protection planned at: {startTime} ", title: "Energy schedule assistant");
             }
 
             var endTime = startTime.AddHours(2);
