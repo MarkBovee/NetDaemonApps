@@ -10,6 +10,7 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
 {
     /// <summary>
     /// Adjust the energy appliances schedule based on the power prices
+    /// TODO: Split to different apps
     /// </summary>
     [NetDaemonApp]
     public class AdjustEnergySchedule
@@ -47,17 +48,17 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
         /// <summary>
         /// The temperature heat
         /// </summary>
-        private readonly int _temperatureHeat;
+        private readonly double _temperatureHeat;
 
         /// <summary>
         /// The temperature idle
         /// </summary>
-        private readonly int _temperatureIdle;
+        private readonly double _temperatureIdle;
 
         /// <summary>
         /// The temperature legionalla
         /// </summary>
-        private readonly int _temperatureLegionalla;
+        private readonly double _temperatureLegionalla;
 
         /// <summary>
         /// The is heater on indication
