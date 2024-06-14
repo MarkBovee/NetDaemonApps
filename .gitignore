@@ -1,8 +1,5 @@
 obj
 bin
-appsettings.Development.json
 .vs
 *.gen
 .idea
-#appsettings.json
-#HomeAssistantGenerated.cs
