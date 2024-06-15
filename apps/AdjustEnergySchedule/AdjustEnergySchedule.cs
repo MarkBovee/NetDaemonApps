@@ -46,39 +46,14 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
         private IDictionary<DateTime, double>? _pricesTommorow;
 
         /// <summary>
-        /// The temperature heat
-        /// </summary>
-        private readonly double _temperatureHeat;
-
-        /// <summary>
-        /// The temperature idle
-        /// </summary>
-        private readonly double _temperatureIdle;
-
-        /// <summary>
-        /// The temperature legionalla
-        /// </summary>
-        private readonly double _temperatureLegionalla;
-
-        /// <summary>
         /// The is heater on indication
         /// </summary>
         private bool _isHeaterOn;
 
         /// <summary>
-        /// The is legionella protection on indication
+        /// The heating time
         /// </summary>
-        private bool _isLegionellaProtectionOn;
-
-        /// <summary>
-        /// The heating day
-        /// </summary>
-        private DateTime _heatingDay;
-
-        /// <summary>
-        /// The protection day
-        /// </summary>
-        private DateTime _protectionDay;
+        private DateTime _heatingTime;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="AdjustEnergySchedule"/> class
@@ -90,11 +65,6 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
         {
             _ha = ha;
             _logger = logger;
-
-            // Set the temperature values
-            _temperatureHeat = 58;
-            _temperatureIdle = 35;
-            _temperatureLegionalla = 63;
 
             // Read the Home assistant services and entities
             _services = new Services(ha);
@@ -108,8 +78,6 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
             else
             {
                 // Application started
-                _services.PersistentNotification.Create(message: "Succesfully started!", title: "Energy schedule assistant");
-
                 _services.Logbook.Log("Energy schedule assistant", "Succesfully started");
 
                 // Run every 5 minutes
@@ -127,9 +95,6 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
 
             // Set the heating schedule for the heatpump
             SetHeatingSchedule();
-
-            // Set the legionella protection schedule for the heatpump
-            SetLegionellaProtection();
 
             // Disable the dishwasher if the price is too high
 
@@ -156,23 +121,31 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
             if (heater == null)
             {
                 _logger.LogWarning("Hot water heater not found");
+
                 return;
             }
 
-            // Get the start time for the lowest price after 11:00
+            // Set the temperature values
+            var temperatureHeat = 58;
+            var temperatureIdle = 35;
+            var temperatureLegionallaProtection = 64;
+
+            // Get the start time for the lowest price after 8:00
             var timeStamp = DateTime.Now;
-            var startTime = _pricesToday.Where(p => p.Key.TimeOfDay > TimeSpan.FromHours(11)).OrderBy(p => p.Value).First().Key;
+            var startTime = _pricesToday.Where(p => p.Key.TimeOfDay > TimeSpan.FromHours(8)).OrderBy(p => p.Value).First().Key;
             var endTime = startTime.AddHours(2);
+            var useLegionellaProtection = timeStamp.DayOfWeek == DayOfWeek.Saturday;
+            var programType = useLegionellaProtection ? "Legionella Protection" : "Heating";
 
             // Set notification for the start of the heating period
-            if (_heatingDay.Date < startTime.Date)
+            if (_heatingTime.Date < startTime.Date)
             {
-                _heatingDay = startTime;
+                _heatingTime = startTime;
 
                 // Check if the start time is in the future
                 if (startTime > timeStamp)
                 {
-                    _services.PersistentNotification.Create(message: $"Next heating planned at: {startTime} ", title: "Energy schedule assistant");
+                    _services.PersistentNotification.Create(message: $"Next {programType} planned at: {startTime} ", title: "Energy schedule assistant");
                 }
             }
 
@@ -181,114 +154,26 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
             {
                 if (_isHeaterOn == false)
                 {
-                    _logger.LogInformation($"Started water heating program from: {startTime}, to: {endTime}");
+                    _services.Logbook.Log("Energy schedule assistant", $"Started {programType} program from: {startTime}, to: {endTime}");
 
                     try
                     {
                         heater.SetOperationMode("Manual");
-                        heater.SetTemperature(_temperatureHeat);
+                        heater.SetTemperature(useLegionellaProtection ? temperatureLegionallaProtection : temperatureHeat);
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogError(ex, "Failed to start water heating program");
+                        _logger.LogError(ex, "Failed to set heating schedule");
                     }
-
-                    _ha.SendEvent("Energy schedule assistant", new { heater = "On" });
 
                     _isHeaterOn = true;
                 }
             }
             else
             {
-                heater.SetTemperature(_temperatureIdle);
-
-                _ha.SendEvent("Energy schedule assistant", new { heater = "Off" });
+                heater.SetTemperature(temperatureIdle);
 
                 _isHeaterOn = false;
-            }
-        }
-
-        /// <summary>
-        /// Sets the legionella protection
-        /// </summary>
-        private void SetLegionellaProtection()
-        {
-            // Check if the prices are available
-            if (_pricesToday == null)
-            {
-                return;
-            }
-
-            // Get the heat pump warm water heater entity
-            var heater = _entities.WaterHeater.OurHomeDomesticHotWater0;
-            if (heater == null)
-            {
-                _logger.LogWarning("Hot water heater not found");
-                return;
-            }
-
-            // Check if it's Saturday
-            var timeStamp = DateTime.Now;
-            if (timeStamp.DayOfWeek != DayOfWeek.Saturday)
-            {
-                return;
-            }
-
-            // Get the start time for the lowest price after 07:00
-            var startTime = _pricesToday.Where(p => p.Key.TimeOfDay > TimeSpan.FromHours(7)).OrderBy(p => p.Value).First().Key;
-
-            // Set the start time 30 minutes earlier
-            if (startTime.Hour > 2)
-            {
-                startTime = startTime.AddMinutes(-30);
-            }
-
-            // Set notification for the start of the protection period
-            if (_protectionDay.Date < startTime.Date)
-            {
-                _protectionDay = startTime;
-
-                // Check if the start time is in the future
-                if (startTime > timeStamp)
-                {
-                    _services.PersistentNotification.Create(message: $"Next legionella protection planned at: {startTime} ", title: "Energy schedule assistant");
-                }
-            }
-
-            var endTime = startTime.AddHours(2);
-
-            // Check if the heater is off and the current timestamp is within the schedule
-            if (timeStamp.TimeOfDay >= startTime.TimeOfDay && timeStamp.TimeOfDay <= endTime.TimeOfDay)
-            {
-                if (_isLegionellaProtectionOn == false)
-                {
-                    try
-                    {
-                        heater.SetOperationMode("Manual");
-                        heater.SetTemperature(_temperatureLegionalla);
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError(ex, "Failed to start legionella protection program");
-                    }
-
-                    _logger.LogInformation($"Started legionella protection program from: {startTime}, to: {endTime}");
-
-                    _ha.SendEvent("Energy schedule assistant", new { heater = "On", legionella_protection = "On" });
-                    _services.PersistentNotification.Create(message: "Started Legionella Protection", title: "Energy schedule assistant");
-
-                    _isHeaterOn = true;
-                    _isLegionellaProtectionOn = true;
-                }
-            }
-            else
-            {
-                heater.SetTemperature(_temperatureIdle);
-
-                _ha.SendEvent("Energy schedule assistant", new { heater = "Off", legionella_protection = "Off" });
-
-                _isHeaterOn = false;
-                _isLegionellaProtectionOn = false;
             }
         }
 
