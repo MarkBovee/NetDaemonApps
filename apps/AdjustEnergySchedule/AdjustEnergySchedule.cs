@@ -80,8 +80,8 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
                 // Application started
                 _services.Logbook.Log("Energy schedule assistant", "Succesfully started");
 
-                // Run every 5 minutes
-                scheduler.RunEvery(TimeSpan.FromMinutes(5), RunChecks);
+                // Run every 1 minute
+                scheduler.RunEvery(TimeSpan.FromMinutes(1), RunChecks);
             }
         }
 
@@ -96,13 +96,84 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
             // Set the heating schedule for the heatpump
             SetHeatingSchedule();
 
-            // Disable the dishwasher if the price is too high
-
-            // Disable the washing machine if the price is too high
-
-            // Disable the dryer if the price is too high
+            // Disable the dishwasher, the washing machine and the dryer if the price is too high
+            SetAppliancesSchedule();
 
             // Set the car charging schedule
+        }
+
+        private void SetAppliancesSchedule()
+        {
+            // Get the entities for the appliances
+            var washingMachine = _entities.Switch.Wasmachine;
+            var washingMachineCurrentPower = _entities.Sensor.WasmachineCurrentPower;
+
+            var dryer = _entities.Switch.Droger;
+            var dryerCurrentPower = _entities.Sensor.DrogerCurrentPower;
+
+            var dishwasher = _entities.Switch.Vaatwasser;
+            var dishwasherCurrentPower = _entities.Sensor.VaatwasserCurrentPower;
+
+            // Check if the prices are available
+            if (_pricesToday == null)
+            {
+                return;
+            }
+
+            // Get the current timestamp
+            var timeStamp = DateTime.Now;
+
+            // Set the threshold for the price, above this value the appliances will be disabled
+            var priceThreshold = 0.27;
+
+            // Get the current price
+            var currentPrice = _pricesToday.FirstOrDefault(p => p.Key.Hour == timeStamp.Hour).Value;
+
+            // Check if the price is above the threshold
+            if (currentPrice > priceThreshold)
+            {
+                // Check if the washing machine is on and if no program is running
+                if (washingMachine?.State == "on" && washingMachineCurrentPower.State < 10)
+                {
+                    _services.Logbook.Log("Energy schedule assistant", "Washing machine disabled due to high power prices");
+                    washingMachine.TurnOff();
+                }
+
+                // Check if the dryer is on
+                if (dryer?.State == "on" && dryerCurrentPower.State < 10)
+                {
+                    _services.Logbook.Log("Energy schedule assistant", "Dryer disabled due to high power prices");
+                    dryer.TurnOff();
+                }
+
+                // Check if the dishwasher is on
+                if (dishwasher?.State == "on" && dishwasherCurrentPower.State < 10)
+                {
+                    _services.Logbook.Log("Energy schedule assistant", "Dishwasher disabled due to high power prices");
+                    dishwasher.TurnOff();
+                }
+            }
+            else
+            {
+                // Turn on the appliances if they are off
+                if (washingMachine?.State == "off")
+                {
+                    _services.Logbook.Log("Energy schedule assistant", "Washing machine  enabled again");
+                    washingMachine.TurnOn();
+                }
+
+                if (dryer?.State == "off")
+                {
+                    _services.Logbook.Log("Energy schedule assistant", "Dryer enabled again");
+                    dryer.TurnOn();
+                }
+
+                if (dishwasher?.State == "off")
+                {
+                    _services.Logbook.Log("Energy schedule assistant", "Dishwasher enabled again");
+                    dishwasher.TurnOn();
+                }
+            }
         }
 
         /// <summary>
@@ -110,12 +181,6 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
         /// </summary>
         private void SetHeatingSchedule()
         {
-            // Check if the prices are available
-            if (_pricesToday == null)
-            {
-                return;
-            }
-
             // Get the heat pump warm water heater entity
             var heater = _entities.WaterHeater.OurHomeDomesticHotWater0;
             if (heater == null)
@@ -125,17 +190,34 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
                 return;
             }
 
-            // Set the temperature values
-            var temperatureHeat = 58;
-            var temperatureIdle = 35;
-            var temperatureLegionallaProtection = 64;
+            // Check if the prices are available
+            if (_pricesToday == null)
+            {
+                return;
+            }
 
-            // Get the start time for the lowest price after 8:00
+            // Get the current timestamp
             var timeStamp = DateTime.Now;
-            var startTime = _pricesToday.Where(p => p.Key.TimeOfDay > TimeSpan.FromHours(8)).OrderBy(p => p.Value).First().Key;
-            var endTime = startTime.AddHours(2);
+
+            // Check if the legionella protection should be used
             var useLegionellaProtection = timeStamp.DayOfWeek == DayOfWeek.Saturday;
             var programType = useLegionellaProtection ? "Legionella Protection" : "Heating";
+
+            // Set the start and end time for the heating period
+            var startTime = _pricesToday.Where(p => p.Key.TimeOfDay > TimeSpan.FromHours(8)).OrderBy(p => p.Value).First().Key;
+
+            // Check if the value 1 hour before before the start time is lower than 1 hour after the start time
+            if (_pricesToday[startTime.AddHours(-1)] < _pricesToday[startTime.AddHours(1)])
+            {
+                startTime = startTime.AddHours(-1);
+            }
+
+            // Set the end time 3 hours after the start time
+            var endTime = startTime.AddHours(3);
+
+            // Set the temperature values
+            var temperatureHeat = useLegionellaProtection ? 64 : 58;
+            var temperatureIdle = 35;
 
             // Set notification for the start of the heating period
             if (_heatingTime.Date < startTime.Date)
@@ -159,7 +241,7 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
                     try
                     {
                         heater.SetOperationMode("Manual");
-                        heater.SetTemperature(useLegionellaProtection ? temperatureLegionallaProtection : temperatureHeat);
+                        heater.SetTemperature(temperatureHeat);
                     }
                     catch (Exception ex)
                     {
