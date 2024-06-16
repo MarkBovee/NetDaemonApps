@@ -102,6 +102,9 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
             // Set the car charging schedule
         }
 
+        /// <summary>
+        /// Sets the appliances schedule
+        /// </summary>
         private void SetAppliancesSchedule()
         {
             // Get the entities for the appliances
@@ -253,7 +256,11 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
             }
             else
             {
-                heater.SetTemperature(temperatureIdle);
+                // Set the heater to idle temperature after the heating period
+                if (_isHeaterOn)
+                {
+                    heater.SetTemperature(temperatureIdle);
+                }
 
                 _isHeaterOn = false;
             }
