@@ -127,7 +127,7 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
             var timeStamp = DateTime.Now;
 
             // Set the threshold for the price, above this value the appliances will be disabled
-            var priceThreshold = 0.27;
+            var priceThreshold = 0.30;
 
             // Get the current price
             var currentPrice = _pricesToday.FirstOrDefault(p => p.Key.Hour == timeStamp.Hour).Value;
@@ -203,14 +203,23 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
             var timeStamp = DateTime.Now;
 
             // Check if the legionella protection should be used
-            var useLegionellaProtection = timeStamp.DayOfWeek == DayOfWeek.Saturday;
-            var programType = useLegionellaProtection ? "Legionella Protection" : "Heating";
+            var useNightProgram = timeStamp.Hour < 6;
+            var useLegionellaProtection = useNightProgram == false && timeStamp.DayOfWeek == DayOfWeek.Saturday;
+            var programType = useNightProgram ? "Night" : useLegionellaProtection ? "Legionella Protection" : "Heating";
 
             // Set the start and end time for the heating period
-            var startTime = _pricesToday.Where(p => p.Key.TimeOfDay > TimeSpan.FromHours(8)).OrderBy(p => p.Value).First().Key;
+            DateTime startTime;
+            if (useNightProgram)
+            {
+                startTime = _pricesToday.Where(p => p.Key.TimeOfDay < TimeSpan.FromHours(6)).OrderBy(p => p.Value).First().Key;
+            }
+            else
+            {
+                startTime = _pricesToday.Where(p => p.Key.TimeOfDay > TimeSpan.FromHours(8)).OrderBy(p => p.Value).First().Key;
+            }
 
             // Check if the value 1 hour before before the start time is lower than 1 hour after the start time
-            if (_pricesToday[startTime.AddHours(-1)] < _pricesToday[startTime.AddHours(1)])
+            if (startTime.Hour > 0 && _pricesToday[startTime.AddHours(-1)] < _pricesToday[startTime.AddHours(1)])
             {
                 startTime = startTime.AddHours(-1);
             }
@@ -219,8 +228,8 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
             var endTime = startTime.AddHours(3);
 
             // Set the temperature values
-            var temperatureHeat = useLegionellaProtection ? 64 : 58;
-            var temperatureIdle = 35;
+            var temperatureHeat = useNightProgram ? 54 : useLegionellaProtection ? 64 : 58;
+            var temperatureIdle = 42;
 
             // Set notification for the start of the heating period
             if (_heatingTime.Date < startTime.Date)
@@ -230,7 +239,7 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
                 // Check if the start time is in the future
                 if (startTime > timeStamp)
                 {
-                    _services.PersistentNotification.Create(message: $"Next {programType} planned at: {startTime} ", title: "Energy schedule assistant");
+                    _services.PersistentNotification.Create(message: $"Next {programType} program planned at: {startTime} ", title: "Energy schedule assistant");
                 }
             }
 
