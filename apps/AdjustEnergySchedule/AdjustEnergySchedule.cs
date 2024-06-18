@@ -229,7 +229,7 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
 
             // Set the temperature values
             var temperatureHeat = useNightProgram ? 52 : useLegionellaProtection ? 64 : 58;
-            var temperatureIdle = 42;
+            var temperatureIdle = 40;
 
             // Set notification for the start of the heating period
             if (_heatingTime.Date < startTime.Date)
