@@ -219,7 +219,7 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
             }
 
             // Check if the value 1 hour before before the start time is lower than 1 hour after the start time
-            if (startTime.Hour > 0 && _pricesToday[startTime.AddHours(-1)] < _pricesToday[startTime.AddHours(1)])
+            if (useLegionellaProtection && startTime.Hour > 0 && _pricesToday[startTime.AddHours(-1)] < _pricesToday[startTime.AddHours(1)])
             {
                 startTime = startTime.AddHours(-1);
             }
@@ -228,7 +228,7 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
             var endTime = startTime.AddHours(3);
 
             // Set the temperature values
-            var temperatureHeat = useNightProgram ? 54 : useLegionellaProtection ? 64 : 58;
+            var temperatureHeat = useNightProgram ? 52 : useLegionellaProtection ? 64 : 58;
             var temperatureIdle = 42;
 
             // Set notification for the start of the heating period
