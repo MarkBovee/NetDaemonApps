@@ -271,7 +271,7 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
             else
             {
                 // Set the heater to idle temperature after the heating period
-                if (_isHeaterOn || heater.Attributes?.Temperature > temperatureIdle)
+                if (_isHeaterOn || heater.Attributes?.Temperature != temperatureIdle)
                 {
                     heater.SetTemperature(temperatureIdle);
                 }
