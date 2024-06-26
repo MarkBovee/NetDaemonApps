@@ -56,6 +56,11 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
         private DateTime _heatingTime;
 
         /// <summary>
+        /// Set the threshold for the price, above this value the appliances will be disabled
+        /// </summary>
+        private readonly double _priceThreshold = 0.30;
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="AdjustEnergySchedule"/> class
         /// </summary>
         /// <param name="ha">The ha</param>
@@ -126,14 +131,11 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
             // Get the current timestamp
             var timeStamp = DateTime.Now;
 
-            // Set the threshold for the price, above this value the appliances will be disabled
-            var priceThreshold = 0.30;
-
             // Get the current price
             var currentPrice = _pricesToday.FirstOrDefault(p => p.Key.Hour == timeStamp.Hour).Value;
 
             // Check if the price is above the threshold
-            if (currentPrice > priceThreshold)
+            if (currentPrice > _priceThreshold)
             {
                 // Check if the washing machine is on and if no program is running
                 if (washingMachine?.State == "on" && washingMachineCurrentPower.State < 10)
@@ -202,6 +204,9 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
             // Get the current timestamp
             var timeStamp = DateTime.Now;
 
+            // Get the current price
+            var currentPrice = _pricesToday.FirstOrDefault(p => p.Key.Hour == timeStamp.Hour).Value;
+
             // Check if the legionella protection should be used
             var useNightProgram = timeStamp.Hour < 6;
             var useLegionellaProtection = useNightProgram == false && timeStamp.DayOfWeek == DayOfWeek.Saturday;
@@ -229,7 +234,7 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
 
             // Set the temperature values
             var temperatureHeat = useNightProgram ? 50 : useLegionellaProtection ? 64 : 56;
-            var temperatureIdle = 40;
+            var temperatureIdle = currentPrice < _priceThreshold ? 40 : 35;
 
             // Set notification for the start of the heating period
             if (_heatingTime.Date < startTime.Date)
