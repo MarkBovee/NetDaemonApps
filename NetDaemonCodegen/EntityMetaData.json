@@ -126,11 +126,6 @@
           "cSharpName": "ChromecastHuiskamer"
         },
         {
-          "id": "media_player.chromecast0669",
-          "friendlyName": null,
-          "cSharpName": "Chromecast0669"
-        },
-        {
           "id": "media_player.echo_pop_mark",
           "friendlyName": "Echo Pop Mark",
           "cSharpName": "EchoPopMark"
@@ -475,11 +470,6 @@
       "domain": "automation",
       "entities": [
         {
-          "id": "automation.apparatuur_aan_bij_thuiskomst",
-          "friendlyName": "Apparatuur aan bij thuiskomst",
-          "cSharpName": "ApparatuurAanBijThuiskomst"
-        },
-        {
           "id": "automation.apparatuur_uit_bij_alarm_aan",
           "friendlyName": "Apparatuur uit bij alarm aan",
           "cSharpName": "ApparatuurUitBijAlarmAan"
@@ -488,11 +478,6 @@
           "id": "automation.automation_3",
           "friendlyName": "Alarm uit als we thuis zijn",
           "cSharpName": "Automation3"
-        },
-        {
-          "id": "automation.kantoor_aan",
-          "friendlyName": "Kantoor aan",
-          "cSharpName": "KantoorAan"
         },
         {
           "id": "automation.lampen_aan",
@@ -525,6 +510,11 @@
           "cSharpName": "RestartAdguard"
         },
         {
+          "id": "automation.take_a_camer_snapshot_every_10_minutes",
+          "friendlyName": "Take a camer snapshot every 10 minutes",
+          "cSharpName": "TakeACamerSnapshotEvery10Minutes"
+        },
+        {
           "id": "automation.turn_on_alexa_screen_when_tv_is_off",
           "friendlyName": "Turn on Alexa screen when tv is off",
           "cSharpName": "TurnOnAlexaScreenWhenTvIsOff"
@@ -533,6 +523,11 @@
           "id": "automation.turn_on_lights_when_tv_is_on",
           "friendlyName": "Turn on lights when tv is on",
           "cSharpName": "TurnOnLightsWhenTvIsOn"
+        },
+        {
+          "id": "automation.tv_en_media_aanzetten",
+          "friendlyName": "TV en Media aanzetten",
+          "cSharpName": "TvEnMediaAanzetten"
         }
       ],
       "attributes": [
@@ -662,6 +657,16 @@
           "cSharpName": "LampTafelROverheat"
         },
         {
+          "id": "binary_sensor.media_overheat",
+          "friendlyName": "TV en Media Overheat",
+          "cSharpName": "MediaOverheat"
+        },
+        {
+          "id": "binary_sensor.new_overheat",
+          "friendlyName": "Overheat",
+          "cSharpName": "NewOverheat"
+        },
+        {
           "id": "binary_sensor.our_home_circuit_0_cooling_allowed",
           "friendlyName": "Our home Circuit 0 Cooling Allowed",
           "cSharpName": "OurHomeCircuit0CoolingAllowed"
@@ -687,6 +692,11 @@
           "cSharpName": "OurHomeTroubleCodes"
         },
         {
+          "id": "binary_sensor.our_home_zone_thuis_circuit_0_manual_cooling_active",
+          "friendlyName": "Our home Zone Thuis (Circuit 0) Manual Cooling Active",
+          "cSharpName": "OurHomeZoneThuisCircuit0ManualCoolingActive"
+        },
+        {
           "id": "binary_sensor.toetsenpaneel_ingang_motion",
           "friendlyName": "Toetsenpaneel ingang Motion",
           "cSharpName": "ToetsenpaneelIngangMotion"
@@ -710,11 +720,6 @@
           "id": "binary_sensor.tuinhuis_verlichting_overheat",
           "friendlyName": "Tuinhuis verlichting  Overheat",
           "cSharpName": "TuinhuisVerlichtingOverheat"
-        },
-        {
-          "id": "binary_sensor.tv_overheat",
-          "friendlyName": "TV Overheat",
-          "cSharpName": "TvOverheat"
         },
         {
           "id": "binary_sensor.vaatwasser_overheat",
@@ -832,6 +837,16 @@
           "jsonName": "motionDetectionEnabled",
           "cSharpName": "MotionDetectionEnabled",
           "clrType": "System.Boolean"
+        },
+        {
+          "jsonName": "restored",
+          "cSharpName": "Restored",
+          "clrType": "System.Boolean"
+        },
+        {
+          "jsonName": "supported_features",
+          "cSharpName": "SupportedFeatures",
+          "clrType": "System.Double"
         }
       ]
     },
@@ -871,19 +886,24 @@
       "domain": "calendar",
       "entities": [
         {
-          "id": "calendar.our_home_domestic_hot_water_0_circulation_schedule",
-          "friendlyName": "Our home Domestic Hot Water 0 Circulation Schedule",
-          "cSharpName": "OurHomeDomesticHotWater0CirculationSchedule"
+          "id": "calendar.circulating_water_in_our_home_domestic_hot_water_0",
+          "friendlyName": "Circulating Water in Our home Domestic Hot Water 0",
+          "cSharpName": "CirculatingWaterInOurHomeDomesticHotWater0"
         },
         {
-          "id": "calendar.our_home_domestic_hot_water_0_schedule",
-          "friendlyName": "Our home Domestic Hot Water 0 Schedule",
-          "cSharpName": "OurHomeDomesticHotWater0Schedule"
+          "id": "calendar.our_home_domestic_hot_water_0",
+          "friendlyName": "Our home Domestic Hot Water 0",
+          "cSharpName": "OurHomeDomesticHotWater0"
         },
         {
-          "id": "calendar.our_home_zone_thuis_circuit_0_heating_schedule",
-          "friendlyName": "Our home Zone Thuis (Circuit 0) Heating Schedule",
-          "cSharpName": "OurHomeZoneThuisCircuit0HeatingSchedule"
+          "id": "calendar.our_home_zone_thuis_circuit_0",
+          "friendlyName": "Our home Zone Thuis (Circuit 0)",
+          "cSharpName": "OurHomeZoneThuisCircuit0"
+        },
+        {
+          "id": "calendar.our_home_zone_thuis_circuit_0_2",
+          "friendlyName": "Our home Zone Thuis (Circuit 0)",
+          "cSharpName": "OurHomeZoneThuisCircuit02"
         }
       ],
       "attributes": [
@@ -1030,6 +1050,11 @@
       "domain": "climate",
       "entities": [
         {
+          "id": "climate.ac_zolder",
+          "friendlyName": "AC-Zolder",
+          "cSharpName": "AcZolder"
+        },
+        {
           "id": "climate.our_home_zone_thuis_circuit_0_climate",
           "friendlyName": "Our home Zone Thuis (Circuit 0) Climate",
           "cSharpName": "OurHomeZoneThuisCircuit0Climate"
@@ -1120,6 +1145,26 @@
           "jsonName": "supported_features",
           "cSharpName": "SupportedFeatures",
           "clrType": "System.Double"
+        },
+        {
+          "jsonName": "restored",
+          "cSharpName": "Restored",
+          "clrType": "System.Boolean"
+        },
+        {
+          "jsonName": "target_temp_step",
+          "cSharpName": "TargetTempStep",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "fan_modes",
+          "cSharpName": "FanModes",
+          "clrType": "System.Collections.Generic.IReadOnlyList\u00601[System.String]"
+        },
+        {
+          "jsonName": "swing_modes",
+          "cSharpName": "SwingModes",
+          "clrType": "System.Collections.Generic.IReadOnlyList\u00601[System.String]"
         }
       ]
     },
@@ -1192,7 +1237,7 @@
       "entities": [
         {
           "id": "device_tracker.iphone_mark_2",
-          "friendlyName": "iPhone Mark 2",
+          "friendlyName": "iPhone Mark",
           "cSharpName": "IphoneMark2"
         }
       ],
@@ -1436,7 +1481,7 @@
         {
           "jsonName": "activity_list",
           "cSharpName": "ActivityList",
-          "clrType": null
+          "clrType": "System.Collections.Generic.IReadOnlyList\u00601[System.Object]"
         },
         {
           "jsonName": "current_activity",
@@ -1598,11 +1643,6 @@
           "cSharpName": "BackupState"
         },
         {
-          "id": "sensor.buienalarm_next_rain_forecast",
-          "friendlyName": "buienalarm Next rain forecast",
-          "cSharpName": "BuienalarmNextRainForecast"
-        },
-        {
           "id": "sensor.deurbel_info_3",
           "friendlyName": "Deurbel Info",
           "cSharpName": "DeurbelInfo3"
@@ -1663,44 +1703,54 @@
           "cSharpName": "GasMeterGasConsumption"
         },
         {
-          "id": "sensor.iphone_mark_2_battery_state",
-          "friendlyName": "iPhone Mark 2 Battery State",
-          "cSharpName": "IphoneMark2BatteryState"
+          "id": "sensor.gedetailleerde_staat",
+          "friendlyName": "Gedetailleerde staat",
+          "cSharpName": "GedetailleerdeStaat"
         },
         {
-          "id": "sensor.iphone_mark_2_bssid",
-          "friendlyName": "iPhone Mark 2 BSSID",
-          "cSharpName": "IphoneMark2Bssid"
+          "id": "sensor.gedetailleerde_staat_1d",
+          "friendlyName": "Gedetailleerde staat 1d",
+          "cSharpName": "GedetailleerdeStaat1d"
         },
         {
-          "id": "sensor.iphone_mark_2_connection_type",
-          "friendlyName": "iPhone Mark 2 Connection Type",
-          "cSharpName": "IphoneMark2ConnectionType"
+          "id": "sensor.iphone_mark_battery_state_2",
+          "friendlyName": "iPhone Mark Battery State",
+          "cSharpName": "IphoneMarkBatteryState2"
         },
         {
-          "id": "sensor.iphone_mark_2_geocoded_location",
-          "friendlyName": "iPhone Mark 2 Geocoded Location",
-          "cSharpName": "IphoneMark2GeocodedLocation"
+          "id": "sensor.iphone_mark_bssid_2",
+          "friendlyName": "iPhone Mark BSSID",
+          "cSharpName": "IphoneMarkBssid2"
         },
         {
-          "id": "sensor.iphone_mark_2_last_update_trigger",
-          "friendlyName": "iPhone Mark 2 Last Update Trigger",
-          "cSharpName": "IphoneMark2LastUpdateTrigger"
+          "id": "sensor.iphone_mark_connection_type_2",
+          "friendlyName": "iPhone Mark Connection Type",
+          "cSharpName": "IphoneMarkConnectionType2"
         },
         {
-          "id": "sensor.iphone_mark_2_sim_1",
-          "friendlyName": "iPhone Mark 2 SIM 1",
-          "cSharpName": "IphoneMark2Sim1"
+          "id": "sensor.iphone_mark_geocoded_location_2",
+          "friendlyName": "iPhone Mark Geocoded Location",
+          "cSharpName": "IphoneMarkGeocodedLocation2"
         },
         {
-          "id": "sensor.iphone_mark_2_sim_2",
-          "friendlyName": "iPhone Mark 2 SIM 2",
-          "cSharpName": "IphoneMark2Sim2"
+          "id": "sensor.iphone_mark_last_update_trigger_2",
+          "friendlyName": "iPhone Mark Last Update Trigger",
+          "cSharpName": "IphoneMarkLastUpdateTrigger2"
         },
         {
-          "id": "sensor.iphone_mark_2_ssid",
-          "friendlyName": "iPhone Mark 2 SSID",
-          "cSharpName": "IphoneMark2Ssid"
+          "id": "sensor.iphone_mark_sim_1_2",
+          "friendlyName": "iPhone Mark SIM 1",
+          "cSharpName": "IphoneMarkSim12"
+        },
+        {
+          "id": "sensor.iphone_mark_sim_2_2",
+          "friendlyName": "iPhone Mark SIM 2",
+          "cSharpName": "IphoneMarkSim22"
+        },
+        {
+          "id": "sensor.iphone_mark_ssid_2",
+          "friendlyName": "iPhone Mark SSID",
+          "cSharpName": "IphoneMarkSsid2"
         },
         {
           "id": "sensor.keuken_chime_info_2",
@@ -1771,6 +1821,16 @@
           "id": "sensor.mark_s_echo_show_next_timer",
           "friendlyName": "Mark\u0027s Echo Show next Timer",
           "cSharpName": "MarkSEchoShowNextTimer"
+        },
+        {
+          "id": "sensor.neerslag_buienalarm_regen_data",
+          "friendlyName": "neerslag_buienalarm_regen_data",
+          "cSharpName": "NeerslagBuienalarmRegenData"
+        },
+        {
+          "id": "sensor.neerslag_buienradar_regen_data",
+          "friendlyName": "neerslag_buienradar_regen_data",
+          "cSharpName": "NeerslagBuienradarRegenData"
         },
         {
           "id": "sensor.our_home_circuit_0_heating_curve",
@@ -1901,6 +1961,11 @@
           "id": "sensor.tuin_volume",
           "friendlyName": "Tuin Volume",
           "cSharpName": "TuinVolume"
+        },
+        {
+          "id": "sensor.volledige_staat_1d",
+          "friendlyName": "Volledige staat 1d",
+          "cSharpName": "VolledigeStaat1d"
         },
         {
           "id": "sensor.voordeur_contact_sensor_info",
@@ -2458,6 +2523,16 @@
           "jsonName": "reminder",
           "cSharpName": "Reminder",
           "clrType": null
+        },
+        {
+          "jsonName": "entity_picture",
+          "cSharpName": "EntityPicture",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "data",
+          "cSharpName": "Data",
+          "clrType": "System.Object"
         }
       ]
     },
@@ -2504,26 +2579,6 @@
           "id": "sensor.adguard_home_safe_searches_enforced",
           "friendlyName": "AdGuard Home Veilig zoeken afgedwongen",
           "cSharpName": "AdguardHomeSafeSearchesEnforced"
-        },
-        {
-          "id": "sensor.buienalarm_precipitation",
-          "friendlyName": "buienalarm Precipitation",
-          "cSharpName": "BuienalarmPrecipitation"
-        },
-        {
-          "id": "sensor.buienalarm_precipitation_forecast_average",
-          "friendlyName": "buienalarm Precipitation forecast average",
-          "cSharpName": "BuienalarmPrecipitationForecastAverage"
-        },
-        {
-          "id": "sensor.buienalarm_precipitation_forecast_total",
-          "friendlyName": "buienalarm Precipitation forecast total",
-          "cSharpName": "BuienalarmPrecipitationForecastTotal"
-        },
-        {
-          "id": "sensor.buienalarm_temperature",
-          "friendlyName": "buienalarm Temperature",
-          "cSharpName": "BuienalarmTemperature"
         },
         {
           "id": "sensor.computer_current_power",
@@ -2731,14 +2786,14 @@
           "cSharpName": "Hacs"
         },
         {
-          "id": "sensor.iphone_mark_2_battery_level",
-          "friendlyName": "iPhone Mark 2 Battery Level",
-          "cSharpName": "IphoneMark2BatteryLevel"
+          "id": "sensor.iphone_mark_battery_level_2",
+          "friendlyName": "iPhone Mark Battery Level",
+          "cSharpName": "IphoneMarkBatteryLevel2"
         },
         {
-          "id": "sensor.iphone_mark_2_storage",
-          "friendlyName": "iPhone Mark 2 Storage",
-          "cSharpName": "IphoneMark2Storage"
+          "id": "sensor.iphone_mark_storage_2",
+          "friendlyName": "iPhone Mark Storage",
+          "cSharpName": "IphoneMarkStorage2"
         },
         {
           "id": "sensor.kantoor_current_power",
@@ -2826,6 +2881,76 @@
           "cSharpName": "LampTafelRSignalLevel"
         },
         {
+          "id": "sensor.maximale_regen_1d",
+          "friendlyName": "Maximale regen 1d",
+          "cSharpName": "MaximaleRegen1d"
+        },
+        {
+          "id": "sensor.media_current_power",
+          "friendlyName": "TV en Media Current Power",
+          "cSharpName": "MediaCurrentPower"
+        },
+        {
+          "id": "sensor.media_month_energy",
+          "friendlyName": "TV en Media Month Energy",
+          "cSharpName": "MediaMonthEnergy"
+        },
+        {
+          "id": "sensor.media_month_runtime",
+          "friendlyName": "TV en Media Month Runtime",
+          "cSharpName": "MediaMonthRuntime"
+        },
+        {
+          "id": "sensor.media_signal_level",
+          "friendlyName": "TV en Media Signal Level",
+          "cSharpName": "MediaSignalLevel"
+        },
+        {
+          "id": "sensor.media_today_energy",
+          "friendlyName": "TV en Media Today Energy",
+          "cSharpName": "MediaTodayEnergy"
+        },
+        {
+          "id": "sensor.media_today_runtime",
+          "friendlyName": "TV en Media Today Runtime",
+          "cSharpName": "MediaTodayRuntime"
+        },
+        {
+          "id": "sensor.neerslagverwachting_gemiddeld",
+          "friendlyName": "Neerslagverwachting gemiddeld",
+          "cSharpName": "NeerslagverwachtingGemiddeld"
+        },
+        {
+          "id": "sensor.new_current_power",
+          "friendlyName": "Current Power",
+          "cSharpName": "NewCurrentPower"
+        },
+        {
+          "id": "sensor.new_month_energy",
+          "friendlyName": "Month Energy",
+          "cSharpName": "NewMonthEnergy"
+        },
+        {
+          "id": "sensor.new_month_runtime",
+          "friendlyName": "Month Runtime",
+          "cSharpName": "NewMonthRuntime"
+        },
+        {
+          "id": "sensor.new_signal_level",
+          "friendlyName": "Signal Level",
+          "cSharpName": "NewSignalLevel"
+        },
+        {
+          "id": "sensor.new_today_energy",
+          "friendlyName": "Today Energy",
+          "cSharpName": "NewTodayEnergy"
+        },
+        {
+          "id": "sensor.new_today_runtime",
+          "friendlyName": "Today Runtime",
+          "cSharpName": "NewTodayRuntime"
+        },
+        {
           "id": "sensor.our_home_circuit_0_current_flow_temperature",
           "friendlyName": "Our home Circuit 0 Current Flow Temperature",
           "cSharpName": "OurHomeCircuit0CurrentFlowTemperature"
@@ -2906,6 +3031,11 @@
           "cSharpName": "OurHomeZoneThuisCircuit0Humidity"
         },
         {
+          "id": "sensor.regenkans_1d",
+          "friendlyName": "Regenkans 1d",
+          "cSharpName": "Regenkans1d"
+        },
+        {
           "id": "sensor.toetsenpaneel_ingang_battery",
           "friendlyName": "Toetsenpaneel ingang Battery",
           "cSharpName": "ToetsenpaneelIngangBattery"
@@ -2949,36 +3079,6 @@
           "id": "sensor.tuinhuis_verlichting_today_runtime",
           "friendlyName": "Tuinhuis verlichting  Today Runtime",
           "cSharpName": "TuinhuisVerlichtingTodayRuntime"
-        },
-        {
-          "id": "sensor.tv_current_power",
-          "friendlyName": "TV Current Power",
-          "cSharpName": "TvCurrentPower"
-        },
-        {
-          "id": "sensor.tv_month_energy",
-          "friendlyName": "TV Month Energy",
-          "cSharpName": "TvMonthEnergy"
-        },
-        {
-          "id": "sensor.tv_month_runtime",
-          "friendlyName": "TV Month Runtime",
-          "cSharpName": "TvMonthRuntime"
-        },
-        {
-          "id": "sensor.tv_signal_level",
-          "friendlyName": "TV Signal Level",
-          "cSharpName": "TvSignalLevel"
-        },
-        {
-          "id": "sensor.tv_today_energy",
-          "friendlyName": "TV Today Energy",
-          "cSharpName": "TvTodayEnergy"
-        },
-        {
-          "id": "sensor.tv_today_runtime",
-          "friendlyName": "TV Today Runtime",
-          "cSharpName": "TvTodayRuntime"
         },
         {
           "id": "sensor.vaatwasser_current_power",
@@ -3064,6 +3164,11 @@
           "id": "sensor.woonkamer_camera_wireless",
           "friendlyName": "Woonkamer Camera Wireless",
           "cSharpName": "WoonkamerCameraWireless"
+        },
+        {
+          "id": "sensor.zonkans_1d",
+          "friendlyName": "Zonkans 1d",
+          "cSharpName": "Zonkans1d"
         }
       ],
       "attributes": [
@@ -3171,6 +3276,26 @@
           "jsonName": "supported_features",
           "cSharpName": "SupportedFeatures",
           "clrType": "System.Double"
+        },
+        {
+          "jsonName": "desired_room_temperature_setpoint_heating",
+          "cSharpName": "DesiredRoomTemperatureSetpointHeating",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "desired_room_temperature_setpoint_cooling",
+          "cSharpName": "DesiredRoomTemperatureSetpointCooling",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "desired_room_temperature_setpoint",
+          "cSharpName": "DesiredRoomTemperatureSetpoint",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "is_eco_mode",
+          "cSharpName": "IsEcoMode",
+          "clrType": "System.Boolean"
         }
       ]
     },
@@ -3452,6 +3577,16 @@
           "cSharpName": "MarkSEchoShowShuffleSwitch"
         },
         {
+          "id": "switch.media",
+          "friendlyName": "TV en Media",
+          "cSharpName": "Media"
+        },
+        {
+          "id": "switch.new",
+          "friendlyName": "New",
+          "cSharpName": "New"
+        },
+        {
           "id": "switch.our_home_away_mode",
           "friendlyName": "Our home Away Mode",
           "cSharpName": "OurHomeAwayMode"
@@ -3503,13 +3638,8 @@
         },
         {
           "id": "switch.tuinhuis_verlichting",
-          "friendlyName": "Tuinhuis",
+          "friendlyName": "Tuinhuis verlichting ",
           "cSharpName": "TuinhuisVerlichting"
-        },
-        {
-          "id": "switch.tv",
-          "friendlyName": "TV",
-          "cSharpName": "Tv"
         },
         {
           "id": "switch.vaatwasser",
@@ -3602,6 +3732,16 @@
           "jsonName": "minutes_remaining",
           "cSharpName": "MinutesRemaining",
           "clrType": "System.Double"
+        },
+        {
+          "jsonName": "restored",
+          "cSharpName": "Restored",
+          "clrType": "System.Boolean"
+        },
+        {
+          "jsonName": "supported_features",
+          "cSharpName": "SupportedFeatures",
+          "clrType": "System.Double"
         }
       ]
     },
@@ -3684,6 +3824,11 @@
           "cSharpName": "LampTafelRFirmware"
         },
         {
+          "id": "update.media_firmware",
+          "friendlyName": "TV en Media Firmware",
+          "cSharpName": "MediaFirmware"
+        },
+        {
           "id": "update.mosquitto_broker_update",
           "friendlyName": "Mosquitto broker Update",
           "cSharpName": "MosquittoBrokerUpdate"
@@ -3692,6 +3837,11 @@
           "id": "update.netdaemon_v4_net_8_update",
           "friendlyName": "NetDaemon V4 (.NET 8) Update",
           "cSharpName": "NetdaemonV4Net8Update"
+        },
+        {
+          "id": "update.new_firmware",
+          "friendlyName": "Firmware",
+          "cSharpName": "NewFirmware"
         },
         {
           "id": "update.nginx_home_assistant_ssl_proxy_update",
@@ -3717,11 +3867,6 @@
           "id": "update.tuinhuis_verlichting_firmware",
           "friendlyName": "Tuinhuis verlichting  Firmware",
           "cSharpName": "TuinhuisVerlichtingFirmware"
-        },
-        {
-          "id": "update.tv_firmware",
-          "friendlyName": "TV Firmware",
-          "cSharpName": "TvFirmware"
         },
         {
           "id": "update.vaatwasser_firmware",
@@ -3794,6 +3939,11 @@
           "jsonName": "device_class",
           "cSharpName": "DeviceClass",
           "clrType": "System.String"
+        },
+        {
+          "jsonName": "restored",
+          "cSharpName": "Restored",
+          "clrType": "System.Boolean"
         }
       ]
     },
@@ -4000,6 +4150,53 @@
           "jsonName": "editable",
           "cSharpName": "Editable",
           "clrType": "System.Boolean"
+        },
+        {
+          "jsonName": "icon",
+          "cSharpName": "Icon",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "friendly_name",
+          "cSharpName": "FriendlyName",
+          "clrType": "System.String"
+        }
+      ]
+    },
+    {
+      "domain": "script",
+      "entities": [
+        {
+          "id": "script.say_with_alexa",
+          "friendlyName": "Say with Alexa",
+          "cSharpName": "SayWithAlexa"
+        },
+        {
+          "id": "script.toggle_lamp_eettafel",
+          "friendlyName": "Toggle Lamp Eettafel",
+          "cSharpName": "ToggleLampEettafel"
+        },
+        {
+          "id": "script.water_opwarmen",
+          "friendlyName": "Water opwarmen",
+          "cSharpName": "WaterOpwarmen"
+        }
+      ],
+      "attributes": [
+        {
+          "jsonName": "last_triggered",
+          "cSharpName": "LastTriggered",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "mode",
+          "cSharpName": "Mode",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "current",
+          "cSharpName": "Current",
+          "clrType": "System.Double"
         },
         {
           "jsonName": "icon",
