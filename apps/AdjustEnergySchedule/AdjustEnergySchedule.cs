@@ -216,11 +216,11 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
             DateTime startTime;
             if (useNightProgram)
             {
-                startTime = _pricesToday.Where(p => p.Key.TimeOfDay < TimeSpan.FromHours(6)).OrderBy(p => p.Value).First().Key;
+                startTime = _pricesToday.Where(p => p.Key.TimeOfDay < TimeSpan.FromHours(6)).OrderBy(p => p.Value).ThenBy(p => p.Key).First().Key;
             }
             else
             {
-                startTime = _pricesToday.Where(p => p.Key.TimeOfDay > TimeSpan.FromHours(8)).OrderBy(p => p.Value).First().Key;
+                startTime = _pricesToday.Where(p => p.Key.TimeOfDay > TimeSpan.FromHours(8)).OrderBy(p => p.Value).ThenBy(p => p.Key).First().Key;
             }
 
             // Check if the value 1 hour before before the start time is lower than 1 hour after the start time
