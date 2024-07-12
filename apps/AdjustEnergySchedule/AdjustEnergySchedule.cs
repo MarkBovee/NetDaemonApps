@@ -237,12 +237,12 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
             var temperatureIdle = currentPrice < _priceThreshold ? 40 : 35;
 
             // Set notification for the start of the heating period
-            if (_heatingTime.Date != startTime.Date)
+            if (_heatingTime != startTime)
             {
                 _heatingTime = startTime;
 
                 // Check if the start time is in the future
-                if (startTime > timeStamp)
+                if (_heatingTime > timeStamp)
                 {
                     _services.PersistentNotification.Create(message: $"Next {programType} program planned at: {startTime} ", title: "Energy schedule assistant");
                 }
