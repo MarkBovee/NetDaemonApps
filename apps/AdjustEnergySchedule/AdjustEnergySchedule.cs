@@ -58,7 +58,7 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
         /// <summary>
         /// Set the threshold for the price, above this value the appliances will be disabled
         /// </summary>
-        private readonly double _priceThreshold = 0.30;
+        private readonly double _priceThreshold = 0.26;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="AdjustEnergySchedule"/> class
@@ -236,13 +236,20 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
             var temperatureHeat = useNightProgram ? 50 : useLegionellaProtection ? 64 : 56;
             var temperatureIdle = currentPrice < _priceThreshold ? 40 : 35;
 
+            // If prices are below zero, set the temperature to max!
+            if (currentPrice < 0)
+            {
+                temperatureHeat = 70;
+                temperatureIdle = 70;
+            }
+
             // Set notification for the start of the heating period
             if (_heatingTime != startTime)
             {
                 _heatingTime = startTime;
 
                 // Check if the start time is in the future
-                if (_heatingTime > timeStamp)
+                if (_heatingTime >= timeStamp)
                 {
                     _services.PersistentNotification.Create(message: $"Next {programType} program planned at: {startTime} ", title: "Energy schedule assistant");
                 }
