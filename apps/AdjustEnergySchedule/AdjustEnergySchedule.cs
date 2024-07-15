@@ -58,7 +58,7 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
         /// <summary>
         /// Set the threshold for the price, above this value the appliances will be disabled
         /// </summary>
-        private readonly double _priceThreshold = 0.26;
+        private readonly double _priceThreshold = 0.27;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="AdjustEnergySchedule"/> class
