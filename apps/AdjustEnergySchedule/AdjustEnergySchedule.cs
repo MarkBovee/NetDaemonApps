@@ -211,10 +211,11 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
             // Get the current price
             var currentPrice = _pricesToday.FirstOrDefault(p => p.Key.Hour == timeStamp.Hour).Value;
 
-            // Check if the legionella protection should be used
+            // Check if the what type of programe should be used
+            var awayMode = _entities.Switch.OurHomeAwayMode.State == "on";
             var useNightProgram = timeStamp.Hour < 6;
             var useLegionellaProtection = useNightProgram == false && timeStamp.DayOfWeek == DayOfWeek.Saturday;
-            var programType = useNightProgram ? "Night" : useLegionellaProtection ? "Legionella Protection" : "Heating";
+            var programType = awayMode ? "Away" : useNightProgram ? "Night" : useLegionellaProtection ? "Legionella Protection" : "Heating";
 
             // Set the start and end time for the heating period
             DateTime startTime;
@@ -237,8 +238,22 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
             var endTime = startTime.AddHours(3);
 
             // Set the temperature values
-            var temperatureHeat = useNightProgram ? 50 : useLegionellaProtection ? 64 : 56;
-            var temperatureIdle = currentPrice < _priceThreshold ? 40 : 35;
+            var temperatureHeat = 35;
+            var temperatureIdle = 35;
+
+            if (awayMode)
+            {
+                // Set the temperature to 60 degrees for the away mode for legionella protection
+                if (useLegionellaProtection == true && useNightProgram == false)
+                {
+                    temperatureHeat = 60;
+                }
+            }
+            else
+            {
+                temperatureHeat = useNightProgram ? 48 : useLegionellaProtection ? 64 : 56;
+                temperatureIdle = currentPrice < _priceThreshold ? 40 : 35;
+            }
 
             // If prices are below zero, set the temperature to max!
             if (currentPrice < 0)
