@@ -58,7 +58,7 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
         /// <summary>
         /// Set the threshold for the price, above this value the appliances will be disabled
         /// </summary>
-        private readonly double _priceThreshold = 0.275;
+        private readonly double _priceThreshold = 0.280;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="AdjustEnergySchedule"/> class
@@ -83,7 +83,7 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
             else
             {
                 // Application started
-                _services.Logbook.Log("Energy schedule assistant", "Succesfully started");
+                _services.Logbook.Log("Energy schedule assistant", "Succesfully loaded");
 
                 // Run every 1 minute
                 scheduler.RunEvery(TimeSpan.FromMinutes(1), RunChecks);
