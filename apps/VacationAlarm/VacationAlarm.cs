@@ -75,7 +75,7 @@ namespace NetDaemonApps.apps.VacationAlarm
                 // Check if the current time is between 00:00 and 06:00
                 var now = DateTime.Now;
 
-                if (now.Hour >= 0 && now.Hour <= 6)
+                if (now.Hour >= 0 && now.Hour < 6)
                 {
                     // Check if the alarm is active
                     var alarmSet = _entities.AlarmControlPanel.EmmeloordAlarm.State != "disarmed";
