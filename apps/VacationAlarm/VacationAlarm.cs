@@ -83,7 +83,7 @@ namespace NetDaemonApps.apps.VacationAlarm
                     if (!alarmSet)
                     {
                         // Turn on the alarm
-                        _entities.AlarmControlPanel.EmmeloordAlarm.AlarmArmVacation();
+                        _entities.AlarmControlPanel.EmmeloordAlarm.AlarmArmAway();
                     }
                 }
                 else
