@@ -72,10 +72,10 @@ namespace NetDaemonApps.apps.VacationAlarm
             // Start the away mode alarm
             if (awayMode)
             {
-                // Check if the current time is between 00:00 and 06:00
+                // Check if the current time is between 00:00 and 07:00
                 var now = DateTime.Now;
 
-                if (now.Hour >= 0 && now.Hour < 6)
+                if (now.Hour >= 0 && now.Hour < 7)
                 {
                     // Check if the alarm is active
                     var alarmSet = _entities.AlarmControlPanel.EmmeloordAlarm.State != "disarmed";
