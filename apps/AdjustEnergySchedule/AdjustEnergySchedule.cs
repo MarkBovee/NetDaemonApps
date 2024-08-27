@@ -85,8 +85,8 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
                 // Application started
                 _services.Logbook.Log("Energy schedule assistant", "Succesfully loaded");
 
-                // Run every 1 minute
-                scheduler.RunEvery(TimeSpan.FromMinutes(1), RunChecks);
+                // Run every 5 minutes
+                scheduler.RunEvery(TimeSpan.FromMinutes(5), RunChecks);
             }
         }
 
@@ -124,7 +124,7 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
 
             // Get the current solar energy production
             var energyProduction = _entities.Sensor.ElectricityMeterPowerProduction;
-            var noEnergyProduction = energyProduction.State < 1;
+            var noEnergyProduction = energyProduction.State < 0.3;
 
             // Check if the prices are available
             if (_pricesToday == null)
@@ -142,21 +142,21 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
             if (currentPrice > _priceThreshold && noEnergyProduction)
             {
                 // Check if the washing machine is on and if no program is running
-                if (washingMachine?.State == "on" && washingMachineCurrentPower.State < 7)
+                if (washingMachine?.State == "on" && washingMachineCurrentPower.State < 5)
                 {
                     _services.Logbook.Log("Energy schedule assistant", "Washing machine disabled due to high power prices");
                     washingMachine.TurnOff();
                 }
 
                 // Check if the dryer is on
-                if (dryer?.State == "on" && dryerCurrentPower.State < 7)
+                if (dryer?.State == "on" && dryerCurrentPower.State < 5)
                 {
                     _services.Logbook.Log("Energy schedule assistant", "Dryer disabled due to high power prices");
                     dryer.TurnOff();
                 }
 
                 // Check if the dishwasher is on
-                if (dishwasher?.State == "on" && dishwasherCurrentPower.State < 7)
+                if (dishwasher?.State == "on" && dishwasherCurrentPower.State < 5)
                 {
                     _services.Logbook.Log("Energy schedule assistant", "Dishwasher disabled due to high power prices");
                     dishwasher.TurnOff();
