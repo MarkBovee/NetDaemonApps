@@ -315,6 +315,12 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
         /// </summary>
         private void GetPrices()
         {
+            // Check if the prices are already loaded
+            if (_pricesToday != null && _pricesToday.First().Key.Date == DateTime.Today.Date)
+            {
+                return;
+            }
+
             // Read power prices for today
             var powerPrices = _ha.Entity("sensor.energy_prices_average_electricity_price_today");
             if (powerPrices == null)
