@@ -1,10 +1,14 @@
 using HomeAssistantGenerated;
+using HtmlAgilityPack;
 using NetDaemon.Extensions.Scheduler;
 using NetDaemonApps.models.energy_prices;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.Linq;
+using System.Net.Http;
 using System.Text.Json;
+using System.Threading.Tasks;
 
 namespace NetDaemonApps.apps.AdjustPowerSchedule
 {
@@ -329,11 +333,102 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
             var json = jsonAttributes.Value.ToString();
             var averageElectricyPrice = JsonSerializer.Deserialize<AverageElectricityPrice>(json);
 
-            if (averageElectricyPrice != null)
+            // Check if the price data is correct
+            if (averageElectricyPrice == null || averageElectricyPrice.PricesToday.First().GetTimeValue().Date < DateTime.Today.Date)
+            {
+                // Use the fallback data source
+                _logger.LogWarning("Power prices sensor has no new data, using the fallback data sourc");
+
+                LoadFallbackData().Wait();
+            }
+            else
             {
                 _pricesToday = averageElectricyPrice.PricesToday.ToDictionary(p => p.GetTimeValue(), p => p.Price);
                 _pricesTommorow = averageElectricyPrice.PricesTomorrow.ToDictionary(p => p.GetTimeValue(), p => p.Price);
             }
+        }
+
+        /// <summary>
+        /// Loads the fallback data
+        /// </summary>
+        /// <returns>A task containing a dictionary of date time and double</returns>
+        private async Task LoadFallbackData()
+        {
+            try
+            {
+                using HttpClient client = new();
+
+                // Add a user agent header in case the requested URI contains a query.
+                client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.2; .NET CLR 1.0.3705;)");
+
+                var html = await client.GetStringAsync("https://jeroen.nl/dynamische-energie/prijzen/vandaag");
+
+                ParseHtmlToPrices(html);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to load fallback data");
+            }
+        }
+
+        /// <summary>
+        /// Parses the html to prices using the specified html
+        /// </summary>
+        /// <param name="html">The html</param>
+        /// <returns>A dictionary of date time and double</returns>
+        private Dictionary<DateTime, double>? ParseHtmlToPrices(string html)
+        {
+            var pricesToday = new Dictionary<DateTime, double>();
+            var pricesTomorrow = new Dictionary<DateTime, double>();
+
+            // Parse the html
+            if (html != null)
+            {
+                HtmlDocument document = new();
+                document.LoadHtml(html);
+
+                // Extract the table with the price information
+                var nodes = document.DocumentNode.SelectNodes("//div[@class='row boxinner']");
+
+                if (nodes != null)
+                {
+                    foreach (var node in nodes)
+                    {
+                        // Load the html of the row
+                        HtmlDocument nodeHtml = new();
+                        nodeHtml.LoadHtml($"<html>{node.OuterHtml}</html>");
+
+                        // Parse the time text
+                        var timeText = nodeHtml.DocumentNode.SelectSingleNode("//div[@class='col-6 col-md-2']").InnerText.Trim();
+                        var timeStart = timeText.Substring(0, 5);
+                        var day = timeText.Substring(11);
+
+                        // Parse the price text
+                        HtmlDocument priceHtml = new();
+                        priceHtml.LoadHtml($"<html>{nodeHtml.DocumentNode.SelectSingleNode("//div[@class='collapse']").OuterHtml}</html>");
+                        var priceText = priceHtml.DocumentNode.SelectNodes("//strong").Last().InnerText.Trim();
+
+                        if (day == "Vandaag" && double.TryParse(priceText, NumberStyles.Any, CultureInfo.InvariantCulture, out var priceToday))
+                        {
+                            var date = DateTime.ParseExact(timeStart, "HH:mm", CultureInfo.InvariantCulture);
+
+                            pricesToday[date] = priceToday;
+                        }
+
+                        if (day == "Morgen" && double.TryParse(priceText, NumberStyles.Any, CultureInfo.InvariantCulture, out var priceTomorrow))
+                        {
+                            var date = DateTime.ParseExact(timeStart, "HH:mm", CultureInfo.InvariantCulture).AddDays(1);
+
+                            pricesTomorrow[date] = priceTomorrow;
+                        }
+                    }
+
+                    _pricesToday = pricesToday;
+                    _pricesTommorow = pricesTomorrow;
+                }
+            }
+
+            return null;
         }
     }
 }

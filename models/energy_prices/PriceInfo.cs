@@ -34,6 +34,16 @@ namespace NetDaemonApps.models.energy_prices
                 // Convert DateTimeOffset to DateTime, considering the local time zone
                 DateTime dateTime = dateTimeOffset.LocalDateTime;
 
+                //// Check for an error in the date, this can happen when we dont have any new data
+                //if (dateTime.Date < DateTime.Today.Date)
+                //{
+                //    // Calculate the difference in days
+                //    int daysDifference = (DateTime.Today.Date - dateTime.Date).Days;
+
+                //    // Add it to the current date
+                //    dateTime = dateTime.AddDays(daysDifference);
+                //}
+
                 return dateTime;
             }
             catch (FormatException)
