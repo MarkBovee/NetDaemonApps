@@ -62,7 +62,7 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
         /// <summary>
         /// Set the threshold for the price, above this value the appliances will be disabled
         /// </summary>
-        private readonly double _priceThreshold = 0.280;
+        private double _priceThreshold;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="AdjustEnergySchedule"/> class
@@ -87,8 +87,6 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
             else
             {
                 // Application started
-                _services.Logbook.Log("Energy schedule assistant", "Succesfully loaded");
-
                 // Run every 5 minutes
                 scheduler.RunEvery(TimeSpan.FromMinutes(5), RunChecks);
             }
@@ -102,6 +100,9 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
             // Get the current power prices
             GetPrices();
 
+            // Get the price threshold
+            SetEnergyPriceThreshold();
+
             // Set the heating schedule for the heatpump
             SetHeatingSchedule();
 
@@ -109,6 +110,25 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
             SetAppliancesSchedule();
 
             // Set the car charging schedule
+        }
+
+        /// <summary>
+        /// Sets the energy price threshold
+        /// </summary>
+        private void SetEnergyPriceThreshold()
+        {
+            var avgPrice = _entities.Sensor.EnergyPricesAverageElectricityPriceToday.State;
+
+            if (avgPrice != null)
+            {
+                // Set the price to the average price minus 2 cent
+                _priceThreshold = avgPrice.Value - 0.02;
+            }
+            else
+            {
+                // Set the price to a fallback default value
+                _priceThreshold = 0.28;
+            }
         }
 
         /// <summary>
