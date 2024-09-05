@@ -118,16 +118,23 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
         private void SetEnergyPriceThreshold()
         {
             var avgPrice = _entities.Sensor.EnergyPricesAverageElectricityPriceToday.State;
+            var fallbackPrice = 0.28;
 
             if (avgPrice != null)
             {
-                // Set the price to the average price minus 2 cent
-                _priceThreshold = avgPrice.Value - 0.02;
+                // Set the price to the average price minus 1 cent
+                _priceThreshold = avgPrice.Value - 0.01;
+
+                // Check if the price is below the fallback price
+                if (_priceThreshold < fallbackPrice)
+                {
+                    _priceThreshold = fallbackPrice;
+                }
             }
             else
             {
                 // Set the price to a fallback default value
-                _priceThreshold = 0.28;
+                _priceThreshold = fallbackPrice;
             }
         }
 
