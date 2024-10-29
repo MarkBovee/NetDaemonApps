@@ -45,9 +45,9 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
         private IDictionary<DateTime, double>? _pricesToday;
 
         /// <summary>
-        /// The prices tommorow
+        /// The prices tomorrow
         /// </summary>
-            private IDictionary<DateTime, double>? _pricesTommorow;
+        private IDictionary<DateTime, double>? _pricesTomorrow;
 
         /// <summary>
         /// The is heater on indication
@@ -113,7 +113,7 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
             // Get the price threshold
             SetEnergyPriceThreshold();
 
-            // Set the heating schedule for the heatpump
+            // Set the heating schedule for the heat pump
             SetHeatingSchedule();
 
             // Disable the dishwasher, the washing machine and the dryer if the price is too high
@@ -132,8 +132,8 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
 
             if (avgPrice != null)
             {
-                // Set the price to the average price minus 1 cent
-                _priceThreshold = avgPrice.Value - 0.01;
+                // Set the price to the average price
+                _priceThreshold = avgPrice.Value;
 
                 // Check if the price is below the fallback price
                 if (_priceThreshold < fallbackPrice)
@@ -148,7 +148,7 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
             }
 
             // Check if the energy production is above the threshold
-            _energyProduction = _entities.Sensor.ElectricityMeterPowerProduction.State > 0.7;
+            _energyProduction = _entities.Sensor.ElectricityMeterPowerProduction.State > 0.5;
         }
 
         /// <summary>
@@ -241,20 +241,7 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
         {
             // Get the heat pump warm water heater entities
             var heatingWater = _entities.WaterHeater.OurHomeDomesticHotWater0;
-            if (heatingWater == null)
-            {
-                _logger.LogWarning("Hot water heater not found");
-
-                return;
-            }
-
             var heatingCircuit = _entities.Climate.OurHomeZoneThuisCircuit0Climate;
-            if (heatingCircuit == null)
-            {
-                _logger.LogWarning("Circuit heater not found");
-
-                return;
-            }
 
             // Check if the prices are available
             if (_pricesToday == null)
@@ -268,7 +255,7 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
             // Get the current price
             var currentPrice = _pricesToday.FirstOrDefault(p => p.Key.Hour == timeStamp.Hour).Value;
 
-            // Check if the what type of programe should be used
+            // Check what type of program should be used
             var awayMode = _entities.Switch.OurHomeAwayMode.State == "on";
             var useNightProgram = timeStamp.Hour < 6;
             var useLegionellaProtection = useNightProgram == false && timeStamp.DayOfWeek == DayOfWeek.Saturday;
@@ -285,7 +272,7 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
                 startTime = _pricesToday.Where(p => p.Key.TimeOfDay > TimeSpan.FromHours(8)).OrderBy(p => p.Value).ThenBy(p => p.Key).First().Key;
             }
 
-            // Check if the value 1 hour before before the start time is lower than 1 hour after the start time
+            // Check if the value 1 hour before the start time is lower than 1 hour after the start time
             if (useLegionellaProtection && startTime.Hour > 0 && _pricesToday[startTime.AddHours(-1)] < _pricesToday[startTime.AddHours(1)])
             {
                 startTime = startTime.AddHours(-1);
@@ -308,7 +295,7 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
             }
             else
             {
-                temperatureHeat = useNightProgram ? 48 : useLegionellaProtection ? 62 : 55;
+                temperatureHeat = useNightProgram ? 48 : useLegionellaProtection ? 62 : 50;
                 temperatureIdle = _energyProduction ? 50 : currentPrice < _priceThreshold ? 40 : 35;
             }
 
@@ -334,16 +321,15 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
             // Check if the heater is off and the current timestamp is within the schedule
             if (timeStamp.TimeOfDay >= startTime.TimeOfDay && timeStamp.TimeOfDay <= endTime.TimeOfDay)
             {
-                if (_isHeaterOn == false)
-                {
-                    _services.Logbook.Log("Energy schedule assistant", $"Started {programType} program from: {startTime}, to: {endTime}");
+                if (_isHeaterOn) return;
+                
+                _services.Logbook.Log("Energy schedule assistant", $"Started {programType} program from: {startTime}, to: {endTime}", heatingWater.EntityId);
 
-                    heatingWater.SetOperationMode("Manual");
-                    heatingWater.SetTemperature(temperatureHeat);
+                heatingWater.SetOperationMode("Manual");
+                heatingWater.SetTemperature(temperatureHeat);
 
-                    _isHeaterOn = true;
-                    _targetTemperature = temperatureHeat;
-                }
+                _isHeaterOn = true;
+                _targetTemperature = temperatureHeat;
             }
             else
             {
@@ -392,17 +378,17 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
             if (json == null || json == "null")
             {
                 // Use the fallback data source
-                _logger.LogWarning("Power prices sensor has no data, using the fallback data sourc");
+                _logger.LogWarning("Power prices sensor has no data, using the fallback data source");
 
                 LoadFallbackData().Wait();
             }
             else
             {
-                AverageElectricityPrice? averageElectricyPrice = null;
+                AverageElectricityPrice? averageElectricityPrice = null;
 
                 try
                 {
-                    averageElectricyPrice = JsonSerializer.Deserialize<AverageElectricityPrice>(json);
+                    averageElectricityPrice = JsonSerializer.Deserialize<AverageElectricityPrice>(json);
                 }
                 catch (Exception ex)
                 {
@@ -410,7 +396,7 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
                 }
 
                 // Check if the price data is correct
-                if (averageElectricyPrice == null || averageElectricyPrice.PricesToday.First().GetTimeValue().Date < DateTime.Today.Date)
+                if (averageElectricityPrice == null || averageElectricityPrice.PricesToday.First().GetTimeValue().Date < DateTime.Today.Date)
                 {
                     // Use the fallback data source
                     _logger.LogWarning("Power prices sensor has no new data, using the fallback data source");
@@ -422,16 +408,16 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
                     // Set the prices for today and tomorrow
                     _pricesToday = new Dictionary<DateTime, double>();
                     
-                    foreach (var price in averageElectricyPrice.PricesToday)
+                    foreach (var price in averageElectricityPrice.PricesToday)
                     {
                         _pricesToday[price.GetTimeValue()] = price.Price;
                     }
                     
-                    _pricesTommorow = new Dictionary<DateTime, double>();
+                    _pricesTomorrow = new Dictionary<DateTime, double>();
                     
-                    foreach (var price in averageElectricyPrice.PricesTomorrow)
+                    foreach (var price in averageElectricityPrice.PricesTomorrow)
                     {
-                        _pricesToday[price.GetTimeValue()] = price.Price;
+                        _pricesTomorrow[price.GetTimeValue()] = price.Price;
                     }
                 }
             }
@@ -513,7 +499,7 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
                     }
 
                     _pricesToday = pricesToday;
-                    _pricesTommorow = pricesTomorrow;
+                    _pricesTomorrow = pricesTomorrow;
                 }
             }
 
