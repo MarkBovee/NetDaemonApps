@@ -45,7 +45,9 @@ namespace NetDaemonApps.apps.VacationAlarm
             // Read the Home assistant services and entities
             _services = new Services(ha);
             _entities = new Entities(ha);
-
+            
+            _logger.LogInformation("Started Vacation Alarm program");
+            
             if (Debugger.IsAttached)
             {
                 // Run once

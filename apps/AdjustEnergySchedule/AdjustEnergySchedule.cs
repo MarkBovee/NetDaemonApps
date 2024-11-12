@@ -9,6 +9,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Text.Json;
 using System.Threading.Tasks;
+using HomeAssistantGenerated.models.enums;
 
 namespace NetDaemonApps.apps.AdjustPowerSchedule
 {
@@ -67,12 +68,17 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
         /// <summary>
         /// The energy production
         /// </summary>
-        private bool _energyProduction;
+        private Level _energyProduction;
 
         /// <summary>
         /// The target temperature for the water heater
         /// </summary>
         private int _targetTemperature;
+        
+        /// <summary>
+        /// The wait cycles
+        /// </summary>
+        private int _waitCycles = 0;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="AdjustEnergySchedule"/> class
@@ -88,6 +94,8 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
             // Read the Home assistant services and entities
             _services = new Services(ha);
             _entities = new Entities(ha);
+            
+            _logger.LogInformation("Started Energy Schedule Assistant program");
 
             if (Debugger.IsAttached)
             {
@@ -146,9 +154,16 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
                 // Set the price to a fallback default value
                 _priceThreshold = fallbackPrice;
             }
-
-            // Check if the energy production is above the threshold
-            _energyProduction = _entities.Sensor.ElectricityMeterPowerProduction.State > 0.5;
+            
+            // Set the energy production level
+            _energyProduction = _entities.Sensor.ElectricityMeterPowerProduction.State switch
+            {
+                // Check if the energy production is above the threshold
+                < 0.1 => Level.None,
+                > 0.1 and < 0.5 => Level.Low,
+                > 0.5 and < 1 => Level.Medium,
+                _ => Level.High
+            };
         }
 
         /// <summary>
@@ -181,33 +196,33 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
             var currentPrice = _pricesToday.FirstOrDefault(p => p.Key.Hour == timeStamp.Hour).Value;
 
             // Check if the price is above the threshold and there is no energy production
-            if (currentPrice > _priceThreshold && !_energyProduction)
+            if (_energyProduction < Level.Medium && currentPrice > _priceThreshold)
             {
                 // Check if the washing machine is on and if no program is running
                 if (washingMachine?.State == "on" && washingMachineCurrentPower.State < 5)
                 {
-                    _services.Logbook.Log("Energy schedule assistant", "Washing machine disabled due to high power prices");
+                    _logger.LogInformation("Washing machine disabled due to high power prices");
                     washingMachine.TurnOff();
                 }
 
                 // Check if the dryer is on
                 if (dryer?.State == "on" && dryerCurrentPower.State < 5)
                 {
-                    _services.Logbook.Log("Energy schedule assistant", "Dryer disabled due to high power prices");
+                    _logger.LogInformation("Dryer disabled due to high power prices");
                     dryer.TurnOff();
                 }
 
                 // Check if the dishwasher is on
                 if (dishwasher?.State == "on" && dishwasherCurrentPower.State < 5)
                 {
-                    _services.Logbook.Log("Energy schedule assistant", "Dishwasher disabled due to high power prices");
+                    _logger.LogInformation("Dishwasher disabled due to high power prices");
                     dishwasher.TurnOff();
                 }
 
                 // Check if the garage power is on
                 if (garage?.State == "on")
                 {
-                    _services.Logbook.Log("Energy schedule assistant", "Garage disabled due to high power prices");
+                    _logger.LogInformation("Garage disabled due to high power prices");
                     garage.TurnOff();
                 }
             }
@@ -216,19 +231,19 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
                 // Turn on the appliances if they are off
                 if (washingMachine?.State == "off")
                 {
-                    _services.Logbook.Log("Energy schedule assistant", "Washing machine  enabled again");
+                    _logger.LogInformation("Washing machine  enabled again");
                     washingMachine.TurnOn();
                 }
 
                 if (dryer?.State == "off")
                 {
-                    _services.Logbook.Log("Energy schedule assistant", "Dryer enabled again");
+                    _logger.LogInformation("Dryer enabled again");
                     dryer.TurnOn();
                 }
 
                 if (dishwasher?.State == "off")
                 {
-                    _services.Logbook.Log("Energy schedule assistant", "Dishwasher enabled again");
+                    _logger.LogInformation("Dishwasher enabled again");
                     dishwasher.TurnOn();
                 }
             }
@@ -239,7 +254,7 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
         /// </summary>
         private void SetHeatingSchedule()
         {
-            // Get the heat pump warm water heater entities
+            // Get the heatpump warm water heater entities
             var heatingWater = _entities.WaterHeater.OurHomeDomesticHotWater0;
             var heatingCircuit = _entities.Climate.OurHomeZoneThuisCircuit0Climate;
 
@@ -288,24 +303,48 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
             if (awayMode)
             {
                 // Set the temperature to 60 degrees for the away mode for legionella protection
-                if (useLegionellaProtection == true && useNightProgram == false)
+                if (useLegionellaProtection && useNightProgram == false)
                 {
                     temperatureHeat = 60;
                 }
             }
             else
             {
-                temperatureHeat = useNightProgram ? 48 : useLegionellaProtection ? 62 : 50;
-                temperatureIdle = _energyProduction ? 50 : currentPrice < _priceThreshold ? 40 : 35;
+                // Set the temperature values for the heating program
+                if (useNightProgram)
+                {
+                    temperatureHeat = 48;
+                }
+                else if (useLegionellaProtection)
+                {
+                    temperatureHeat = 62;
+                }
+                else
+                {
+                    temperatureHeat = _energyProduction switch
+                    {
+                        Level.High => 58,
+                        Level.Medium => 56,
+                        _ => 50
+                    };
+                }
+                
+                // Set the idle temperature
+                temperatureIdle = _energyProduction switch
+                {
+                    Level.High => 56,
+                    Level.Medium => 50,
+                    _ => currentPrice < _priceThreshold ? 40 : 35
+                };
             }
 
             // If prices are below zero, set the temperature to max!
-            if (currentPrice < 0)
+            if (currentPrice < 0.1)
             {
                 temperatureHeat = 70;
                 temperatureIdle = 70;
             }
-
+            
             // Set notification for the start of the heating period
             if (_heatingTime != startTime)
             {
@@ -318,32 +357,56 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
                 }
             }
 
-            // Check if the heater is off and the current timestamp is within the schedule
-            if (timeStamp.TimeOfDay >= startTime.TimeOfDay && timeStamp.TimeOfDay <= endTime.TimeOfDay)
+            // Set the water heating temperature
+            try
             {
-                if (_isHeaterOn) return;
-                
-                _services.Logbook.Log("Energy schedule assistant", $"Started {programType} program from: {startTime}, to: {endTime}", heatingWater.EntityId);
-
-                heatingWater.SetOperationMode("Manual");
-                heatingWater.SetTemperature(temperatureHeat);
-
-                _isHeaterOn = true;
-                _targetTemperature = temperatureHeat;
-            }
-            else
-            {
-                // Set the heater to idle temperature after the heating period
-                if (_isHeaterOn || temperatureIdle != _targetTemperature)
+                // Check if the heater is off and the current timestamp is within the schedule  
+                if (timeStamp.TimeOfDay >= startTime.TimeOfDay && timeStamp.TimeOfDay <= endTime.TimeOfDay)
                 {
-                    heatingWater.SetOperationMode("Manual");
-                    heatingWater.SetTemperature(temperatureIdle);
-                    
-                    _targetTemperature = temperatureIdle;
-                }
+                    if (_isHeaterOn) return;
+                
+                    _logger.LogInformation($"Started {programType} program from: {startTime}, to: {endTime}", heatingWater.EntityId);
 
+                    heatingWater.SetOperationMode("Manual");
+                    heatingWater.SetTemperature(temperatureHeat);
+
+                    _isHeaterOn = true;
+                    _targetTemperature = temperatureHeat;
+                }
+                else
+                {
+                    // Set the heater to idle temperature after the heating period
+                    if (_waitCycles > 0 && temperatureIdle < _targetTemperature)
+                    {
+                        _waitCycles--;
+                    
+                        _logger.LogInformation($"Continue heating to {_targetTemperature} for {_waitCycles} cycles");
+                    
+                    }
+                    else if (_isHeaterOn || _targetTemperature != temperatureIdle)
+                    {
+                        _targetTemperature = temperatureIdle;
+                        _waitCycles = 6;
+                    
+                        _logger.LogInformation($"Started heating to {_targetTemperature} for {_waitCycles} cycles");
+                    
+                        heatingWater.SetOperationMode("Manual");
+                        heatingWater.SetTemperature(temperatureIdle);
+                    
+                        _isHeaterOn = false;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to set the heating temperature");
+
+                // Reset the values
+                _targetTemperature = 0;
+                _waitCycles = 0;
                 _isHeaterOn = false;
             }
+            
         }
 
         /// <summary>
