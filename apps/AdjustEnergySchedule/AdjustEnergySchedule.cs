@@ -196,7 +196,7 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
             var currentPrice = _pricesToday.FirstOrDefault(p => p.Key.Hour == timeStamp.Hour).Value;
 
             // Check if the price is above the threshold and there is no energy production
-            if (_energyProduction < Level.Medium && currentPrice > _priceThreshold)
+            if (_energyProduction < Level.Low && currentPrice > _priceThreshold)
             {
                 // Check if the washing machine is on and if no program is running
                 if (washingMachine?.State == "on" && washingMachineCurrentPower.State < 5)
