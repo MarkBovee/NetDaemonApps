@@ -331,7 +331,7 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
                     temperatureHeat = _energyProduction switch
                     {
                         Level.High => 58,
-                        Level.Medium => 56,
+                        Level.Medium => 54,
                         _ => 50
                     };
                 }
@@ -340,8 +340,8 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
                 temperatureIdle = _energyProduction switch
                 {
                     Level.High => 56,
-                    Level.Medium => 50,
-                    _ => currentPrice < _priceThreshold ? 40 : 35
+                    Level.Medium => 52,
+                    _ => currentPrice < _priceThreshold ? 48 : 35
                 };
             }
 
