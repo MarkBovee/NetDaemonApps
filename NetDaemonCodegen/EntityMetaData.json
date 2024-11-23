@@ -4,6 +4,11 @@
       "domain": "light",
       "entities": [
         {
+          "id": "light.dinnertable",
+          "friendlyName": "Dinnertable",
+          "cSharpName": "Dinnertable"
+        },
+        {
           "id": "light.lamp_kantoor",
           "friendlyName": "Lamp-Kantoor",
           "cSharpName": "LampKantoor"
@@ -17,6 +22,31 @@
           "id": "light.lamp_tafel_r",
           "friendlyName": "Lamp-tafel-R",
           "cSharpName": "LampTafelR"
+        },
+        {
+          "id": "light.moodlight_1",
+          "friendlyName": "Moodlight 1",
+          "cSharpName": "Moodlight1"
+        },
+        {
+          "id": "light.moodlight_2",
+          "friendlyName": "Moodlight 2",
+          "cSharpName": "Moodlight2"
+        },
+        {
+          "id": "light.moodlight_3",
+          "friendlyName": "Moodlight 3",
+          "cSharpName": "Moodlight3"
+        },
+        {
+          "id": "light.moodlight_4",
+          "friendlyName": "Moodlight 4",
+          "cSharpName": "Moodlight4"
+        },
+        {
+          "id": "light.moodlights",
+          "friendlyName": "Moodlights",
+          "cSharpName": "Moodlights"
         }
       ],
       "attributes": [
@@ -126,49 +156,44 @@
           "cSharpName": "ChromecastHuiskamer"
         },
         {
-          "id": "media_player.echo_pop_mark",
-          "friendlyName": "Echo Pop Mark",
-          "cSharpName": "EchoPopMark"
-        },
-        {
-          "id": "media_player.everywhere",
-          "friendlyName": "Everywhere",
-          "cSharpName": "Everywhere"
-        },
-        {
           "id": "media_player.huiskamer",
           "friendlyName": "Chromecast Huiskamer ",
           "cSharpName": "Huiskamer"
         },
         {
-          "id": "media_player.lg_oled_tv",
-          "friendlyName": "LG OLED TV",
-          "cSharpName": "LgOledTv"
+          "id": "media_player.lg_webos_tv_oled65c16la",
+          "friendlyName": "[LG] webOS TV OLED65C16LA",
+          "cSharpName": "LgWebosTvOled65c16la"
         },
         {
-          "id": "media_player.lg_webos_smart_tv",
-          "friendlyName": "LG webOS Smart TV",
-          "cSharpName": "LgWebosSmartTv"
+          "id": "media_player.office",
+          "friendlyName": null,
+          "cSharpName": "Office"
         },
         {
-          "id": "media_player.mark_s_bose_quietcomfort_35_ii",
-          "friendlyName": "Mark\u0027s Bose QuietComfort 35 II",
-          "cSharpName": "MarkSBoseQuietcomfort35Ii"
+          "id": "media_player.wiim_ultra_7a1e",
+          "friendlyName": "Home Cinema",
+          "cSharpName": "WiimUltra7a1e"
         },
         {
-          "id": "media_player.mark_s_echo_dot",
-          "friendlyName": "Mark\u0027s Echo Dot",
-          "cSharpName": "MarkSEchoDot"
+          "id": "media_player.wiim_ultra_7a1e_2",
+          "friendlyName": "WiiM Ultra-7A1E",
+          "cSharpName": "WiimUltra7a1e2"
         },
         {
-          "id": "media_player.mark_s_echo_show",
-          "friendlyName": "Mark\u0027s Echo Show",
-          "cSharpName": "MarkSEchoShow"
+          "id": "media_player.wiim_ultra_9b0c",
+          "friendlyName": null,
+          "cSharpName": "WiimUltra9b0c"
         },
         {
-          "id": "media_player.this_device",
-          "friendlyName": "This Device",
-          "cSharpName": "ThisDevice"
+          "id": "media_player.wiim_ultra_9b0c_2",
+          "friendlyName": "WiiM Ultra-9B0C",
+          "cSharpName": "WiimUltra9b0c2"
+        },
+        {
+          "id": "media_player.wiim_ultra_cinema",
+          "friendlyName": "Home Cinema",
+          "cSharpName": "WiimUltraCinema"
         }
       ],
       "attributes": [
@@ -361,6 +386,11 @@
           "jsonName": "bluetooth_list",
           "cSharpName": "BluetoothList",
           "clrType": "System.Collections.Generic.IReadOnlyList\u00601[System.String]"
+        },
+        {
+          "jsonName": "group_members",
+          "cSharpName": "GroupMembers",
+          "clrType": "System.Collections.Generic.IReadOnlyList\u00601[System.Object]"
         }
       ]
     },
@@ -481,12 +511,12 @@
         },
         {
           "id": "automation.lampen_aan",
-          "friendlyName": "Lampen aan in de avond",
+          "friendlyName": "Verlichting aan in de avond",
           "cSharpName": "LampenAan"
         },
         {
           "id": "automation.lampen_aan_in_de_morgen",
-          "friendlyName": "Lampen aan in de morgen",
+          "friendlyName": "Verlichting aan in de morgen",
           "cSharpName": "LampenAanInDeMorgen"
         },
         {
@@ -496,7 +526,7 @@
         },
         {
           "id": "automation.nieuwe_automatisering",
-          "friendlyName": "Turn off Alexa screen when tv is on",
+          "friendlyName": "Turn off Alexa screen when media is on",
           "cSharpName": "NieuweAutomatisering"
         },
         {
@@ -506,28 +536,38 @@
         },
         {
           "id": "automation.restart_adguard",
-          "friendlyName": "Restart AdGuard",
+          "friendlyName": "Restart Ad-Guard",
           "cSharpName": "RestartAdguard"
         },
         {
-          "id": "automation.take_a_camer_snapshot_every_10_minutes",
-          "friendlyName": "Take a camer snapshot every 10 minutes",
-          "cSharpName": "TakeACamerSnapshotEvery10Minutes"
+          "id": "automation.restart_nginx",
+          "friendlyName": "Restart Nginx",
+          "cSharpName": "RestartNginx"
         },
         {
-          "id": "automation.turn_on_alexa_screen_when_tv_is_off",
-          "friendlyName": "Turn on Alexa screen when tv is off",
-          "cSharpName": "TurnOnAlexaScreenWhenTvIsOff"
+          "id": "automation.turn_off_alexa_when_music_is_playing",
+          "friendlyName": "Turn off Alexa when music is playing ",
+          "cSharpName": "TurnOffAlexaWhenMusicIsPlaying"
         },
         {
           "id": "automation.turn_on_lights_when_tv_is_on",
-          "friendlyName": "Turn on lights when tv is on",
+          "friendlyName": "Verlichting (sfeer) aan bij tv kijken",
           "cSharpName": "TurnOnLightsWhenTvIsOn"
         },
         {
-          "id": "automation.tv_en_media_aanzetten",
-          "friendlyName": "TV en Media aanzetten",
-          "cSharpName": "TvEnMediaAanzetten"
+          "id": "automation.tv_sound_move_mode",
+          "friendlyName": "TV Sound Move Mode",
+          "cSharpName": "TvSoundMoveMode"
+        },
+        {
+          "id": "automation.tv_speaker_as_default",
+          "friendlyName": "TV Sound default",
+          "cSharpName": "TvSpeakerAsDefault"
+        },
+        {
+          "id": "automation.verlichting_aan_bij_zonsondergang",
+          "friendlyName": "Verlichting aan bij zonsondergang",
+          "cSharpName": "VerlichtingAanBijZonsondergang"
         }
       ],
       "attributes": [
@@ -572,6 +612,11 @@
           "cSharpName": "AchterdeurContactSensorTamper"
         },
         {
+          "id": "binary_sensor.amplifier_overheat",
+          "friendlyName": "Audio Overheat",
+          "cSharpName": "AmplifierOverheat"
+        },
+        {
           "id": "binary_sensor.backups_stale",
           "friendlyName": "Backups Stale",
           "cSharpName": "BackupsStale"
@@ -612,6 +657,11 @@
           "cSharpName": "EmmeloordRangeExtenderTamper"
         },
         {
+          "id": "binary_sensor.energy_prices_tomorrow",
+          "friendlyName": "energy_prices_tomorrow",
+          "cSharpName": "EnergyPricesTomorrow"
+        },
+        {
           "id": "binary_sensor.ex5601_t1_wan_status",
           "friendlyName": "EX5601-T1 WAN status",
           "cSharpName": "Ex5601T1WanStatus"
@@ -643,7 +693,7 @@
         },
         {
           "id": "binary_sensor.lamp_keuken_overheat",
-          "friendlyName": "Lamp keuken Overheat",
+          "friendlyName": "Keuken verlichting Overheat",
           "cSharpName": "LampKeukenOverheat"
         },
         {
@@ -657,19 +707,19 @@
           "cSharpName": "LampTafelROverheat"
         },
         {
-          "id": "binary_sensor.media_overheat",
-          "friendlyName": "TV en Media Overheat",
-          "cSharpName": "MediaOverheat"
-        },
-        {
-          "id": "binary_sensor.new_overheat",
-          "friendlyName": "Overheat",
-          "cSharpName": "NewOverheat"
-        },
-        {
           "id": "binary_sensor.our_home_circuit_0_cooling_allowed",
           "friendlyName": "Our home Circuit 0 Cooling Allowed",
           "cSharpName": "OurHomeCircuit0CoolingAllowed"
+        },
+        {
+          "id": "binary_sensor.our_home_eebus_capable",
+          "friendlyName": "Our home EEBUS Capable",
+          "cSharpName": "OurHomeEebusCapable"
+        },
+        {
+          "id": "binary_sensor.our_home_eebus_enabled",
+          "friendlyName": "Our home EEBUS Enabled",
+          "cSharpName": "OurHomeEebusEnabled"
         },
         {
           "id": "binary_sensor.our_home_firmware_update_enabled",
@@ -707,11 +757,6 @@
           "cSharpName": "ToetsenpaneelIngangTamper"
         },
         {
-          "id": "binary_sensor.tuin_beweging",
-          "friendlyName": "Tuin Beweging",
-          "cSharpName": "TuinBeweging"
-        },
-        {
           "id": "binary_sensor.tuin_camera_motion",
           "friendlyName": "Tuin Camera Motion",
           "cSharpName": "TuinCameraMotion"
@@ -722,14 +767,14 @@
           "cSharpName": "TuinhuisVerlichtingOverheat"
         },
         {
+          "id": "binary_sensor.tv_en_media_overheat",
+          "friendlyName": "TV en Media Overheat",
+          "cSharpName": "TvEnMediaOverheat"
+        },
+        {
           "id": "binary_sensor.vaatwasser_overheat",
           "friendlyName": "Vaatwasser  Overheat",
           "cSharpName": "VaatwasserOverheat"
-        },
-        {
-          "id": "binary_sensor.voordeur_beweging",
-          "friendlyName": "Voordeur Beweging",
-          "cSharpName": "VoordeurBeweging"
         },
         {
           "id": "binary_sensor.voordeur_contact_sensor",
@@ -740,11 +785,6 @@
           "id": "binary_sensor.voordeur_contact_sensor_tamper",
           "friendlyName": "Voordeur Contact Sensor Tamper",
           "cSharpName": "VoordeurContactSensorTamper"
-        },
-        {
-          "id": "binary_sensor.voordeur_ding",
-          "friendlyName": "Voordeur Ding",
-          "cSharpName": "VoordeurDing"
         },
         {
           "id": "binary_sensor.voordeur_motion_sensor_2",
@@ -760,11 +800,6 @@
           "id": "binary_sensor.wasmachine_overheat",
           "friendlyName": "Wasmachine  Overheat",
           "cSharpName": "WasmachineOverheat"
-        },
-        {
-          "id": "binary_sensor.woonkamer_beweging",
-          "friendlyName": "Woonkamer Beweging",
-          "cSharpName": "WoonkamerBeweging"
         },
         {
           "id": "binary_sensor.woonkamer_camera_motion",
@@ -847,6 +882,21 @@
           "jsonName": "supported_features",
           "cSharpName": "SupportedFeatures",
           "clrType": "System.Double"
+        },
+        {
+          "jsonName": "after",
+          "cSharpName": "After",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "before",
+          "cSharpName": "Before",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "next_update",
+          "cSharpName": "NextUpdate",
+          "clrType": "System.String"
         }
       ]
     },
@@ -1114,12 +1164,12 @@
         {
           "jsonName": "quick_veto_start_date_time",
           "cSharpName": "QuickVetoStartDateTime",
-          "clrType": null
+          "clrType": "System.String"
         },
         {
           "jsonName": "quick_veto_end_date_time",
           "cSharpName": "QuickVetoEndDateTime",
-          "clrType": null
+          "clrType": "System.String"
         },
         {
           "jsonName": "holiday_start_date_time",
@@ -1165,6 +1215,16 @@
           "jsonName": "swing_modes",
           "cSharpName": "SwingModes",
           "clrType": "System.Collections.Generic.IReadOnlyList\u00601[System.String]"
+        },
+        {
+          "jsonName": "target_temp_high",
+          "cSharpName": "TargetTempHigh",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "target_temp_low",
+          "cSharpName": "TargetTempLow",
+          "clrType": "System.Double"
         }
       ]
     },
@@ -1182,6 +1242,11 @@
           "jsonName": "friendly_name",
           "cSharpName": "FriendlyName",
           "clrType": "System.String"
+        },
+        {
+          "jsonName": "supported_features",
+          "cSharpName": "SupportedFeatures",
+          "clrType": "System.Double"
         }
       ]
     },
@@ -1197,6 +1262,16 @@
           "id": "datetime.our_home_away_mode_start_date",
           "friendlyName": "Our home Away Mode Start Date",
           "cSharpName": "OurHomeAwayModeStartDate"
+        },
+        {
+          "id": "datetime.our_home_manual_cooling_end_date",
+          "friendlyName": "Our home Manual Cooling End Date",
+          "cSharpName": "OurHomeManualCoolingEndDate"
+        },
+        {
+          "id": "datetime.our_home_manual_cooling_start_date",
+          "friendlyName": "Our home Manual Cooling Start Date",
+          "cSharpName": "OurHomeManualCoolingStartDate"
         }
       ],
       "attributes": [
@@ -1229,6 +1304,31 @@
           "jsonName": "friendly_name",
           "cSharpName": "FriendlyName",
           "clrType": "System.String"
+        },
+        {
+          "jsonName": "manual_cooling_ongoing",
+          "cSharpName": "ManualCoolingOngoing",
+          "clrType": "System.Boolean"
+        },
+        {
+          "jsonName": "manual_cooling_remaining_seconds",
+          "cSharpName": "ManualCoolingRemainingSeconds",
+          "clrType": null
+        },
+        {
+          "jsonName": "manual_cooling_start_date_time",
+          "cSharpName": "ManualCoolingStartDateTime",
+          "clrType": null
+        },
+        {
+          "jsonName": "manual_cooling_end_date_time",
+          "cSharpName": "ManualCoolingEndDateTime",
+          "clrType": null
+        },
+        {
+          "jsonName": "manual_cooling_days_remaining",
+          "cSharpName": "ManualCoolingDaysRemaining",
+          "clrType": null
         }
       ]
     },
@@ -1258,9 +1358,19 @@
       "domain": "input_boolean",
       "entities": [
         {
+          "id": "input_boolean.bath",
+          "friendlyName": "Bath",
+          "cSharpName": "Bath"
+        },
+        {
           "id": "input_boolean.netdaemon_net_daemon_apps_apps_adjust_power_schedule_adjust_energy_schedule",
           "friendlyName": "netdaemon_net_daemon_apps_apps_adjust_power_schedule_adjust_energy_schedule",
           "cSharpName": "NetdaemonNetDaemonAppsAppsAdjustPowerScheduleAdjustEnergySchedule"
+        },
+        {
+          "id": "input_boolean.netdaemon_net_daemon_apps_apps_vacation_alarm_vacation_alarm",
+          "friendlyName": "netdaemon_net_daemon_apps_apps_vacation_alarm_vacation_alarm",
+          "cSharpName": "NetdaemonNetDaemonAppsAppsVacationAlarmVacationAlarm"
         }
       ],
       "attributes": [
@@ -1272,6 +1382,11 @@
         {
           "jsonName": "friendly_name",
           "cSharpName": "FriendlyName",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "icon",
+          "cSharpName": "Icon",
           "clrType": "System.String"
         }
       ]
@@ -1308,6 +1423,11 @@
       "isNumeric": true,
       "entities": [
         {
+          "id": "number.beneden_volume",
+          "friendlyName": "Beneden Volume",
+          "cSharpName": "BenedenVolume"
+        },
+        {
           "id": "number.deurbel_ding_duration",
           "friendlyName": "Deurbel Ding Duration",
           "cSharpName": "DeurbelDingDuration"
@@ -1338,9 +1458,29 @@
           "cSharpName": "KeukenChimeVolume"
         },
         {
+          "id": "number.our_home_circuit_0_heat_demand_limited_by_outside_temperature",
+          "friendlyName": "Our home Circuit 0 Heat Demand Limited by Outside Temperature",
+          "cSharpName": "OurHomeCircuit0HeatDemandLimitedByOutsideTemperature"
+        },
+        {
+          "id": "number.our_home_circuit_0_heating_curve",
+          "friendlyName": "Our home Circuit 0 Heating Curve",
+          "cSharpName": "OurHomeCircuit0HeatingCurve"
+        },
+        {
+          "id": "number.our_home_circuit_0_min_flow_temperature_setpoint",
+          "friendlyName": "Our home Circuit 0 Min Flow Temperature Setpoint",
+          "cSharpName": "OurHomeCircuit0MinFlowTemperatureSetpoint"
+        },
+        {
           "id": "number.our_home_holiday_duration_remaining",
           "friendlyName": "Our home Holiday Duration Remaining",
           "cSharpName": "OurHomeHolidayDurationRemaining"
+        },
+        {
+          "id": "number.our_home_manual_cooling_duration",
+          "friendlyName": "Our home Manual Cooling Duration",
+          "cSharpName": "OurHomeManualCoolingDuration"
         },
         {
           "id": "number.our_home_zone_thuis_circuit_0_quick_veto_duration",
@@ -1363,6 +1503,16 @@
           "cSharpName": "TuinCameraSnapshotInterval"
         },
         {
+          "id": "number.tuin_volume",
+          "friendlyName": "Tuin Volume",
+          "cSharpName": "TuinVolume"
+        },
+        {
+          "id": "number.voordeur_volume",
+          "friendlyName": "Voordeur Volume",
+          "cSharpName": "VoordeurVolume"
+        },
+        {
           "id": "number.woonkamer_camera_motion_duration",
           "friendlyName": "Woonkamer Camera Motion Duration",
           "cSharpName": "WoonkamerCameraMotionDuration"
@@ -1371,6 +1521,11 @@
           "id": "number.woonkamer_camera_snapshot_interval",
           "friendlyName": "Woonkamer Camera Snapshot Interval",
           "cSharpName": "WoonkamerCameraSnapshotInterval"
+        },
+        {
+          "id": "number.woonkamer_volume",
+          "friendlyName": "Woonkamer Volume",
+          "cSharpName": "WoonkamerVolume"
         }
       ],
       "attributes": [
@@ -1428,12 +1583,22 @@
           "jsonName": "friendly_name",
           "cSharpName": "FriendlyName",
           "clrType": "System.String"
+        },
+        {
+          "jsonName": "attribution",
+          "cSharpName": "Attribution",
+          "clrType": "System.String"
         }
       ]
     },
     {
       "domain": "person",
       "entities": [
+        {
+          "id": "person.marjolein_vooijs",
+          "friendlyName": "Marjolein Vooijs",
+          "cSharpName": "MarjoleinVooijs"
+        },
         {
           "id": "person.mark_bovee",
           "friendlyName": "Mark Bovee",
@@ -1648,21 +1813,6 @@
           "cSharpName": "DeurbelInfo3"
         },
         {
-          "id": "sensor.echo_pop_mark_next_alarm",
-          "friendlyName": "Echo Pop Mark next Alarm",
-          "cSharpName": "EchoPopMarkNextAlarm"
-        },
-        {
-          "id": "sensor.echo_pop_mark_next_reminder",
-          "friendlyName": "Echo Pop Mark next Reminder",
-          "cSharpName": "EchoPopMarkNextReminder"
-        },
-        {
-          "id": "sensor.echo_pop_mark_next_timer",
-          "friendlyName": "Echo Pop Mark next Timer",
-          "cSharpName": "EchoPopMarkNextTimer"
-        },
-        {
           "id": "sensor.electricity_meter_active_tariff",
           "friendlyName": "Electricity Meter Actief tarief",
           "cSharpName": "ElectricityMeterActiveTariff"
@@ -1684,12 +1834,12 @@
         },
         {
           "id": "sensor.energy_prices_time_of_highest_price_today",
-          "friendlyName": "Time of highest price today (Energy Prices)",
+          "friendlyName": "Time of highest price (energy prices)",
           "cSharpName": "EnergyPricesTimeOfHighestPriceToday"
         },
         {
           "id": "sensor.energy_prices_time_of_lowest_price_today",
-          "friendlyName": "Time of lowest price today (Energy Prices)",
+          "friendlyName": "Time of lowest price (energy prices)",
           "cSharpName": "EnergyPricesTimeOfLowestPriceToday"
         },
         {
@@ -1711,6 +1861,11 @@
           "id": "sensor.gedetailleerde_staat_1d",
           "friendlyName": "Gedetailleerde staat 1d",
           "cSharpName": "GedetailleerdeStaat1d"
+        },
+        {
+          "id": "sensor.iphone_mark_app_version",
+          "friendlyName": "iPhone Mark App Version",
+          "cSharpName": "IphoneMarkAppVersion"
         },
         {
           "id": "sensor.iphone_mark_battery_state_2",
@@ -1738,6 +1893,11 @@
           "cSharpName": "IphoneMarkLastUpdateTrigger2"
         },
         {
+          "id": "sensor.iphone_mark_location_permission",
+          "friendlyName": "iPhone Mark Location permission",
+          "cSharpName": "IphoneMarkLocationPermission"
+        },
+        {
           "id": "sensor.iphone_mark_sim_1_2",
           "friendlyName": "iPhone Mark SIM 1",
           "cSharpName": "IphoneMarkSim12"
@@ -1761,66 +1921,6 @@
           "id": "sensor.keuken_motion_sensor_info",
           "friendlyName": "Keuken Motion Sensor Info",
           "cSharpName": "KeukenMotionSensorInfo"
-        },
-        {
-          "id": "sensor.keuken_volume",
-          "friendlyName": "Beneden Volume",
-          "cSharpName": "KeukenVolume"
-        },
-        {
-          "id": "sensor.lg_oled_tv_next_alarm",
-          "friendlyName": "LG OLED TV next Alarm",
-          "cSharpName": "LgOledTvNextAlarm"
-        },
-        {
-          "id": "sensor.lg_oled_tv_next_reminder",
-          "friendlyName": "LG OLED TV next Reminder",
-          "cSharpName": "LgOledTvNextReminder"
-        },
-        {
-          "id": "sensor.lg_oled_tv_next_timer",
-          "friendlyName": "LG OLED TV next Timer",
-          "cSharpName": "LgOledTvNextTimer"
-        },
-        {
-          "id": "sensor.mark_s_bose_quietcomfort_35_ii_next_alarm",
-          "friendlyName": "Mark\u0027s Bose QuietComfort 35 II next Alarm",
-          "cSharpName": "MarkSBoseQuietcomfort35IiNextAlarm"
-        },
-        {
-          "id": "sensor.mark_s_bose_quietcomfort_35_ii_next_timer",
-          "friendlyName": "Mark\u0027s Bose QuietComfort 35 II next Timer",
-          "cSharpName": "MarkSBoseQuietcomfort35IiNextTimer"
-        },
-        {
-          "id": "sensor.mark_s_echo_dot_next_alarm",
-          "friendlyName": "Mark\u0027s Echo Dot next Alarm",
-          "cSharpName": "MarkSEchoDotNextAlarm"
-        },
-        {
-          "id": "sensor.mark_s_echo_dot_next_reminder",
-          "friendlyName": "Mark\u0027s Echo Dot next Reminder",
-          "cSharpName": "MarkSEchoDotNextReminder"
-        },
-        {
-          "id": "sensor.mark_s_echo_dot_next_timer",
-          "friendlyName": "Mark\u0027s Echo Dot next Timer",
-          "cSharpName": "MarkSEchoDotNextTimer"
-        },
-        {
-          "id": "sensor.mark_s_echo_show_next_alarm",
-          "friendlyName": "Mark\u0027s Echo Show next Alarm",
-          "cSharpName": "MarkSEchoShowNextAlarm"
-        },
-        {
-          "id": "sensor.mark_s_echo_show_next_reminder",
-          "friendlyName": "Mark\u0027s Echo Show next Reminder",
-          "cSharpName": "MarkSEchoShowNextReminder"
-        },
-        {
-          "id": "sensor.mark_s_echo_show_next_timer",
-          "friendlyName": "Mark\u0027s Echo Show next Timer",
-          "cSharpName": "MarkSEchoShowNextTimer"
         },
         {
           "id": "sensor.neerslag_buienalarm_regen_data",
@@ -1918,21 +2018,6 @@
           "cSharpName": "SunNextSetting"
         },
         {
-          "id": "sensor.this_device_next_alarm",
-          "friendlyName": "This Device next Alarm",
-          "cSharpName": "ThisDeviceNextAlarm"
-        },
-        {
-          "id": "sensor.this_device_next_reminder",
-          "friendlyName": "This Device next Reminder",
-          "cSharpName": "ThisDeviceNextReminder"
-        },
-        {
-          "id": "sensor.this_device_next_timer",
-          "friendlyName": "This Device next Timer",
-          "cSharpName": "ThisDeviceNextTimer"
-        },
-        {
           "id": "sensor.toetsenpaneel_ingang_info",
           "friendlyName": "Toetsenpaneel ingang Info",
           "cSharpName": "ToetsenpaneelIngangInfo"
@@ -1944,23 +2029,13 @@
         },
         {
           "id": "sensor.tuin_last_activity",
-          "friendlyName": "Tuin Last activity",
+          "friendlyName": "Tuin Laatste activiteit",
           "cSharpName": "TuinLastActivity"
         },
         {
-          "id": "sensor.tuin_last_ding",
-          "friendlyName": "Tuin Last ding",
-          "cSharpName": "TuinLastDing"
-        },
-        {
-          "id": "sensor.tuin_last_motion",
-          "friendlyName": "Tuin Last motion",
-          "cSharpName": "TuinLastMotion"
-        },
-        {
-          "id": "sensor.tuin_volume",
-          "friendlyName": "Tuin Volume",
-          "cSharpName": "TuinVolume"
+          "id": "sensor.vaillant_api_request_count",
+          "friendlyName": "Vaillant API Request Count",
+          "cSharpName": "VaillantApiRequestCount"
         },
         {
           "id": "sensor.volledige_staat_1d",
@@ -1974,28 +2049,13 @@
         },
         {
           "id": "sensor.voordeur_last_activity",
-          "friendlyName": "Voordeur Last activity",
+          "friendlyName": "Voordeur Laatste activiteit",
           "cSharpName": "VoordeurLastActivity"
-        },
-        {
-          "id": "sensor.voordeur_last_ding",
-          "friendlyName": "Voordeur Last ding",
-          "cSharpName": "VoordeurLastDing"
-        },
-        {
-          "id": "sensor.voordeur_last_motion",
-          "friendlyName": "Voordeur Last motion",
-          "cSharpName": "VoordeurLastMotion"
         },
         {
           "id": "sensor.voordeur_motion_sensor_info_2",
           "friendlyName": "Voordeur Motion Sensor Info",
           "cSharpName": "VoordeurMotionSensorInfo2"
-        },
-        {
-          "id": "sensor.voordeur_volume",
-          "friendlyName": "Voordeur Volume",
-          "cSharpName": "VoordeurVolume"
         },
         {
           "id": "sensor.woonkamer_camera_info",
@@ -2004,23 +2064,8 @@
         },
         {
           "id": "sensor.woonkamer_last_activity",
-          "friendlyName": "Woonkamer Last activity",
+          "friendlyName": "Woonkamer Laatste activiteit",
           "cSharpName": "WoonkamerLastActivity"
-        },
-        {
-          "id": "sensor.woonkamer_last_ding",
-          "friendlyName": "Woonkamer Last ding",
-          "cSharpName": "WoonkamerLastDing"
-        },
-        {
-          "id": "sensor.woonkamer_last_motion",
-          "friendlyName": "Woonkamer Last motion",
-          "cSharpName": "WoonkamerLastMotion"
-        },
-        {
-          "id": "sensor.woonkamer_volume",
-          "friendlyName": "Woonkamer Volume",
-          "cSharpName": "WoonkamerVolume"
         }
       ],
       "attributes": [
@@ -2533,6 +2578,16 @@
           "jsonName": "data",
           "cSharpName": "Data",
           "clrType": "System.Object"
+        },
+        {
+          "jsonName": "is_legionalla_protection_activated",
+          "cSharpName": "IsLegionallaProtectionActivated",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "eebus",
+          "cSharpName": "Eebus",
+          "clrType": "System.Object"
         }
       ]
     },
@@ -2579,6 +2634,36 @@
           "id": "sensor.adguard_home_safe_searches_enforced",
           "friendlyName": "AdGuard Home Veilig zoeken afgedwongen",
           "cSharpName": "AdguardHomeSafeSearchesEnforced"
+        },
+        {
+          "id": "sensor.amplifier_current_power",
+          "friendlyName": "Audio Current Power",
+          "cSharpName": "AmplifierCurrentPower"
+        },
+        {
+          "id": "sensor.amplifier_month_energy",
+          "friendlyName": "Audio Month Energy",
+          "cSharpName": "AmplifierMonthEnergy"
+        },
+        {
+          "id": "sensor.amplifier_month_runtime",
+          "friendlyName": "Audio Month Runtime",
+          "cSharpName": "AmplifierMonthRuntime"
+        },
+        {
+          "id": "sensor.amplifier_signal_level",
+          "friendlyName": "Audio Signal Level",
+          "cSharpName": "AmplifierSignalLevel"
+        },
+        {
+          "id": "sensor.amplifier_today_energy",
+          "friendlyName": "Audio Today Energy",
+          "cSharpName": "AmplifierTodayEnergy"
+        },
+        {
+          "id": "sensor.amplifier_today_runtime",
+          "friendlyName": "Audio Today Runtime",
+          "cSharpName": "AmplifierTodayRuntime"
         },
         {
           "id": "sensor.computer_current_power",
@@ -2702,32 +2787,37 @@
         },
         {
           "id": "sensor.energy_prices_average_electricity_price_today",
-          "friendlyName": "Average electricity price today (Energy Prices)",
+          "friendlyName": "Average electricity price (energy prices)",
           "cSharpName": "EnergyPricesAverageElectricityPriceToday"
         },
         {
           "id": "sensor.energy_prices_current_electricity_market_price",
-          "friendlyName": "Current electricity market price (Energy Prices)",
+          "friendlyName": "Current electricity market price (energy prices)",
           "cSharpName": "EnergyPricesCurrentElectricityMarketPrice"
         },
         {
+          "id": "sensor.energy_prices_current_percentage_in_electricity_price_range",
+          "friendlyName": "Current percentage in electricity price range (energy prices)",
+          "cSharpName": "EnergyPricesCurrentPercentageInElectricityPriceRange"
+        },
+        {
           "id": "sensor.energy_prices_current_percentage_of_highest_electricity_price_today",
-          "friendlyName": "Current percentage of highest electricity price today (Energy Prices)",
+          "friendlyName": "Current percentage of highest electricity price (energy prices)",
           "cSharpName": "EnergyPricesCurrentPercentageOfHighestElectricityPriceToday"
         },
         {
           "id": "sensor.energy_prices_highest_energy_price_today",
-          "friendlyName": "Highest energy price today (Energy Prices)",
+          "friendlyName": "Highest energy price (energy prices)",
           "cSharpName": "EnergyPricesHighestEnergyPriceToday"
         },
         {
           "id": "sensor.energy_prices_lowest_energy_price_today",
-          "friendlyName": "Lowest energy price today (Energy Prices)",
+          "friendlyName": "Lowest energy price (energy prices)",
           "cSharpName": "EnergyPricesLowestEnergyPriceToday"
         },
         {
           "id": "sensor.energy_prices_next_hour_electricity_market_price",
-          "friendlyName": "Next hour electricity market price (Energy Prices)",
+          "friendlyName": "Next hour electricity market price (energy prices)",
           "cSharpName": "EnergyPricesNextHourElectricityMarketPrice"
         },
         {
@@ -2779,11 +2869,6 @@
           "id": "sensor.garage_today_runtime",
           "friendlyName": "Garage Today Runtime",
           "cSharpName": "GarageTodayRuntime"
-        },
-        {
-          "id": "sensor.hacs",
-          "friendlyName": "hacs",
-          "cSharpName": "Hacs"
         },
         {
           "id": "sensor.iphone_mark_battery_level_2",
@@ -2842,32 +2927,32 @@
         },
         {
           "id": "sensor.lamp_keuken_current_power",
-          "friendlyName": "Lamp keuken Current Power",
+          "friendlyName": "Keuken verlichting Current Power",
           "cSharpName": "LampKeukenCurrentPower"
         },
         {
           "id": "sensor.lamp_keuken_month_energy",
-          "friendlyName": "Lamp keuken Month Energy",
+          "friendlyName": "Keuken verlichting Month Energy",
           "cSharpName": "LampKeukenMonthEnergy"
         },
         {
           "id": "sensor.lamp_keuken_month_runtime",
-          "friendlyName": "Lamp keuken Month Runtime",
+          "friendlyName": "Keuken verlichting Month Runtime",
           "cSharpName": "LampKeukenMonthRuntime"
         },
         {
           "id": "sensor.lamp_keuken_signal_level",
-          "friendlyName": "Lamp keuken Signal Level",
+          "friendlyName": "Keuken verlichting Signal Level",
           "cSharpName": "LampKeukenSignalLevel"
         },
         {
           "id": "sensor.lamp_keuken_today_energy",
-          "friendlyName": "Lamp keuken Today Energy",
+          "friendlyName": "Keuken verlichting Today Energy",
           "cSharpName": "LampKeukenTodayEnergy"
         },
         {
           "id": "sensor.lamp_keuken_today_runtime",
-          "friendlyName": "Lamp keuken Today Runtime",
+          "friendlyName": "Keuken verlichting Today Runtime",
           "cSharpName": "LampKeukenTodayRuntime"
         },
         {
@@ -2886,69 +2971,9 @@
           "cSharpName": "MaximaleRegen1d"
         },
         {
-          "id": "sensor.media_current_power",
-          "friendlyName": "TV en Media Current Power",
-          "cSharpName": "MediaCurrentPower"
-        },
-        {
-          "id": "sensor.media_month_energy",
-          "friendlyName": "TV en Media Month Energy",
-          "cSharpName": "MediaMonthEnergy"
-        },
-        {
-          "id": "sensor.media_month_runtime",
-          "friendlyName": "TV en Media Month Runtime",
-          "cSharpName": "MediaMonthRuntime"
-        },
-        {
-          "id": "sensor.media_signal_level",
-          "friendlyName": "TV en Media Signal Level",
-          "cSharpName": "MediaSignalLevel"
-        },
-        {
-          "id": "sensor.media_today_energy",
-          "friendlyName": "TV en Media Today Energy",
-          "cSharpName": "MediaTodayEnergy"
-        },
-        {
-          "id": "sensor.media_today_runtime",
-          "friendlyName": "TV en Media Today Runtime",
-          "cSharpName": "MediaTodayRuntime"
-        },
-        {
           "id": "sensor.neerslagverwachting_gemiddeld",
           "friendlyName": "Neerslagverwachting gemiddeld",
           "cSharpName": "NeerslagverwachtingGemiddeld"
-        },
-        {
-          "id": "sensor.new_current_power",
-          "friendlyName": "Current Power",
-          "cSharpName": "NewCurrentPower"
-        },
-        {
-          "id": "sensor.new_month_energy",
-          "friendlyName": "Month Energy",
-          "cSharpName": "NewMonthEnergy"
-        },
-        {
-          "id": "sensor.new_month_runtime",
-          "friendlyName": "Month Runtime",
-          "cSharpName": "NewMonthRuntime"
-        },
-        {
-          "id": "sensor.new_signal_level",
-          "friendlyName": "Signal Level",
-          "cSharpName": "NewSignalLevel"
-        },
-        {
-          "id": "sensor.new_today_energy",
-          "friendlyName": "Today Energy",
-          "cSharpName": "NewTodayEnergy"
-        },
-        {
-          "id": "sensor.new_today_runtime",
-          "friendlyName": "Today Runtime",
-          "cSharpName": "NewTodayRuntime"
         },
         {
           "id": "sensor.our_home_circuit_0_current_flow_temperature",
@@ -2961,9 +2986,19 @@
           "cSharpName": "OurHomeDevice0ArothermConsumedElectricalEnergyDomesticHotWater"
         },
         {
+          "id": "sensor.our_home_device_0_arotherm_consumed_electrical_energy_domestic_hot_water_2",
+          "friendlyName": "Our home Device 0 aroTHERM Consumed Electrical Energy Domestic Hot Water",
+          "cSharpName": "OurHomeDevice0ArothermConsumedElectricalEnergyDomesticHotWater2"
+        },
+        {
           "id": "sensor.our_home_device_0_arotherm_consumed_electrical_energy_heating",
           "friendlyName": "Our home Device 0 aroTHERM Consumed Electrical Energy Heating",
           "cSharpName": "OurHomeDevice0ArothermConsumedElectricalEnergyHeating"
+        },
+        {
+          "id": "sensor.our_home_device_0_arotherm_consumed_electrical_energy_heating_2",
+          "friendlyName": "Our home Device 0 aroTHERM Consumed Electrical Energy Heating",
+          "cSharpName": "OurHomeDevice0ArothermConsumedElectricalEnergyHeating2"
         },
         {
           "id": "sensor.our_home_device_0_arotherm_earned_environment_energy_domestic_hot_water",
@@ -2971,9 +3006,19 @@
           "cSharpName": "OurHomeDevice0ArothermEarnedEnvironmentEnergyDomesticHotWater"
         },
         {
+          "id": "sensor.our_home_device_0_arotherm_earned_environment_energy_domestic_hot_water_2",
+          "friendlyName": "Our home Device 0 aroTHERM Earned Environment Energy Domestic Hot Water",
+          "cSharpName": "OurHomeDevice0ArothermEarnedEnvironmentEnergyDomesticHotWater2"
+        },
+        {
           "id": "sensor.our_home_device_0_arotherm_earned_environment_energy_heating",
           "friendlyName": "Our home Device 0 aroTHERM Earned Environment Energy Heating",
           "cSharpName": "OurHomeDevice0ArothermEarnedEnvironmentEnergyHeating"
+        },
+        {
+          "id": "sensor.our_home_device_0_arotherm_earned_environment_energy_heating_2",
+          "friendlyName": "Our home Device 0 aroTHERM Earned Environment Energy Heating",
+          "cSharpName": "OurHomeDevice0ArothermEarnedEnvironmentEnergyHeating2"
         },
         {
           "id": "sensor.our_home_device_0_arotherm_heat_generated_domestic_hot_water",
@@ -2981,9 +3026,19 @@
           "cSharpName": "OurHomeDevice0ArothermHeatGeneratedDomesticHotWater"
         },
         {
+          "id": "sensor.our_home_device_0_arotherm_heat_generated_domestic_hot_water_2",
+          "friendlyName": "Our home Device 0 aroTHERM Heat Generated Domestic Hot Water",
+          "cSharpName": "OurHomeDevice0ArothermHeatGeneratedDomesticHotWater2"
+        },
+        {
           "id": "sensor.our_home_device_0_arotherm_heat_generated_heating",
           "friendlyName": "Our home Device 0 aroTHERM Heat Generated Heating",
           "cSharpName": "OurHomeDevice0ArothermHeatGeneratedHeating"
+        },
+        {
+          "id": "sensor.our_home_device_0_arotherm_heat_generated_heating_2",
+          "friendlyName": "Our home Device 0 aroTHERM Heat Generated Heating",
+          "cSharpName": "OurHomeDevice0ArothermHeatGeneratedHeating2"
         },
         {
           "id": "sensor.our_home_device_1_hydraulic_station_consumed_electrical_energy_domestic_hot_water",
@@ -2991,9 +3046,19 @@
           "cSharpName": "OurHomeDevice1HydraulicStationConsumedElectricalEnergyDomesticHotWater"
         },
         {
+          "id": "sensor.our_home_device_1_hydraulic_station_consumed_electrical_energy_domestic_hot_water_2",
+          "friendlyName": "Our home Device 1 Hydraulic Station Consumed Electrical Energy Domestic Hot Water",
+          "cSharpName": "OurHomeDevice1HydraulicStationConsumedElectricalEnergyDomesticHotWater2"
+        },
+        {
           "id": "sensor.our_home_device_1_hydraulic_station_consumed_electrical_energy_heating",
           "friendlyName": "Our home Device 1 Hydraulic Station Consumed Electrical Energy Heating",
           "cSharpName": "OurHomeDevice1HydraulicStationConsumedElectricalEnergyHeating"
+        },
+        {
+          "id": "sensor.our_home_device_1_hydraulic_station_consumed_electrical_energy_heating_2",
+          "friendlyName": "Our home Device 1 Hydraulic Station Consumed Electrical Energy Heating",
+          "cSharpName": "OurHomeDevice1HydraulicStationConsumedElectricalEnergyHeating2"
         },
         {
           "id": "sensor.our_home_domestic_hot_water_0_setpoint",
@@ -3019,6 +3084,16 @@
           "id": "sensor.our_home_zone_thuis_circuit_0_current_temperature",
           "friendlyName": "Our home Zone Thuis (Circuit 0) Current Temperature",
           "cSharpName": "OurHomeZoneThuisCircuit0CurrentTemperature"
+        },
+        {
+          "id": "sensor.our_home_zone_thuis_circuit_0_desired_cooling_temperature",
+          "friendlyName": "Our home Zone Thuis (Circuit 0) Desired Cooling Temperature",
+          "cSharpName": "OurHomeZoneThuisCircuit0DesiredCoolingTemperature"
+        },
+        {
+          "id": "sensor.our_home_zone_thuis_circuit_0_desired_heating_temperature",
+          "friendlyName": "Our home Zone Thuis (Circuit 0) Desired Heating Temperature",
+          "cSharpName": "OurHomeZoneThuisCircuit0DesiredHeatingTemperature"
         },
         {
           "id": "sensor.our_home_zone_thuis_circuit_0_desired_temperature",
@@ -3079,6 +3154,36 @@
           "id": "sensor.tuinhuis_verlichting_today_runtime",
           "friendlyName": "Tuinhuis verlichting  Today Runtime",
           "cSharpName": "TuinhuisVerlichtingTodayRuntime"
+        },
+        {
+          "id": "sensor.tv_en_media_current_power",
+          "friendlyName": "TV en Media Current Power",
+          "cSharpName": "TvEnMediaCurrentPower"
+        },
+        {
+          "id": "sensor.tv_en_media_month_energy",
+          "friendlyName": "TV en Media Month Energy",
+          "cSharpName": "TvEnMediaMonthEnergy"
+        },
+        {
+          "id": "sensor.tv_en_media_month_runtime",
+          "friendlyName": "TV en Media Month Runtime",
+          "cSharpName": "TvEnMediaMonthRuntime"
+        },
+        {
+          "id": "sensor.tv_en_media_signal_level",
+          "friendlyName": "TV en Media Signal Level",
+          "cSharpName": "TvEnMediaSignalLevel"
+        },
+        {
+          "id": "sensor.tv_en_media_today_energy",
+          "friendlyName": "TV en Media Today Energy",
+          "cSharpName": "TvEnMediaTodayEnergy"
+        },
+        {
+          "id": "sensor.tv_en_media_today_runtime",
+          "friendlyName": "TV en Media Today Runtime",
+          "cSharpName": "TvEnMediaTodayRuntime"
         },
         {
           "id": "sensor.vaatwasser_current_power",
@@ -3303,9 +3408,19 @@
       "domain": "siren",
       "entities": [
         {
-          "id": "siren.keuken_sirene",
+          "id": "siren.beneden_sirene",
           "friendlyName": "Beneden Sirene",
-          "cSharpName": "KeukenSirene"
+          "cSharpName": "BenedenSirene"
+        },
+        {
+          "id": "siren.tuin_sirene",
+          "friendlyName": "Tuin Sirene",
+          "cSharpName": "TuinSirene"
+        },
+        {
+          "id": "siren.woonkamer_sirene",
+          "friendlyName": "Woonkamer Sirene",
+          "cSharpName": "WoonkamerSirene"
         }
       ],
       "attributes": [
@@ -3427,6 +3542,11 @@
           "cSharpName": "AdguardHomeSafeSearch"
         },
         {
+          "id": "switch.amplifier",
+          "friendlyName": "Audio",
+          "cSharpName": "Amplifier"
+        },
+        {
           "id": "switch.computer",
           "friendlyName": "Computer",
           "cSharpName": "Computer"
@@ -3452,39 +3572,9 @@
           "cSharpName": "Droger"
         },
         {
-          "id": "switch.echo_pop_mark_do_not_disturb_switch",
-          "friendlyName": "Echo Pop Mark do not disturb switch",
-          "cSharpName": "EchoPopMarkDoNotDisturbSwitch"
-        },
-        {
-          "id": "switch.echo_pop_mark_repeat_switch",
-          "friendlyName": "Echo Pop Mark repeat switch",
-          "cSharpName": "EchoPopMarkRepeatSwitch"
-        },
-        {
-          "id": "switch.echo_pop_mark_shuffle_switch",
-          "friendlyName": "Echo Pop Mark shuffle switch",
-          "cSharpName": "EchoPopMarkShuffleSwitch"
-        },
-        {
           "id": "switch.emmeloord_alarm_siren",
           "friendlyName": "Emmeloord Alarm Siren",
           "cSharpName": "EmmeloordAlarmSiren"
-        },
-        {
-          "id": "switch.everywhere_do_not_disturb_switch",
-          "friendlyName": "Everywhere do not disturb switch",
-          "cSharpName": "EverywhereDoNotDisturbSwitch"
-        },
-        {
-          "id": "switch.everywhere_repeat_switch",
-          "friendlyName": "Everywhere repeat switch",
-          "cSharpName": "EverywhereRepeatSwitch"
-        },
-        {
-          "id": "switch.everywhere_shuffle_switch",
-          "friendlyName": "Everywhere shuffle switch",
-          "cSharpName": "EverywhereShuffleSwitch"
         },
         {
           "id": "switch.garage",
@@ -3513,78 +3603,8 @@
         },
         {
           "id": "switch.lamp_keuken",
-          "friendlyName": "Lamp keuken",
+          "friendlyName": "Keuken verlichting",
           "cSharpName": "LampKeuken"
-        },
-        {
-          "id": "switch.lg_oled_tv_do_not_disturb_switch",
-          "friendlyName": "LG OLED TV do not disturb switch",
-          "cSharpName": "LgOledTvDoNotDisturbSwitch"
-        },
-        {
-          "id": "switch.lg_oled_tv_repeat_switch",
-          "friendlyName": "LG OLED TV repeat switch",
-          "cSharpName": "LgOledTvRepeatSwitch"
-        },
-        {
-          "id": "switch.lg_oled_tv_shuffle_switch",
-          "friendlyName": "LG OLED TV shuffle switch",
-          "cSharpName": "LgOledTvShuffleSwitch"
-        },
-        {
-          "id": "switch.mark_s_bose_quietcomfort_35_ii_do_not_disturb_switch",
-          "friendlyName": "Mark\u0027s Bose QuietComfort 35 II do not disturb switch",
-          "cSharpName": "MarkSBoseQuietcomfort35IiDoNotDisturbSwitch"
-        },
-        {
-          "id": "switch.mark_s_bose_quietcomfort_35_ii_repeat_switch",
-          "friendlyName": "Mark\u0027s Bose QuietComfort 35 II repeat switch",
-          "cSharpName": "MarkSBoseQuietcomfort35IiRepeatSwitch"
-        },
-        {
-          "id": "switch.mark_s_bose_quietcomfort_35_ii_shuffle_switch",
-          "friendlyName": "Mark\u0027s Bose QuietComfort 35 II shuffle switch",
-          "cSharpName": "MarkSBoseQuietcomfort35IiShuffleSwitch"
-        },
-        {
-          "id": "switch.mark_s_echo_dot_do_not_disturb_switch",
-          "friendlyName": "Mark\u0027s Echo Dot do not disturb switch",
-          "cSharpName": "MarkSEchoDotDoNotDisturbSwitch"
-        },
-        {
-          "id": "switch.mark_s_echo_dot_repeat_switch",
-          "friendlyName": "Mark\u0027s Echo Dot repeat switch",
-          "cSharpName": "MarkSEchoDotRepeatSwitch"
-        },
-        {
-          "id": "switch.mark_s_echo_dot_shuffle_switch",
-          "friendlyName": "Mark\u0027s Echo Dot shuffle switch",
-          "cSharpName": "MarkSEchoDotShuffleSwitch"
-        },
-        {
-          "id": "switch.mark_s_echo_show_do_not_disturb_switch",
-          "friendlyName": "Mark\u0027s Echo Show do not disturb switch",
-          "cSharpName": "MarkSEchoShowDoNotDisturbSwitch"
-        },
-        {
-          "id": "switch.mark_s_echo_show_repeat_switch",
-          "friendlyName": "Mark\u0027s Echo Show repeat switch",
-          "cSharpName": "MarkSEchoShowRepeatSwitch"
-        },
-        {
-          "id": "switch.mark_s_echo_show_shuffle_switch",
-          "friendlyName": "Mark\u0027s Echo Show shuffle switch",
-          "cSharpName": "MarkSEchoShowShuffleSwitch"
-        },
-        {
-          "id": "switch.media",
-          "friendlyName": "TV en Media",
-          "cSharpName": "Media"
-        },
-        {
-          "id": "switch.new",
-          "friendlyName": "New",
-          "cSharpName": "New"
         },
         {
           "id": "switch.our_home_away_mode",
@@ -3597,9 +3617,19 @@
           "cSharpName": "OurHomeDomesticHotWater0Boost"
         },
         {
-          "id": "switch.this_device_do_not_disturb_switch",
-          "friendlyName": "This Device do not disturb switch",
-          "cSharpName": "ThisDeviceDoNotDisturbSwitch"
+          "id": "switch.our_home_eebus",
+          "friendlyName": "Our home EEBUS",
+          "cSharpName": "OurHomeEebus"
+        },
+        {
+          "id": "switch.our_home_manual_cooling",
+          "friendlyName": "Our home Manual Cooling",
+          "cSharpName": "OurHomeManualCooling"
+        },
+        {
+          "id": "switch.our_home_zone_thuis_circuit_0_ventilation_boost",
+          "friendlyName": "Our home Zone Thuis (Circuit 0) Ventilation Boost",
+          "cSharpName": "OurHomeZoneThuisCircuit0VentilationBoost"
         },
         {
           "id": "switch.toetsenpaneel_ingang_chirps",
@@ -3632,9 +3662,9 @@
           "cSharpName": "TuinCameraSiren"
         },
         {
-          "id": "switch.tuin_sirene",
-          "friendlyName": "Tuin Sirene",
-          "cSharpName": "TuinSirene"
+          "id": "switch.tuin_motion_detection",
+          "friendlyName": "Tuin Motion detection",
+          "cSharpName": "TuinMotionDetection"
         },
         {
           "id": "switch.tuinhuis_verlichting",
@@ -3642,9 +3672,19 @@
           "cSharpName": "TuinhuisVerlichting"
         },
         {
+          "id": "switch.tv_en_media",
+          "friendlyName": "TV en Media",
+          "cSharpName": "TvEnMedia"
+        },
+        {
           "id": "switch.vaatwasser",
           "friendlyName": "Vaatwasser ",
           "cSharpName": "Vaatwasser"
+        },
+        {
+          "id": "switch.voordeur_motion_detection",
+          "friendlyName": "Voordeur Motion detection",
+          "cSharpName": "VoordeurMotionDetection"
         },
         {
           "id": "switch.wasmachine",
@@ -3677,9 +3717,9 @@
           "cSharpName": "WoonkamerCameraSiren"
         },
         {
-          "id": "switch.woonkamer_sirene",
-          "friendlyName": "Woonkamer Sirene",
-          "cSharpName": "WoonkamerSirene"
+          "id": "switch.woonkamer_motion_detection",
+          "friendlyName": "Woonkamer Motion detection",
+          "cSharpName": "WoonkamerMotionDetection"
         }
       ],
       "attributes": [
@@ -3742,6 +3782,31 @@
           "jsonName": "supported_features",
           "cSharpName": "SupportedFeatures",
           "clrType": "System.Double"
+        },
+        {
+          "jsonName": "manual_cooling_ongoing",
+          "cSharpName": "ManualCoolingOngoing",
+          "clrType": "System.Boolean"
+        },
+        {
+          "jsonName": "manual_cooling_remaining_seconds",
+          "cSharpName": "ManualCoolingRemainingSeconds",
+          "clrType": null
+        },
+        {
+          "jsonName": "manual_cooling_start_date_time",
+          "cSharpName": "ManualCoolingStartDateTime",
+          "clrType": null
+        },
+        {
+          "jsonName": "manual_cooling_end_date_time",
+          "cSharpName": "ManualCoolingEndDateTime",
+          "clrType": null
+        },
+        {
+          "jsonName": "manual_cooling_days_remaining",
+          "cSharpName": "ManualCoolingDaysRemaining",
+          "clrType": null
         }
       ]
     },
@@ -3754,9 +3819,49 @@
           "cSharpName": "AdguardHomeUpdate"
         },
         {
+          "id": "update.alexa_media_player_update",
+          "friendlyName": "Alexa Media Player update",
+          "cSharpName": "AlexaMediaPlayerUpdate"
+        },
+        {
+          "id": "update.amplifier_firmware",
+          "friendlyName": "Audio Firmware",
+          "cSharpName": "AmplifierFirmware"
+        },
+        {
+          "id": "update.apexcharts_card_update",
+          "friendlyName": "apexcharts-card update",
+          "cSharpName": "ApexchartsCardUpdate"
+        },
+        {
+          "id": "update.buienalarm_update",
+          "friendlyName": "Buienalarm update",
+          "cSharpName": "BuienalarmUpdate"
+        },
+        {
+          "id": "update.button_card_update",
+          "friendlyName": "button-card update",
+          "cSharpName": "ButtonCardUpdate"
+        },
+        {
+          "id": "update.cec_scanner_update",
+          "friendlyName": "CEC Scanner Update",
+          "cSharpName": "CecScannerUpdate"
+        },
+        {
+          "id": "update.clock_weather_card_update",
+          "friendlyName": "Clock Weather Card update",
+          "cSharpName": "ClockWeatherCardUpdate"
+        },
+        {
           "id": "update.computer_firmware",
           "friendlyName": "Computer Firmware",
           "cSharpName": "ComputerFirmware"
+        },
+        {
+          "id": "update.dreo_smart_device_integration_update",
+          "friendlyName": "Dreo Smart Device Integration update",
+          "cSharpName": "DreoSmartDeviceIntegrationUpdate"
         },
         {
           "id": "update.droger_firmware",
@@ -3769,6 +3874,11 @@
           "cSharpName": "DuckDnsUpdate"
         },
         {
+          "id": "update.entso_e_transparency_platform_update",
+          "friendlyName": "ENTSO-e Transparency Platform update",
+          "cSharpName": "EntsoETransparencyPlatformUpdate"
+        },
+        {
           "id": "update.file_editor_update",
           "friendlyName": "File editor Update",
           "cSharpName": "FileEditorUpdate"
@@ -3777,6 +3887,16 @@
           "id": "update.garage_firmware",
           "friendlyName": "Garage Firmware",
           "cSharpName": "GarageFirmware"
+        },
+        {
+          "id": "update.graphite_theme_update",
+          "friendlyName": "Graphite Theme update",
+          "cSharpName": "GraphiteThemeUpdate"
+        },
+        {
+          "id": "update.hacs_update",
+          "friendlyName": "HACS update",
+          "cSharpName": "HacsUpdate"
         },
         {
           "id": "update.home_assistant_core_update",
@@ -3810,7 +3930,7 @@
         },
         {
           "id": "update.lamp_keuken_firmware",
-          "friendlyName": "Lamp keuken Firmware",
+          "friendlyName": "Keuken verlichting Firmware",
           "cSharpName": "LampKeukenFirmware"
         },
         {
@@ -3824,9 +3944,19 @@
           "cSharpName": "LampTafelRFirmware"
         },
         {
-          "id": "update.media_firmware",
-          "friendlyName": "TV en Media Firmware",
-          "cSharpName": "MediaFirmware"
+          "id": "update.layout_card_update",
+          "friendlyName": "layout-card update",
+          "cSharpName": "LayoutCardUpdate"
+        },
+        {
+          "id": "update.material_rounded_theme_based_on_material_you_by_google_on_android_update",
+          "friendlyName": "Material Rounded Theme - Based on Material You by Google on Android update",
+          "cSharpName": "MaterialRoundedThemeBasedOnMaterialYouByGoogleOnAndroidUpdate"
+        },
+        {
+          "id": "update.mini_graph_card_update",
+          "friendlyName": "mini-graph-card update",
+          "cSharpName": "MiniGraphCardUpdate"
         },
         {
           "id": "update.mosquitto_broker_update",
@@ -3834,19 +3964,39 @@
           "cSharpName": "MosquittoBrokerUpdate"
         },
         {
+          "id": "update.mushroom_update",
+          "friendlyName": "Mushroom update",
+          "cSharpName": "MushroomUpdate"
+        },
+        {
+          "id": "update.myvaillant_update",
+          "friendlyName": "MyVaillant update",
+          "cSharpName": "MyvaillantUpdate"
+        },
+        {
+          "id": "update.neerslag_app_update",
+          "friendlyName": "Neerslag App update",
+          "cSharpName": "NeerslagAppUpdate"
+        },
+        {
+          "id": "update.netdaemon_update",
+          "friendlyName": "NetDaemon update",
+          "cSharpName": "NetdaemonUpdate"
+        },
+        {
           "id": "update.netdaemon_v4_net_8_update",
           "friendlyName": "NetDaemon V4 (.NET 8) Update",
           "cSharpName": "NetdaemonV4Net8Update"
         },
         {
-          "id": "update.new_firmware",
-          "friendlyName": "Firmware",
-          "cSharpName": "NewFirmware"
-        },
-        {
           "id": "update.nginx_home_assistant_ssl_proxy_update",
           "friendlyName": "NGINX Home Assistant SSL proxy Update",
           "cSharpName": "NginxHomeAssistantSslProxyUpdate"
+        },
+        {
+          "id": "update.plex_media_server_update",
+          "friendlyName": "Plex Media Server Update",
+          "cSharpName": "PlexMediaServerUpdate"
         },
         {
           "id": "update.ring_mqtt_with_video_streaming_update",
@@ -3864,9 +4014,24 @@
           "cSharpName": "SshWebTerminalUpdate"
         },
         {
+          "id": "update.swipe_card_update",
+          "friendlyName": "Swipe Card update",
+          "cSharpName": "SwipeCardUpdate"
+        },
+        {
+          "id": "update.tapo_controller_update",
+          "friendlyName": "Tapo Controller update",
+          "cSharpName": "TapoControllerUpdate"
+        },
+        {
           "id": "update.tuinhuis_verlichting_firmware",
           "friendlyName": "Tuinhuis verlichting  Firmware",
           "cSharpName": "TuinhuisVerlichtingFirmware"
+        },
+        {
+          "id": "update.tv_en_media_firmware",
+          "friendlyName": "TV en Media Firmware",
+          "cSharpName": "TvEnMediaFirmware"
         },
         {
           "id": "update.vaatwasser_firmware",
@@ -3944,6 +4109,16 @@
           "jsonName": "restored",
           "cSharpName": "Restored",
           "clrType": "System.Boolean"
+        },
+        {
+          "jsonName": "display_precision",
+          "cSharpName": "DisplayPrecision",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "update_percentage",
+          "cSharpName": "UpdatePercentage",
+          "clrType": "System.Double"
         }
       ]
     },
@@ -4201,6 +4376,58 @@
         {
           "jsonName": "icon",
           "cSharpName": "Icon",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "friendly_name",
+          "cSharpName": "FriendlyName",
+          "clrType": "System.String"
+        }
+      ]
+    },
+    {
+      "domain": "event",
+      "entities": [
+        {
+          "id": "event.tuin_beweging",
+          "friendlyName": "Tuin Beweging",
+          "cSharpName": "TuinBeweging"
+        },
+        {
+          "id": "event.voordeur_beweging",
+          "friendlyName": "Voordeur Beweging",
+          "cSharpName": "VoordeurBeweging"
+        },
+        {
+          "id": "event.voordeur_ding",
+          "friendlyName": "Voordeur Ding",
+          "cSharpName": "VoordeurDing"
+        },
+        {
+          "id": "event.woonkamer_beweging",
+          "friendlyName": "Woonkamer Beweging",
+          "cSharpName": "WoonkamerBeweging"
+        }
+      ],
+      "attributes": [
+        {
+          "jsonName": "event_types",
+          "cSharpName": "EventTypes",
+          "clrType": "System.Collections.Generic.IReadOnlyList\u00601[System.String]"
+        },
+        {
+          "jsonName": "event_type",
+          "cSharpName": "EventType",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "attribution",
+          "cSharpName": "Attribution",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "device_class",
+          "cSharpName": "DeviceClass",
           "clrType": "System.String"
         },
         {

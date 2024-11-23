@@ -282,17 +282,19 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
             var useNightProgram = timeStamp.Hour < 6;
             var useLegionellaProtection = useNightProgram == false && timeStamp.DayOfWeek == DayOfWeek.Saturday;
             var programType = awayMode ? "Away" : useNightProgram ? "Night" : useLegionellaProtection ? "Legionella Protection" : "Heating";
+            
+            // Check bath mode and turn off the bath mode if the water temperature is above 50 degrees
+            var bathMode = _entities.InputBoolean.Bath.State == "on";
+            if (bathMode)
+            {
+                if (heatingWater.Attributes?.CurrentTemperature > 50)
+                {
+                    _entities.InputBoolean.Bath.TurnOff();
+                }
+            }
 
             // Set the start and end time for the heating period
-            DateTime startTime;
-            if (useNightProgram)
-            {
-                startTime = _pricesToday.Where(p => p.Key.TimeOfDay < TimeSpan.FromHours(6)).OrderBy(p => p.Value).ThenBy(p => p.Key).First().Key;
-            }
-            else
-            {
-                startTime = _pricesToday.Where(p => p.Key.TimeOfDay > TimeSpan.FromHours(8)).OrderBy(p => p.Value).ThenBy(p => p.Key).First().Key;
-            }
+            var startTime = useNightProgram ? _pricesToday.Where(p => p.Key.TimeOfDay < TimeSpan.FromHours(6)).OrderBy(p => p.Value).ThenBy(p => p.Key).First().Key : _pricesToday.Where(p => p.Key.TimeOfDay > TimeSpan.FromHours(8)).OrderBy(p => p.Value).ThenBy(p => p.Key).First().Key;
 
             // Check if the value 1 hour before the start time is lower than 1 hour after the start time
             if (useLegionellaProtection && startTime.Hour is > 0 and < 23 && _pricesToday[startTime.AddHours(-1)] < _pricesToday[startTime.AddHours(1)])
@@ -341,7 +343,7 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
                 {
                     Level.High => 56,
                     Level.Medium => 52,
-                    _ => currentPrice < _priceThreshold ? 48 : 35
+                    _ => currentPrice < _priceThreshold ? bathMode ? 52 : 40 : 35
                 };
             }
 
@@ -413,7 +415,6 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
                 _waitCycles = 0;
                 _isHeaterOn = false;
             }
-            
         }
 
         /// <summary>
