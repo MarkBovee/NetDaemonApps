@@ -162,7 +162,8 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
                 < 0.1 => Level.None,
                 > 0.1 and < 0.5 => Level.Low,
                 > 0.5 and < 1 => Level.Medium,
-                _ => Level.High
+                > 1 and < 1.8 => Level.High,
+                _ => Level.Maximum,
             };
         }
 
@@ -246,6 +247,12 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
                     _logger.LogInformation("Dishwasher enabled again");
                     dishwasher.TurnOn();
                 }
+                
+                if (garage?.State == "off" && _energyProduction == Level.Maximum)
+                {
+                    _logger.LogInformation("Garage enabled again");
+                    garage.TurnOn();
+                }
             }
         }
 
@@ -288,7 +295,7 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
             }
 
             // Check if the value 1 hour before the start time is lower than 1 hour after the start time
-            if (useLegionellaProtection && startTime.Hour > 0 && _pricesToday[startTime.AddHours(-1)] < _pricesToday[startTime.AddHours(1)])
+            if (useLegionellaProtection && startTime.Hour is > 0 and < 23 && _pricesToday[startTime.AddHours(-1)] < _pricesToday[startTime.AddHours(1)])
             {
                 startTime = startTime.AddHours(-1);
             }
@@ -386,7 +393,7 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
                     else if (_isHeaterOn || _targetTemperature != temperatureIdle)
                     {
                         _targetTemperature = temperatureIdle;
-                        _waitCycles = 6;
+                        _waitCycles = 3;
                     
                         _logger.LogInformation($"Started heating to {_targetTemperature} for {_waitCycles} cycles");
                     
