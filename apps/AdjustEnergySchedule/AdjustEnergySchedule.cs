@@ -154,6 +154,8 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
                 // Set the price to a fallback default value
                 _priceThreshold = fallbackPrice;
             }
+
+            _priceThreshold = Math.Round(_priceThreshold, 2);
             
             // Set the energy production level
             _energyProduction = _entities.Sensor.ElectricityMeterPowerProduction.State switch
@@ -184,17 +186,12 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
 
             var garage = _entities.Switch.Garage;
 
-            // Check if the prices are available
-            if (_pricesToday == null)
+            // Get the current price
+            var currentPrice = GetCurrentPrice();
+            if (currentPrice == null)
             {
                 return;
             }
-
-            // Get the current timestamp
-            var timeStamp = DateTime.Now;
-
-            // Get the current price
-            var currentPrice = _pricesToday.FirstOrDefault(p => p.Key.Hour == timeStamp.Hour).Value;
 
             // Check if the price is above the threshold and there is no energy production
             if (_energyProduction < Level.Low && currentPrice > _priceThreshold)
@@ -261,23 +258,19 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
         /// </summary>
         private void SetHeatingSchedule()
         {
-            // Get the heatpump warm water heater entities
+            // Get the heat pump water entities
             var heatingWater = _entities.WaterHeater.OurHomeDomesticHotWater0;
             var heatingCircuit = _entities.Climate.OurHomeZoneThuisCircuit0Climate;
 
-            // Check if the prices are available
-            if (_pricesToday == null)
+            // Get the current price
+            var currentPrice = GetCurrentPrice();
+            if (currentPrice == null)
             {
                 return;
             }
 
-            // Get the current timestamp
-            var timeStamp = DateTime.Now;
-
-            // Get the current price
-            var currentPrice = _pricesToday.FirstOrDefault(p => p.Key.Hour == timeStamp.Hour).Value;
-
             // Check what type of program should be used
+            var timeStamp = DateTime.Now;
             var awayMode = _entities.Switch.OurHomeAwayMode.State == "on";
             var useNightProgram = timeStamp.Hour < 6;
             var useLegionellaProtection = useNightProgram == false && timeStamp.DayOfWeek == DayOfWeek.Saturday;
@@ -415,6 +408,27 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
                 _waitCycles = 0;
                 _isHeaterOn = false;
             }
+        }
+
+        /// <summary>
+        /// Gets the current price
+        /// </summary>
+        /// <returns>The current price</returns>
+        private double? GetCurrentPrice()
+        {
+            // Check if the prices are available
+            if (_pricesToday == null)
+            {
+                return null;
+            }
+
+            // Get the current timestamp
+            var timeStamp = DateTime.Now;
+
+            // Get the current price
+            var currentPrice = Math.Round(_pricesToday.FirstOrDefault(p => p.Key.Hour == timeStamp.Hour).Value, 2);
+
+            return currentPrice;
         }
 
         /// <summary>
