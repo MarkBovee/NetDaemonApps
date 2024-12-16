@@ -78,7 +78,7 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
         /// <summary>
         /// The wait cycles
         /// </summary>
-        private int _waitCycles = 0;
+        private int _waitCycles;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="AdjustEnergySchedule"/> class
@@ -162,15 +162,15 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
             {
                 // Check if the energy production is above the threshold
                 < 0.1 => Level.None,
-                > 0.1 and < 0.5 => Level.Low,
-                > 0.5 and < 1 => Level.Medium,
-                > 1 and < 1.8 => Level.High,
+                > 0.1 and < 0.7 => Level.Low,
+                > 0.7 and < 1 => Level.Medium,
+                > 1 and < 2 => Level.High,
                 _ => Level.Maximum,
             };
         }
 
         /// <summary>
-        /// Sets the appliances schedule
+        /// Sets the appliance schedule
         /// </summary>
         private void SetAppliancesSchedule()
         {
@@ -315,7 +315,7 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
                 // Set the temperature values for the heating program
                 if (useNightProgram)
                 {
-                    temperatureHeat = 48;
+                    temperatureHeat = currentPrice < 0.2 ? 56 : 48;
                 }
                 else if (useLegionellaProtection)
                 {
@@ -334,9 +334,11 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
                 // Set the idle temperature
                 temperatureIdle = _energyProduction switch
                 {
-                    Level.High => 56,
-                    Level.Medium => 52,
-                    _ => currentPrice < _priceThreshold ? bathMode ? 52 : 40 : 35
+                    Level.Maximum => 58,
+                    Level.High => 54,
+                    Level.Medium => 50,
+                    Level.Low => currentPrice < _priceThreshold ? 45: 40,
+                    _ => bathMode ? 56 : 35
                 };
             }
 
@@ -363,7 +365,7 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
             try
             {
                 // Check if the heater is off and the current timestamp is within the schedule  
-                if (timeStamp.TimeOfDay >= startTime.TimeOfDay && timeStamp.TimeOfDay <= endTime.TimeOfDay)
+                if (timeStamp.TimeOfDay >= startTime.TimeOfDay && timeStamp <= endTime)
                 {
                     if (_isHeaterOn) return;
                 

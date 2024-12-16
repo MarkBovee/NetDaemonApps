@@ -693,7 +693,7 @@
         },
         {
           "id": "binary_sensor.lamp_keuken_overheat",
-          "friendlyName": "Keuken verlichting Overheat",
+          "friendlyName": "Spotjes Verlichting Overheat",
           "cSharpName": "LampKeukenOverheat"
         },
         {
@@ -745,6 +745,21 @@
           "id": "binary_sensor.our_home_zone_thuis_circuit_0_manual_cooling_active",
           "friendlyName": "Our home Zone Thuis (Circuit 0) Manual Cooling Active",
           "cSharpName": "OurHomeZoneThuisCircuit0ManualCoolingActive"
+        },
+        {
+          "id": "binary_sensor.q7_max_dweil_bevestigd",
+          "friendlyName": "Q7 Max Dweil bevestigd",
+          "cSharpName": "Q7MaxDweilBevestigd"
+        },
+        {
+          "id": "binary_sensor.q7_max_schoonmaken",
+          "friendlyName": "Q7 Max Schoonmaken",
+          "cSharpName": "Q7MaxSchoonmaken"
+        },
+        {
+          "id": "binary_sensor.q7_max_waterbak_geplaatst",
+          "friendlyName": "Q7 Max Waterbak geplaatst",
+          "cSharpName": "Q7MaxWaterbakGeplaatst"
         },
         {
           "id": "binary_sensor.toetsenpaneel_ingang_motion",
@@ -909,6 +924,16 @@
           "cSharpName": "DeurbelTakeSnapshot"
         },
         {
+          "id": "button.home_cinema_herstarten",
+          "friendlyName": "Home Cinema Herstarten",
+          "cSharpName": "HomeCinemaHerstarten"
+        },
+        {
+          "id": "button.home_cinema_sync_time",
+          "friendlyName": "Home Cinema Sync time",
+          "cSharpName": "HomeCinemaSyncTime"
+        },
+        {
           "id": "button.tuin_camera_take_snapshot",
           "friendlyName": "Tuin Camera Take Snapshot",
           "cSharpName": "TuinCameraTakeSnapshot"
@@ -928,6 +953,11 @@
         {
           "jsonName": "friendly_name",
           "cSharpName": "FriendlyName",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "device_class",
+          "cSharpName": "DeviceClass",
           "clrType": "System.String"
         }
       ]
@@ -1019,7 +1049,7 @@
         },
         {
           "id": "camera.tuin",
-          "friendlyName": "Tuin",
+          "friendlyName": "Tuin Laatste opname",
           "cSharpName": "Tuin"
         },
         {
@@ -1028,19 +1058,34 @@
           "cSharpName": "TuinCameraSnapshot"
         },
         {
+          "id": "camera.tuin_live_weergave",
+          "friendlyName": "Tuin Live weergave",
+          "cSharpName": "TuinLiveWeergave"
+        },
+        {
           "id": "camera.voordeur",
-          "friendlyName": "Voordeur",
+          "friendlyName": "Voordeur Laatste opname",
           "cSharpName": "Voordeur"
         },
         {
+          "id": "camera.voordeur_live_weergave",
+          "friendlyName": "Voordeur Live weergave",
+          "cSharpName": "VoordeurLiveWeergave"
+        },
+        {
           "id": "camera.woonkamer",
-          "friendlyName": "Woonkamer",
+          "friendlyName": "Woonkamer Laatste opname",
           "cSharpName": "Woonkamer"
         },
         {
           "id": "camera.woonkamer_camera_snapshot",
           "friendlyName": "Woonkamer Camera Snapshot",
           "cSharpName": "WoonkamerCameraSnapshot"
+        },
+        {
+          "id": "camera.woonkamer_live_weergave",
+          "friendlyName": "Woonkamer Live weergave",
+          "cSharpName": "WoonkamerLiveWeergave"
         }
       ],
       "attributes": [
@@ -1092,6 +1137,11 @@
         {
           "jsonName": "type",
           "cSharpName": "Type",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "frontend_stream_type",
+          "cSharpName": "FrontendStreamType",
           "clrType": "System.String"
         }
       ]
@@ -1424,7 +1474,7 @@
       "entities": [
         {
           "id": "number.beneden_volume",
-          "friendlyName": "Beneden Volume",
+          "friendlyName": "Chime Keuken Volume",
           "cSharpName": "BenedenVolume"
         },
         {
@@ -1486,6 +1536,11 @@
           "id": "number.our_home_zone_thuis_circuit_0_quick_veto_duration",
           "friendlyName": "Our home Zone Thuis (Circuit 0) Quick Veto Duration",
           "cSharpName": "OurHomeZoneThuisCircuit0QuickVetoDuration"
+        },
+        {
+          "id": "number.q7_max_volume",
+          "friendlyName": "Q7 Max Volume",
+          "cSharpName": "Q7MaxVolume"
         },
         {
           "id": "number.toetsenpaneel_ingang_volume",
@@ -1729,6 +1784,16 @@
           "id": "select.keuken_motion_sensor_chirp_tone",
           "friendlyName": "Keuken Motion Sensor Chirp Tone",
           "cSharpName": "KeukenMotionSensorChirpTone"
+        },
+        {
+          "id": "select.q7_max_intensiteit_van_dweilen",
+          "friendlyName": "Q7 Max Intensiteit van dweilen",
+          "cSharpName": "Q7MaxIntensiteitVanDweilen"
+        },
+        {
+          "id": "select.q7_max_selected_map",
+          "friendlyName": "Q7 Max Selected map",
+          "cSharpName": "Q7MaxSelectedMap"
         },
         {
           "id": "select.tuin_camera_event_select",
@@ -1986,6 +2051,31 @@
           "id": "sensor.our_home_zone_thuis_circuit_0_heating_state",
           "friendlyName": "Our home Zone Thuis (Circuit 0) Heating State",
           "cSharpName": "OurHomeZoneThuisCircuit0HeatingState"
+        },
+        {
+          "id": "sensor.q7_max_dock_error",
+          "friendlyName": "Q7 Max Dock error",
+          "cSharpName": "Q7MaxDockError"
+        },
+        {
+          "id": "sensor.q7_max_einde_laatste_schoonmaak",
+          "friendlyName": "Q7 Max Einde laatste schoonmaak",
+          "cSharpName": "Q7MaxEindeLaatsteSchoonmaak"
+        },
+        {
+          "id": "sensor.q7_max_start_laatste_schoonmaak",
+          "friendlyName": "Q7 Max Start laatste schoonmaak",
+          "cSharpName": "Q7MaxStartLaatsteSchoonmaak"
+        },
+        {
+          "id": "sensor.q7_max_status",
+          "friendlyName": "Q7 Max Status",
+          "cSharpName": "Q7MaxStatus"
+        },
+        {
+          "id": "sensor.q7_max_vacuum_error",
+          "friendlyName": "Q7 Max Vacuum error",
+          "cSharpName": "Q7MaxVacuumError"
         },
         {
           "id": "sensor.sun_next_dawn",
@@ -2927,32 +3017,32 @@
         },
         {
           "id": "sensor.lamp_keuken_current_power",
-          "friendlyName": "Keuken verlichting Current Power",
+          "friendlyName": "Spotjes Verlichting Current Power",
           "cSharpName": "LampKeukenCurrentPower"
         },
         {
           "id": "sensor.lamp_keuken_month_energy",
-          "friendlyName": "Keuken verlichting Month Energy",
+          "friendlyName": "Spotjes Verlichting Month Energy",
           "cSharpName": "LampKeukenMonthEnergy"
         },
         {
           "id": "sensor.lamp_keuken_month_runtime",
-          "friendlyName": "Keuken verlichting Month Runtime",
+          "friendlyName": "Spotjes Verlichting Month Runtime",
           "cSharpName": "LampKeukenMonthRuntime"
         },
         {
           "id": "sensor.lamp_keuken_signal_level",
-          "friendlyName": "Keuken verlichting Signal Level",
+          "friendlyName": "Spotjes Verlichting Signal Level",
           "cSharpName": "LampKeukenSignalLevel"
         },
         {
           "id": "sensor.lamp_keuken_today_energy",
-          "friendlyName": "Keuken verlichting Today Energy",
+          "friendlyName": "Spotjes Verlichting Today Energy",
           "cSharpName": "LampKeukenTodayEnergy"
         },
         {
           "id": "sensor.lamp_keuken_today_runtime",
-          "friendlyName": "Keuken verlichting Today Runtime",
+          "friendlyName": "Spotjes Verlichting Today Runtime",
           "cSharpName": "LampKeukenTodayRuntime"
         },
         {
@@ -3104,6 +3194,51 @@
           "id": "sensor.our_home_zone_thuis_circuit_0_humidity",
           "friendlyName": "Our home Zone Thuis (Circuit 0) Humidity",
           "cSharpName": "OurHomeZoneThuisCircuit0Humidity"
+        },
+        {
+          "id": "sensor.q7_max_batterij",
+          "friendlyName": "Q7 Max Batterij",
+          "cSharpName": "Q7MaxBatterij"
+        },
+        {
+          "id": "sensor.q7_max_cleaning_time",
+          "friendlyName": "Q7 Max Cleaning time",
+          "cSharpName": "Q7MaxCleaningTime"
+        },
+        {
+          "id": "sensor.q7_max_filter_time_left",
+          "friendlyName": "Q7 Max Filter time left",
+          "cSharpName": "Q7MaxFilterTimeLeft"
+        },
+        {
+          "id": "sensor.q7_max_main_brush_time_left",
+          "friendlyName": "Q7 Max Main brush time left",
+          "cSharpName": "Q7MaxMainBrushTimeLeft"
+        },
+        {
+          "id": "sensor.q7_max_schoonmaakgebied",
+          "friendlyName": "Q7 Max Schoonmaakgebied",
+          "cSharpName": "Q7MaxSchoonmaakgebied"
+        },
+        {
+          "id": "sensor.q7_max_sensor_time_left",
+          "friendlyName": "Q7 Max Sensor time left",
+          "cSharpName": "Q7MaxSensorTimeLeft"
+        },
+        {
+          "id": "sensor.q7_max_side_brush_time_left",
+          "friendlyName": "Q7 Max Side brush time left",
+          "cSharpName": "Q7MaxSideBrushTimeLeft"
+        },
+        {
+          "id": "sensor.q7_max_totaal_schoonmaakgebied",
+          "friendlyName": "Q7 Max Totaal schoonmaakgebied",
+          "cSharpName": "Q7MaxTotaalSchoonmaakgebied"
+        },
+        {
+          "id": "sensor.q7_max_total_cleaning_time",
+          "friendlyName": "Q7 Max Total cleaning time",
+          "cSharpName": "Q7MaxTotalCleaningTime"
         },
         {
           "id": "sensor.regenkans_1d",
@@ -3409,7 +3544,7 @@
       "entities": [
         {
           "id": "siren.beneden_sirene",
-          "friendlyName": "Beneden Sirene",
+          "friendlyName": "Chime Keuken Sirene",
           "cSharpName": "BenedenSirene"
         },
         {
@@ -3603,7 +3738,7 @@
         },
         {
           "id": "switch.lamp_keuken",
-          "friendlyName": "Keuken verlichting",
+          "friendlyName": "Spotjes Verlichting",
           "cSharpName": "LampKeuken"
         },
         {
@@ -3630,6 +3765,16 @@
           "id": "switch.our_home_zone_thuis_circuit_0_ventilation_boost",
           "friendlyName": "Our home Zone Thuis (Circuit 0) Ventilation Boost",
           "cSharpName": "OurHomeZoneThuisCircuit0VentilationBoost"
+        },
+        {
+          "id": "switch.q7_max_kinderslot",
+          "friendlyName": "Q7 Max Kinderslot",
+          "cSharpName": "Q7MaxKinderslot"
+        },
+        {
+          "id": "switch.q7_max_niet_storen",
+          "friendlyName": "Q7 Max Niet storen",
+          "cSharpName": "Q7MaxNietStoren"
         },
         {
           "id": "switch.toetsenpaneel_ingang_chirps",
@@ -3930,7 +4075,7 @@
         },
         {
           "id": "update.lamp_keuken_firmware",
-          "friendlyName": "Keuken verlichting Firmware",
+          "friendlyName": "Spotjes Verlichting Firmware",
           "cSharpName": "LampKeukenFirmware"
         },
         {
@@ -3952,6 +4097,11 @@
           "id": "update.material_rounded_theme_based_on_material_you_by_google_on_android_update",
           "friendlyName": "Material Rounded Theme - Based on Material You by Google on Android update",
           "cSharpName": "MaterialRoundedThemeBasedOnMaterialYouByGoogleOnAndroidUpdate"
+        },
+        {
+          "id": "update.matter_server_update",
+          "friendlyName": "Matter Server Update",
+          "cSharpName": "MatterServerUpdate"
         },
         {
           "id": "update.mini_graph_card_update",
@@ -4434,6 +4584,102 @@
           "jsonName": "friendly_name",
           "cSharpName": "FriendlyName",
           "clrType": "System.String"
+        }
+      ]
+    },
+    {
+      "domain": "image",
+      "entities": [
+        {
+          "id": "image.q7_max_beneden",
+          "friendlyName": "Q7 Max Beneden",
+          "cSharpName": "Q7MaxBeneden"
+        }
+      ],
+      "attributes": [
+        {
+          "jsonName": "access_token",
+          "cSharpName": "AccessToken",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "entity_picture",
+          "cSharpName": "EntityPicture",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "friendly_name",
+          "cSharpName": "FriendlyName",
+          "clrType": "System.String"
+        }
+      ]
+    },
+    {
+      "domain": "time",
+      "entities": [
+        {
+          "id": "time.q7_max_niet_storen_begin",
+          "friendlyName": "Q7 Max Niet storen begin",
+          "cSharpName": "Q7MaxNietStorenBegin"
+        },
+        {
+          "id": "time.q7_max_niet_storen_einde",
+          "friendlyName": "Q7 Max Niet storen einde",
+          "cSharpName": "Q7MaxNietStorenEinde"
+        }
+      ],
+      "attributes": [
+        {
+          "jsonName": "friendly_name",
+          "cSharpName": "FriendlyName",
+          "clrType": "System.String"
+        }
+      ]
+    },
+    {
+      "domain": "vacuum",
+      "entities": [
+        {
+          "id": "vacuum.q7_max",
+          "friendlyName": "Rocky",
+          "cSharpName": "Q7Max"
+        }
+      ],
+      "attributes": [
+        {
+          "jsonName": "fan_speed_list",
+          "cSharpName": "FanSpeedList",
+          "clrType": "System.Collections.Generic.IReadOnlyList\u00601[System.String]"
+        },
+        {
+          "jsonName": "battery_level",
+          "cSharpName": "BatteryLevel",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "battery_icon",
+          "cSharpName": "BatteryIcon",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "fan_speed",
+          "cSharpName": "FanSpeed",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "icon",
+          "cSharpName": "Icon",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "friendly_name",
+          "cSharpName": "FriendlyName",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "supported_features",
+          "cSharpName": "SupportedFeatures",
+          "clrType": "System.Double"
         }
       ]
     }
