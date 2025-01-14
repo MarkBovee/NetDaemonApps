@@ -579,7 +579,7 @@
             "object": null
           },
           "name": "Add-ons",
-          "description": "List of add-ons to include in the backup. Use the name slug of the add-on."
+          "description": "List of add-ons to include in the backup. Use the name slug of each add-on."
         },
         "folders": {
           "example": [
@@ -676,7 +676,7 @@
             "object": null
           },
           "name": "Folders",
-          "description": "List of directories to include in the backup."
+          "description": "List of directories to restore from the backup."
         },
         "addons": {
           "example": [
@@ -688,7 +688,7 @@
             "object": null
           },
           "name": "Add-ons",
-          "description": "List of add-ons to include in the backup. Use the name slug of the add-on."
+          "description": "List of add-ons to restore from the backup. Use the name slug of each add-on."
         },
         "password": {
           "example": "password",
@@ -704,7 +704,7 @@
   "update": {
     "install": {
       "name": "Install update",
-      "description": "Installs an update for this device or service.",
+      "description": "Installs an update for a device or service.",
       "fields": {
         "version": {
           "required": false,
@@ -721,7 +721,7 @@
             "boolean": null
           },
           "name": "Backup",
-          "description": "If supported by the integration, this creates a backup before starting the update ."
+          "description": "If supported by the integration, this creates a backup before starting the update."
         }
       },
       "target": {
@@ -1418,69 +1418,6 @@
       }
     }
   },
-  "input_number": {
-    "reload": {
-      "name": "Reload",
-      "description": "Reloads helpers from the YAML-configuration.",
-      "fields": {}
-    },
-    "set_value": {
-      "name": "Set",
-      "description": "Sets the value.",
-      "fields": {
-        "value": {
-          "required": true,
-          "selector": {
-            "number": {
-              "min": 0,
-              "max": 9223372036854775807,
-              "step": 0.001,
-              "mode": "box"
-            }
-          },
-          "name": "Value",
-          "description": "The target value."
-        }
-      },
-      "target": {
-        "entity": [
-          {
-            "domain": [
-              "input_number"
-            ]
-          }
-        ]
-      }
-    },
-    "increment": {
-      "name": "Increment",
-      "description": "Increments the current value by 1 step.",
-      "fields": {},
-      "target": {
-        "entity": [
-          {
-            "domain": [
-              "input_number"
-            ]
-          }
-        ]
-      }
-    },
-    "decrement": {
-      "name": "Decrement",
-      "description": "Decrements the current value by 1 step.",
-      "fields": {},
-      "target": {
-        "entity": [
-          {
-            "domain": [
-              "input_number"
-            ]
-          }
-        ]
-      }
-    }
-  },
   "group": {
     "reload": {
       "name": "Reload",
@@ -1489,7 +1426,7 @@
     },
     "set": {
       "name": "Set",
-      "description": "Creates/Updates a user group.",
+      "description": "Creates/Updates a group.",
       "fields": {
         "object_id": {
           "required": true,
@@ -2543,6 +2480,69 @@
       }
     }
   },
+  "input_number": {
+    "reload": {
+      "name": "Reload",
+      "description": "Reloads helpers from the YAML-configuration.",
+      "fields": {}
+    },
+    "set_value": {
+      "name": "Set",
+      "description": "Sets the value.",
+      "fields": {
+        "value": {
+          "required": true,
+          "selector": {
+            "number": {
+              "min": 0,
+              "max": 9223372036854775807,
+              "step": 0.001,
+              "mode": "box"
+            }
+          },
+          "name": "Value",
+          "description": "The target value."
+        }
+      },
+      "target": {
+        "entity": [
+          {
+            "domain": [
+              "input_number"
+            ]
+          }
+        ]
+      }
+    },
+    "increment": {
+      "name": "Increment",
+      "description": "Increments the current value by 1 step.",
+      "fields": {},
+      "target": {
+        "entity": [
+          {
+            "domain": [
+              "input_number"
+            ]
+          }
+        ]
+      }
+    },
+    "decrement": {
+      "name": "Decrement",
+      "description": "Decrements the current value by 1 step.",
+      "fields": {},
+      "target": {
+        "entity": [
+          {
+            "domain": [
+              "input_number"
+            ]
+          }
+        ]
+      }
+    }
+  },
   "timer": {
     "reload": {
       "name": "Reload",
@@ -2640,27 +2640,6 @@
       }
     }
   },
-  "input_button": {
-    "reload": {
-      "name": "Reload",
-      "description": "Reloads helpers from the YAML-configuration.",
-      "fields": {}
-    },
-    "press": {
-      "name": "Press",
-      "description": "Mimics the physical button press on the device.",
-      "fields": {},
-      "target": {
-        "entity": [
-          {
-            "domain": [
-              "input_button"
-            ]
-          }
-        ]
-      }
-    }
-  },
   "input_boolean": {
     "reload": {
       "name": "Reload",
@@ -2704,6 +2683,27 @@
           {
             "domain": [
               "input_boolean"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "input_button": {
+    "reload": {
+      "name": "Reload",
+      "description": "Reloads helpers from the YAML-configuration.",
+      "fields": {}
+    },
+    "press": {
+      "name": "Press",
+      "description": "Mimics the physical button press on the device.",
+      "fields": {},
+      "target": {
+        "entity": [
+          {
+            "domain": [
+              "input_button"
             ]
           }
         ]
@@ -2783,6 +2783,108 @@
       }
     }
   },
+  "script": {
+    "toggle_lamp_eettafel": {
+      "name": "Toggle Lamp Eettafel",
+      "description": "Zet de lampen boven de eettafel aan/uit",
+      "fields": {},
+      "response": {
+        "optional": true
+      }
+    },
+    "water_opwarmen": {
+      "name": "Water opwarmen",
+      "description": "",
+      "fields": {},
+      "response": {
+        "optional": true
+      }
+    },
+    "say_with_alexa": {
+      "name": "Say with Alexa",
+      "description": "",
+      "fields": {},
+      "response": {
+        "optional": true
+      }
+    },
+    "reload": {
+      "name": "Reload",
+      "description": "Reloads all the available scripts.",
+      "fields": {}
+    },
+    "turn_on": {
+      "name": "Turn on",
+      "description": "Runs the sequence of actions defined in a script.",
+      "fields": {},
+      "target": {
+        "entity": [
+          {
+            "domain": [
+              "script"
+            ]
+          }
+        ]
+      }
+    },
+    "turn_off": {
+      "name": "Turn off",
+      "description": "Stops a running script.",
+      "fields": {},
+      "target": {
+        "entity": [
+          {
+            "domain": [
+              "script"
+            ]
+          }
+        ]
+      }
+    },
+    "toggle": {
+      "name": "Toggle",
+      "description": "Starts a script if it isn\u0027t running, stops it otherwise.",
+      "fields": {},
+      "target": {
+        "entity": [
+          {
+            "domain": [
+              "script"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "tibber": {
+    "get_prices": {
+      "name": "Get energy prices",
+      "description": "Get hourly energy prices from Tibber",
+      "fields": {
+        "start": {
+          "required": false,
+          "example": "2024-01-01 00:00:00",
+          "selector": {
+            "datetime": null
+          },
+          "name": "Start",
+          "description": "Specifies the date and time from which to retrieve prices. Defaults to today if omitted."
+        },
+        "end": {
+          "required": false,
+          "example": "2024-01-01 23:00:00",
+          "selector": {
+            "datetime": null
+          },
+          "name": "End",
+          "description": "Specifies the date and time until which to retrieve prices. Defaults to the last hour of today if omitted."
+        }
+      },
+      "response": {
+        "optional": false
+      }
+    }
+  },
   "counter": {
     "increment": {
       "name": "Increment",
@@ -2854,181 +2956,231 @@
       }
     }
   },
-  "mqtt": {
-    "publish": {
-      "name": "Publish",
-      "description": "Publishes a message to an MQTT topic.",
-      "fields": {
-        "topic": {
-          "required": true,
-          "example": "/homeassistant/hello",
-          "selector": {
-            "text": null
-          },
-          "name": "Topic",
-          "description": "Topic to publish to."
-        },
-        "payload": {
-          "required": true,
-          "example": "The temperature is {{ states(\u0027sensor.temperature\u0027) }}",
-          "selector": {
-            "template": null
-          },
-          "name": "Payload",
-          "description": "The payload to publish."
-        },
-        "evaluate_payload": {
-          "advanced": true,
-          "default": false,
-          "selector": {
-            "boolean": null
-          },
-          "name": "Evaluate payload",
-          "description": "When \u0060payload\u0060 is a Python bytes literal, evaluate the bytes literal and publish the raw data."
-        },
-        "qos": {
-          "advanced": true,
-          "default": 0,
-          "selector": {
-            "select": {
-              "options": [
-                "0",
-                "1",
-                "2"
-              ]
-            }
-          },
-          "name": "QoS",
-          "description": "Quality of Service to use. 0: At most once. 1: At least once. 2: Exactly once."
-        },
-        "retain": {
-          "default": false,
-          "selector": {
-            "boolean": null
-          },
-          "name": "Retain",
-          "description": "If the message should have the retain flag set. If set, the broker stores the most recent message on a topic."
-        }
-      }
-    },
-    "dump": {
-      "name": "Export",
-      "description": "Writes all messages on a specific topic into the \u0060mqtt_dump.txt\u0060 file in your configuration folder.",
-      "fields": {
-        "topic": {
-          "example": "OpenZWave/#",
-          "selector": {
-            "text": null
-          },
-          "name": "Topic",
-          "description": "Topic to listen to."
-        },
-        "duration": {
-          "default": 5,
-          "selector": {
-            "number": {
-              "min": 1,
-              "max": 300,
-              "unit_of_measurement": "seconds"
-            }
-          },
-          "name": "Duration",
-          "description": "How long we should listen for messages in seconds."
-        }
-      }
-    },
+  "schedule": {
     "reload": {
       "name": "Reload",
-      "description": "Reloads MQTT entities from the YAML-configuration.",
+      "description": "Reloads schedules from the YAML-configuration.",
       "fields": {}
     }
   },
-  "webostv": {
-    "button": {
-      "name": "Button",
-      "description": "Sends a button press command.",
+  "input_datetime": {
+    "reload": {
+      "name": "Reload",
+      "description": "Reloads helpers from the YAML-configuration.",
+      "fields": {}
+    },
+    "set_datetime": {
+      "name": "Set",
+      "description": "Sets the date and/or time.",
       "fields": {
-        "entity_id": {
-          "required": true,
-          "selector": {
-            "entity": {
-              "integration": "webostv",
-              "domain": "media_player"
-            }
-          },
-          "name": "Entity",
-          "description": "Name(s) of the webostv entities where to run the API method."
-        },
-        "button": {
-          "required": true,
-          "example": "LEFT",
+        "date": {
+          "example": "\u00222019-04-20\u0022",
           "selector": {
             "text": null
           },
-          "name": "Button",
-          "description": "Name of the button to press.  Known possible values are LEFT, RIGHT, DOWN, UP, HOME, MENU, BACK, ENTER, DASH, INFO, ASTERISK, CC, EXIT, MUTE, RED, GREEN, BLUE, YELLOW, VOLUMEUP, VOLUMEDOWN, CHANNELUP, CHANNELDOWN, PLAY, PAUSE, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9."
+          "name": "Date",
+          "description": "The target date."
+        },
+        "time": {
+          "example": "\u002205:04:20\u0022",
+          "selector": {
+            "time": null
+          },
+          "name": "Time",
+          "description": "The target time."
+        },
+        "datetime": {
+          "example": "\u00222019-04-20 05:04:20\u0022",
+          "selector": {
+            "text": null
+          },
+          "name": "Date \u0026 time",
+          "description": "The target date \u0026 time."
+        },
+        "timestamp": {
+          "selector": {
+            "number": {
+              "min": 0,
+              "max": 9223372036854775807,
+              "mode": "box"
+            }
+          },
+          "name": "Timestamp",
+          "description": "The target date \u0026 time, expressed by a UNIX timestamp."
         }
+      },
+      "target": {
+        "entity": [
+          {
+            "domain": [
+              "input_datetime"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "input_text": {
+    "reload": {
+      "name": "Reload",
+      "description": "Reloads helpers from the YAML-configuration.",
+      "fields": {}
+    },
+    "set_value": {
+      "name": "Set",
+      "description": "Sets the value.",
+      "fields": {
+        "value": {
+          "required": true,
+          "example": "This is an example text",
+          "selector": {
+            "text": null
+          },
+          "name": "Value",
+          "description": "The target value."
+        }
+      },
+      "target": {
+        "entity": [
+          {
+            "domain": [
+              "input_text"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "nordpool": {
+    "hourly": {
+      "name": "hourly",
+      "description": "Action that gets the raw hourly price for spesific date from Nordpool",
+      "fields": {
+        "currency": {
+          "description": "What currecy should the prices be returned in",
+          "example": "NOK"
+        },
+        "date": {
+          "description": "For what year, default to currect year",
+          "example": "YYYY-MM-DD"
+        },
+        "area": {
+          "description": "Return the prices for what price area",
+          "example": "NO2"
+        }
+      },
+      "response": {
+        "optional": true
       }
     },
-    "command": {
-      "name": "Command",
-      "description": "Sends a command.",
+    "yearly": {
+      "name": "yearly",
+      "description": "Action that gets the raw aggrigated yearly prices from Nordpool",
       "fields": {
-        "entity_id": {
-          "required": true,
-          "selector": {
-            "entity": {
-              "integration": "webostv",
-              "domain": "media_player"
-            }
-          },
-          "name": "Entity",
-          "description": "Name(s) of the webostv entities where to run the API method."
+        "currency": {
+          "description": "What currecy should the prices be returned in",
+          "example": "NOK"
         },
-        "command": {
-          "required": true,
-          "example": "system.launcher/open",
-          "selector": {
-            "text": null
-          },
-          "name": "Command",
-          "description": "Endpoint of the command."
+        "year": {
+          "description": "For what year, default to currect year",
+          "example": "2024"
         },
-        "payload": {
-          "example": "target: https://www.google.com",
-          "advanced": true,
-          "selector": {
-            "object": null
-          },
-          "name": "Payload",
-          "description": "An optional payload to provide to the endpoint in the format of key value pair(s)."
+        "area": {
+          "description": "Return the prices for what price area",
+          "example": "NO2"
         }
+      },
+      "response": {
+        "optional": true
       }
     },
-    "select_sound_output": {
-      "name": "Select sound output",
-      "description": "Sends the TV the command to change sound output.",
+    "monthly": {
+      "name": "monthly",
+      "description": "Action that gets the raw aggrigated monthly prices from Nordpool",
       "fields": {
-        "entity_id": {
+        "currency": {
+          "description": "What currecy should the prices be returned in",
+          "example": "NOK"
+        },
+        "year": {
+          "description": "For what year, default to currect year",
+          "example": "2024"
+        },
+        "area": {
+          "description": "Return the prices for what price area",
+          "example": "NO2"
+        }
+      },
+      "response": {
+        "optional": true
+      }
+    },
+    "daily": {
+      "name": "daily",
+      "description": "Action that gets the raw aggrigated daily prices from Nordpool",
+      "fields": {
+        "currency": {
+          "description": "What currecy should the prices be returned in",
+          "example": "NOK"
+        },
+        "year": {
+          "description": "For what year, default to currect year",
+          "example": "2024"
+        },
+        "area": {
+          "description": "Return the prices for what price area",
+          "example": "NO2"
+        }
+      },
+      "response": {
+        "optional": true
+      }
+    },
+    "weekly": {
+      "name": "",
+      "description": "",
+      "fields": {},
+      "response": {
+        "optional": true
+      }
+    }
+  },
+  "entsoe": {
+    "get_energy_prices": {
+      "name": "Get energy prices",
+      "description": "Request prices for a specified range from entso-e",
+      "fields": {
+        "config_entry": {
           "required": true,
           "selector": {
-            "entity": {
-              "integration": "webostv",
-              "domain": "media_player"
+            "config_entry": {
+              "integration": "entsoe"
             }
           },
-          "name": "Entity",
-          "description": "Name(s) of the webostv entities to change sound output on."
+          "name": "Config Entry",
+          "description": "The config entry to use for this service."
         },
-        "sound_output": {
-          "required": true,
-          "example": "external_speaker",
+        "start": {
+          "required": false,
+          "example": "2023-01-01 00:00:00",
           "selector": {
-            "text": null
+            "datetime": null
           },
-          "name": "Sound output",
-          "description": "Name of the sound output to switch to."
+          "name": "Start",
+          "description": "Specifies the date and time from which to retrieve prices. Defaults to today if omitted."
+        },
+        "end": {
+          "required": false,
+          "example": "2023-01-01 00:00:00",
+          "selector": {
+            "datetime": null
+          },
+          "name": "End",
+          "description": "Specifies the date and time until which to retrieve prices. Defaults to today if omitted."
         }
+      },
+      "response": {
+        "optional": false
       }
     }
   },
@@ -4344,63 +4496,6 @@
       }
     }
   },
-  "input_datetime": {
-    "reload": {
-      "name": "Reload",
-      "description": "Reloads helpers from the YAML-configuration.",
-      "fields": {}
-    },
-    "set_datetime": {
-      "name": "Set",
-      "description": "Sets the date and/or time.",
-      "fields": {
-        "date": {
-          "example": "\u00222019-04-20\u0022",
-          "selector": {
-            "text": null
-          },
-          "name": "Date",
-          "description": "The target date."
-        },
-        "time": {
-          "example": "\u002205:04:20\u0022",
-          "selector": {
-            "time": null
-          },
-          "name": "Time",
-          "description": "The target time."
-        },
-        "datetime": {
-          "example": "\u00222019-04-20 05:04:20\u0022",
-          "selector": {
-            "text": null
-          },
-          "name": "Date \u0026 time",
-          "description": "The target date \u0026 time."
-        },
-        "timestamp": {
-          "selector": {
-            "number": {
-              "min": 0,
-              "max": 9223372036854775807,
-              "mode": "box"
-            }
-          },
-          "name": "Timestamp",
-          "description": "The target date \u0026 time, expressed by a UNIX timestamp."
-        }
-      },
-      "target": {
-        "entity": [
-          {
-            "domain": [
-              "input_datetime"
-            ]
-          }
-        ]
-      }
-    }
-  },
   "cast": {
     "show_lovelace_view": {
       "name": "Show dashboard view",
@@ -4437,183 +4532,93 @@
       }
     }
   },
-  "tibber": {
-    "get_prices": {
-      "name": "Get energy prices",
-      "description": "Get hourly energy prices from Tibber",
+  "mqtt": {
+    "publish": {
+      "name": "Publish",
+      "description": "Publishes a message to an MQTT topic.",
       "fields": {
-        "start": {
-          "required": false,
-          "example": "2024-01-01 00:00:00",
-          "selector": {
-            "datetime": null
-          },
-          "name": "Start",
-          "description": "Specifies the date and time from which to retrieve prices. Defaults to today if omitted."
-        },
-        "end": {
-          "required": false,
-          "example": "2024-01-01 23:00:00",
-          "selector": {
-            "datetime": null
-          },
-          "name": "End",
-          "description": "Specifies the date and time until which to retrieve prices. Defaults to the last hour of today if omitted."
-        }
-      },
-      "response": {
-        "optional": false
-      }
-    }
-  },
-  "input_text": {
-    "reload": {
-      "name": "Reload",
-      "description": "Reloads helpers from the YAML-configuration.",
-      "fields": {}
-    },
-    "set_value": {
-      "name": "Set",
-      "description": "Sets the value.",
-      "fields": {
-        "value": {
+        "topic": {
           "required": true,
-          "example": "This is an example text",
+          "example": "/homeassistant/hello",
           "selector": {
             "text": null
           },
-          "name": "Value",
-          "description": "The target value."
-        }
-      },
-      "target": {
-        "entity": [
-          {
-            "domain": [
-              "input_text"
-            ]
-          }
-        ]
-      }
-    }
-  },
-  "entsoe": {
-    "get_energy_prices": {
-      "name": "Get energy prices",
-      "description": "Request prices for a specified range from entso-e",
-      "fields": {
-        "config_entry": {
+          "name": "Topic",
+          "description": "Topic to publish to."
+        },
+        "payload": {
           "required": true,
+          "example": "The temperature is {{ states(\u0027sensor.temperature\u0027) }}",
           "selector": {
-            "config_entry": {
-              "integration": "entsoe"
+            "template": null
+          },
+          "name": "Payload",
+          "description": "The payload to publish."
+        },
+        "evaluate_payload": {
+          "advanced": true,
+          "default": false,
+          "selector": {
+            "boolean": null
+          },
+          "name": "Evaluate payload",
+          "description": "When \u0060payload\u0060 is a Python bytes literal, evaluate the bytes literal and publish the raw data."
+        },
+        "qos": {
+          "advanced": true,
+          "default": 0,
+          "selector": {
+            "select": {
+              "options": [
+                "0",
+                "1",
+                "2"
+              ]
             }
           },
-          "name": "Config Entry",
-          "description": "The config entry to use for this service."
+          "name": "QoS",
+          "description": "Quality of Service to use. 0: At most once. 1: At least once. 2: Exactly once."
         },
-        "start": {
-          "required": false,
-          "example": "2023-01-01 00:00:00",
+        "retain": {
+          "default": false,
           "selector": {
-            "datetime": null
+            "boolean": null
           },
-          "name": "Start",
-          "description": "Specifies the date and time from which to retrieve prices. Defaults to today if omitted."
-        },
-        "end": {
-          "required": false,
-          "example": "2023-01-01 00:00:00",
-          "selector": {
-            "datetime": null
-          },
-          "name": "End",
-          "description": "Specifies the date and time until which to retrieve prices. Defaults to today if omitted."
+          "name": "Retain",
+          "description": "If the message should have the retain flag set. If set, the broker stores the most recent message on a topic."
         }
-      },
-      "response": {
-        "optional": false
-      }
-    }
-  },
-  "schedule": {
-    "reload": {
-      "name": "Reload",
-      "description": "Reloads schedules from the YAML-configuration.",
-      "fields": {}
-    }
-  },
-  "script": {
-    "toggle_lamp_eettafel": {
-      "name": "Toggle Lamp Eettafel",
-      "description": "Zet de lampen boven de eettafel aan/uit",
-      "fields": {},
-      "response": {
-        "optional": true
       }
     },
-    "water_opwarmen": {
-      "name": "Water opwarmen",
-      "description": "",
-      "fields": {},
-      "response": {
-        "optional": true
-      }
-    },
-    "say_with_alexa": {
-      "name": "Say with Alexa",
-      "description": "",
-      "fields": {},
-      "response": {
-        "optional": true
+    "dump": {
+      "name": "Export",
+      "description": "Writes all messages on a specific topic into the \u0060mqtt_dump.txt\u0060 file in your configuration folder.",
+      "fields": {
+        "topic": {
+          "example": "OpenZWave/#",
+          "selector": {
+            "text": null
+          },
+          "name": "Topic",
+          "description": "Topic to listen to."
+        },
+        "duration": {
+          "default": 5,
+          "selector": {
+            "number": {
+              "min": 1,
+              "max": 300,
+              "unit_of_measurement": "seconds"
+            }
+          },
+          "name": "Duration",
+          "description": "How long we should listen for messages in seconds."
+        }
       }
     },
     "reload": {
       "name": "Reload",
-      "description": "Reloads all the available scripts.",
+      "description": "Reloads MQTT entities from the YAML-configuration.",
       "fields": {}
-    },
-    "turn_on": {
-      "name": "Turn on",
-      "description": "Runs the sequence of actions defined in a script.",
-      "fields": {},
-      "target": {
-        "entity": [
-          {
-            "domain": [
-              "script"
-            ]
-          }
-        ]
-      }
-    },
-    "turn_off": {
-      "name": "Turn off",
-      "description": "Stops a running script.",
-      "fields": {},
-      "target": {
-        "entity": [
-          {
-            "domain": [
-              "script"
-            ]
-          }
-        ]
-      }
-    },
-    "toggle": {
-      "name": "Toggle",
-      "description": "Toggle a script. Starts it, if isn\u0027t running, stops it otherwise.",
-      "fields": {},
-      "target": {
-        "entity": [
-          {
-            "domain": [
-              "script"
-            ]
-          }
-        ]
-      }
     }
   },
   "notify": {
@@ -4845,6 +4850,46 @@
           "name": "Battery level",
           "description": "Battery level of the device."
         }
+      }
+    }
+  },
+  "weather": {
+    "get_forecasts": {
+      "name": "Get forecasts",
+      "description": "Get weather forecasts.",
+      "fields": {
+        "type": {
+          "required": true,
+          "selector": {
+            "select": {
+              "options": [
+                "daily",
+                "hourly",
+                "twice_daily"
+              ],
+              "translation_key": "forecast_type"
+            }
+          },
+          "name": "Forecast type",
+          "description": "Forecast type: daily, hourly or twice daily."
+        }
+      },
+      "target": {
+        "entity": [
+          {
+            "domain": [
+              "weather"
+            ],
+            "supported_features": [
+              1,
+              2,
+              4
+            ]
+          }
+        ]
+      },
+      "response": {
+        "optional": false
       }
     }
   },
@@ -5595,162 +5640,6 @@
       }
     }
   },
-  "adguard": {
-    "add_url": {
-      "name": "Add URL",
-      "description": "Add a new filter subscription to AdGuard Home.",
-      "fields": {
-        "name": {
-          "required": true,
-          "example": "Example",
-          "selector": {
-            "text": null
-          },
-          "name": "Name",
-          "description": "The name of the filter subscription."
-        },
-        "url": {
-          "required": true,
-          "example": "https://www.example.com/filter/1.txt",
-          "selector": {
-            "text": null
-          },
-          "name": "URL",
-          "description": "The filter URL to subscribe to, containing the filter rules."
-        }
-      }
-    },
-    "remove_url": {
-      "name": "Remove URL",
-      "description": "Removes a filter subscription from AdGuard Home.",
-      "fields": {
-        "url": {
-          "required": true,
-          "example": "https://www.example.com/filter/1.txt",
-          "selector": {
-            "text": null
-          },
-          "name": "URL",
-          "description": "The filter subscription URL to remove."
-        }
-      }
-    },
-    "enable_url": {
-      "name": "Enable URL",
-      "description": "Enables a filter subscription in AdGuard Home.",
-      "fields": {
-        "url": {
-          "required": true,
-          "example": "https://www.example.com/filter/1.txt",
-          "selector": {
-            "text": null
-          },
-          "name": "URL",
-          "description": "The filter subscription URL to enable."
-        }
-      }
-    },
-    "disable_url": {
-      "name": "Disable URL",
-      "description": "Disables a filter subscription in AdGuard Home.",
-      "fields": {
-        "url": {
-          "required": true,
-          "example": "https://www.example.com/filter/1.txt",
-          "selector": {
-            "text": null
-          },
-          "name": "URL",
-          "description": "The filter subscription URL to disable."
-        }
-      }
-    },
-    "refresh": {
-      "name": "Refresh",
-      "description": "Refresh all filter subscriptions in AdGuard Home.",
-      "fields": {
-        "force": {
-          "default": false,
-          "selector": {
-            "boolean": null
-          },
-          "name": "Force",
-          "description": "Force update (bypasses AdGuard Home throttling). \u0022true\u0022 to force, or \u0022false\u0022 to omit for a regular refresh."
-        }
-      }
-    }
-  },
-  "linkplay": {
-    "play_preset": {
-      "name": "Play preset",
-      "description": "Play the preset number on the device.",
-      "fields": {
-        "preset_number": {
-          "example": 1,
-          "required": true,
-          "default": 1,
-          "selector": {
-            "number": {
-              "min": 1,
-              "mode": "box"
-            }
-          },
-          "name": "Preset number",
-          "description": "The preset number on the device to play."
-        }
-      },
-      "target": {
-        "entity": [
-          {
-            "integration": "linkplay",
-            "domain": [
-              "media_player"
-            ]
-          }
-        ]
-      }
-    }
-  },
-  "weather": {
-    "get_forecasts": {
-      "name": "Get forecasts",
-      "description": "Get weather forecasts.",
-      "fields": {
-        "type": {
-          "required": true,
-          "selector": {
-            "select": {
-              "options": [
-                "daily",
-                "hourly",
-                "twice_daily"
-              ],
-              "translation_key": "forecast_type"
-            }
-          },
-          "name": "Forecast type",
-          "description": "Forecast type: daily, hourly or twice daily."
-        }
-      },
-      "target": {
-        "entity": [
-          {
-            "domain": [
-              "weather"
-            ],
-            "supported_features": [
-              1,
-              2,
-              4
-            ]
-          }
-        ]
-      },
-      "response": {
-        "optional": false
-      }
-    }
-  },
   "siren": {
     "turn_on": {
       "name": "Turn on",
@@ -5848,6 +5737,95 @@
             ]
           }
         ]
+      }
+    }
+  },
+  "webostv": {
+    "button": {
+      "name": "Button",
+      "description": "Sends a button press command.",
+      "fields": {
+        "entity_id": {
+          "required": true,
+          "selector": {
+            "entity": {
+              "integration": "webostv",
+              "domain": "media_player"
+            }
+          },
+          "name": "Entity",
+          "description": "Name(s) of the webostv entities where to run the API method."
+        },
+        "button": {
+          "required": true,
+          "example": "LEFT",
+          "selector": {
+            "text": null
+          },
+          "name": "Button",
+          "description": "Name of the button to press.  Known possible values are LEFT, RIGHT, DOWN, UP, HOME, MENU, BACK, ENTER, DASH, INFO, ASTERISK, CC, EXIT, MUTE, RED, GREEN, BLUE, YELLOW, VOLUMEUP, VOLUMEDOWN, CHANNELUP, CHANNELDOWN, PLAY, PAUSE, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9."
+        }
+      }
+    },
+    "command": {
+      "name": "Command",
+      "description": "Sends a command.",
+      "fields": {
+        "entity_id": {
+          "required": true,
+          "selector": {
+            "entity": {
+              "integration": "webostv",
+              "domain": "media_player"
+            }
+          },
+          "name": "Entity",
+          "description": "Name(s) of the webostv entities where to run the API method."
+        },
+        "command": {
+          "required": true,
+          "example": "system.launcher/open",
+          "selector": {
+            "text": null
+          },
+          "name": "Command",
+          "description": "Endpoint of the command."
+        },
+        "payload": {
+          "example": "target: https://www.google.com",
+          "advanced": true,
+          "selector": {
+            "object": null
+          },
+          "name": "Payload",
+          "description": "An optional payload to provide to the endpoint in the format of key value pair(s)."
+        }
+      }
+    },
+    "select_sound_output": {
+      "name": "Select sound output",
+      "description": "Sends the TV the command to change sound output.",
+      "fields": {
+        "entity_id": {
+          "required": true,
+          "selector": {
+            "entity": {
+              "integration": "webostv",
+              "domain": "media_player"
+            }
+          },
+          "name": "Entity",
+          "description": "Name(s) of the webostv entities to change sound output on."
+        },
+        "sound_output": {
+          "required": true,
+          "example": "external_speaker",
+          "selector": {
+            "text": null
+          },
+          "name": "Sound output",
+          "description": "Name of the sound output to switch to."
+        }
       }
     }
   },
@@ -6032,87 +6010,6 @@
       }
     }
   },
-  "automation": {
-    "trigger": {
-      "name": "Trigger",
-      "description": "Triggers the actions of an automation.",
-      "fields": {
-        "skip_condition": {
-          "default": true,
-          "selector": {
-            "boolean": null
-          },
-          "name": "Skip conditions",
-          "description": "Defines whether or not the conditions will be skipped."
-        }
-      },
-      "target": {
-        "entity": [
-          {
-            "domain": [
-              "automation"
-            ]
-          }
-        ]
-      }
-    },
-    "toggle": {
-      "name": "Toggle",
-      "description": "Toggles (enable / disable) an automation.",
-      "fields": {},
-      "target": {
-        "entity": [
-          {
-            "domain": [
-              "automation"
-            ]
-          }
-        ]
-      }
-    },
-    "turn_on": {
-      "name": "Turn on",
-      "description": "Enables an automation.",
-      "fields": {},
-      "target": {
-        "entity": [
-          {
-            "domain": [
-              "automation"
-            ]
-          }
-        ]
-      }
-    },
-    "turn_off": {
-      "name": "Turn off",
-      "description": "Disables an automation.",
-      "fields": {
-        "stop_actions": {
-          "default": true,
-          "selector": {
-            "boolean": null
-          },
-          "name": "Stop actions",
-          "description": "Stops currently running actions."
-        }
-      },
-      "target": {
-        "entity": [
-          {
-            "domain": [
-              "automation"
-            ]
-          }
-        ]
-      }
-    },
-    "reload": {
-      "name": "Reload",
-      "description": "Reloads the automation configuration.",
-      "fields": {}
-    }
-  },
   "humidifier": {
     "turn_on": {
       "name": "Turn on",
@@ -6205,6 +6102,203 @@
           {
             "domain": [
               "humidifier"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "adguard": {
+    "add_url": {
+      "name": "Add URL",
+      "description": "Add a new filter subscription to AdGuard Home.",
+      "fields": {
+        "name": {
+          "required": true,
+          "example": "Example",
+          "selector": {
+            "text": null
+          },
+          "name": "Name",
+          "description": "The name of the filter subscription."
+        },
+        "url": {
+          "required": true,
+          "example": "https://www.example.com/filter/1.txt",
+          "selector": {
+            "text": null
+          },
+          "name": "URL",
+          "description": "The filter URL to subscribe to, containing the filter rules."
+        }
+      }
+    },
+    "remove_url": {
+      "name": "Remove URL",
+      "description": "Removes a filter subscription from AdGuard Home.",
+      "fields": {
+        "url": {
+          "required": true,
+          "example": "https://www.example.com/filter/1.txt",
+          "selector": {
+            "text": null
+          },
+          "name": "URL",
+          "description": "The filter subscription URL to remove."
+        }
+      }
+    },
+    "enable_url": {
+      "name": "Enable URL",
+      "description": "Enables a filter subscription in AdGuard Home.",
+      "fields": {
+        "url": {
+          "required": true,
+          "example": "https://www.example.com/filter/1.txt",
+          "selector": {
+            "text": null
+          },
+          "name": "URL",
+          "description": "The filter subscription URL to enable."
+        }
+      }
+    },
+    "disable_url": {
+      "name": "Disable URL",
+      "description": "Disables a filter subscription in AdGuard Home.",
+      "fields": {
+        "url": {
+          "required": true,
+          "example": "https://www.example.com/filter/1.txt",
+          "selector": {
+            "text": null
+          },
+          "name": "URL",
+          "description": "The filter subscription URL to disable."
+        }
+      }
+    },
+    "refresh": {
+      "name": "Refresh",
+      "description": "Refresh all filter subscriptions in AdGuard Home.",
+      "fields": {
+        "force": {
+          "default": false,
+          "selector": {
+            "boolean": null
+          },
+          "name": "Force",
+          "description": "Force update (bypasses AdGuard Home throttling). \u0022true\u0022 to force, or \u0022false\u0022 to omit for a regular refresh."
+        }
+      }
+    }
+  },
+  "automation": {
+    "trigger": {
+      "name": "Trigger",
+      "description": "Triggers the actions of an automation.",
+      "fields": {
+        "skip_condition": {
+          "default": true,
+          "selector": {
+            "boolean": null
+          },
+          "name": "Skip conditions",
+          "description": "Defines whether or not the conditions will be skipped."
+        }
+      },
+      "target": {
+        "entity": [
+          {
+            "domain": [
+              "automation"
+            ]
+          }
+        ]
+      }
+    },
+    "toggle": {
+      "name": "Toggle",
+      "description": "Toggles (enable / disable) an automation.",
+      "fields": {},
+      "target": {
+        "entity": [
+          {
+            "domain": [
+              "automation"
+            ]
+          }
+        ]
+      }
+    },
+    "turn_on": {
+      "name": "Turn on",
+      "description": "Enables an automation.",
+      "fields": {},
+      "target": {
+        "entity": [
+          {
+            "domain": [
+              "automation"
+            ]
+          }
+        ]
+      }
+    },
+    "turn_off": {
+      "name": "Turn off",
+      "description": "Disables an automation.",
+      "fields": {
+        "stop_actions": {
+          "default": true,
+          "selector": {
+            "boolean": null
+          },
+          "name": "Stop actions",
+          "description": "Stops currently running actions."
+        }
+      },
+      "target": {
+        "entity": [
+          {
+            "domain": [
+              "automation"
+            ]
+          }
+        ]
+      }
+    },
+    "reload": {
+      "name": "Reload",
+      "description": "Reloads the automation configuration.",
+      "fields": {}
+    }
+  },
+  "linkplay": {
+    "play_preset": {
+      "name": "Play preset",
+      "description": "Play the preset number on the device.",
+      "fields": {
+        "preset_number": {
+          "example": 1,
+          "required": true,
+          "default": 1,
+          "selector": {
+            "number": {
+              "min": 1,
+              "mode": "box"
+            }
+          },
+          "name": "Preset number",
+          "description": "The preset number on the device to play."
+        }
+      },
+      "target": {
+        "entity": [
+          {
+            "integration": "linkplay",
+            "domain": [
+              "media_player"
             ]
           }
         ]

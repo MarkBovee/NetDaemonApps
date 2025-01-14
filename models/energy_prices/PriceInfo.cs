@@ -11,13 +11,13 @@ namespace NetDaemonApps.models.energy_prices
         /// <summary>
         /// Gets or sets the value of the time
         /// </summary>
-        [JsonPropertyName("time")]
+        [JsonPropertyName("start")]
         public required string Time { get; set; }
 
         /// <summary>
         /// Gets or sets the value of the price
         /// </summary>
-        [JsonPropertyName("price")]
+        [JsonPropertyName("value")]
         public double Price { get; set; }
 
         /// <summary>
@@ -29,7 +29,7 @@ namespace NetDaemonApps.models.energy_prices
             try
             {
                 // Parse the timestamp string to a DateTimeOffset using a format provider
-                DateTimeOffset dateTimeOffset = DateTimeOffset.ParseExact(Time, "yyyy-MM-dd HH:mm:sszzz", CultureInfo.InvariantCulture);
+                DateTimeOffset dateTimeOffset = DateTimeOffset.ParseExact(Time, "yyyy-MM-ddTHH:mm:sszzz", CultureInfo.InvariantCulture);
 
                 // Convert DateTimeOffset to DateTime, considering the local time zone
                 DateTime dateTime = dateTimeOffset.LocalDateTime;

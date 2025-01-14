@@ -16,6 +16,8 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
     /// <summary>
     /// Adjust the energy appliances schedule based on the power prices
     /// TODO: Split to different apps
+    /// Switched to Nordpool API sensor
+    /// Template: {{ (0.021 + 0.102 + (current_price * 0.21)) | float }}
     /// </summary>
     [NetDaemonApp]
     public class AdjustEnergySchedule
@@ -135,24 +137,27 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
         /// </summary>
         private void SetEnergyPriceThreshold()
         {
-            var avgPrice = _entities.Sensor.EnergyPricesAverageElectricityPriceToday.State;
-            const double fallbackPrice = 0.28;
-
-            if (avgPrice != null)
+            if (_entities.Sensor.NordpoolKwhNlEur310021.Attributes != null)
             {
-                // Set the price to the average price
-                _priceThreshold = avgPrice.Value;
+                var avgPrice = _entities.Sensor.NordpoolKwhNlEur310021.Attributes.Average;
+                const double fallbackPrice = 0.28;
 
-                // Check if the price is below the fallback price
-                if (_priceThreshold < fallbackPrice)
+                if (avgPrice != null)
                 {
+                    // Set the price to the average price
+                    _priceThreshold = avgPrice.Value;
+
+                    // Check if the price is below the fallback price
+                    if (_priceThreshold < fallbackPrice)
+                    {
+                        _priceThreshold = fallbackPrice;
+                    }
+                }
+                else
+                {
+                    // Set the price to a fallback default value
                     _priceThreshold = fallbackPrice;
                 }
-            }
-            else
-            {
-                // Set the price to a fallback default value
-                _priceThreshold = fallbackPrice;
             }
 
             _priceThreshold = Math.Round(_priceThreshold, 2);
@@ -315,7 +320,7 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
                 // Set the temperature values for the heating program
                 if (useNightProgram)
                 {
-                    temperatureHeat = currentPrice < 0.2 ? 56 : 48;
+                    temperatureHeat = currentPrice < 0.23 ? 58 : 52;
                 }
                 else if (useLegionellaProtection)
                 {
@@ -445,7 +450,7 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
             }
 
             // Read power prices for today
-            var powerPrices = _ha.Entity("sensor.energy_prices_average_electricity_price_today");
+            var powerPrices = _ha.Entity("sensor.nordpool_kwh_nl_eur_3_10_021");
             if (powerPrices == null)
             {
                 _logger.LogWarning("Power prices sensor not found");

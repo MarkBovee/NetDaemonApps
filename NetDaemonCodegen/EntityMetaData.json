@@ -934,6 +934,16 @@
           "cSharpName": "HomeCinemaSyncTime"
         },
         {
+          "id": "button.office_herstarten",
+          "friendlyName": "Herstarten",
+          "cSharpName": "OfficeHerstarten"
+        },
+        {
+          "id": "button.office_sync_time",
+          "friendlyName": "Sync time",
+          "cSharpName": "OfficeSyncTime"
+        },
+        {
           "id": "button.tuin_camera_take_snapshot",
           "friendlyName": "Tuin Camera Take Snapshot",
           "cSharpName": "TuinCameraTakeSnapshot"
@@ -959,6 +969,16 @@
           "jsonName": "device_class",
           "cSharpName": "DeviceClass",
           "clrType": "System.String"
+        },
+        {
+          "jsonName": "restored",
+          "cSharpName": "Restored",
+          "clrType": "System.Boolean"
+        },
+        {
+          "jsonName": "supported_features",
+          "cSharpName": "SupportedFeatures",
+          "clrType": "System.Double"
         }
       ]
     },
@@ -1312,6 +1332,11 @@
           "id": "datetime.our_home_away_mode_start_date",
           "friendlyName": "Our home Away Mode Start Date",
           "cSharpName": "OurHomeAwayModeStartDate"
+        },
+        {
+          "id": "datetime.our_home_domestic_hot_water_0_legionella_protection_temperature_reached",
+          "friendlyName": "Our home Domestic Hot Water 0 Legionella Protection Temperature Reached",
+          "cSharpName": "OurHomeDomesticHotWater0LegionellaProtectionTemperatureReached"
         },
         {
           "id": "datetime.our_home_manual_cooling_end_date",
@@ -1898,14 +1923,14 @@
           "cSharpName": "EmmeloordRangeExtenderInfo"
         },
         {
-          "id": "sensor.energy_prices_time_of_highest_price_today",
-          "friendlyName": "Time of highest price (energy prices)",
-          "cSharpName": "EnergyPricesTimeOfHighestPriceToday"
+          "id": "sensor.energy_prices_time_of_highest_price",
+          "friendlyName": "Time of highest price (energy_prices)",
+          "cSharpName": "EnergyPricesTimeOfHighestPrice"
         },
         {
-          "id": "sensor.energy_prices_time_of_lowest_price_today",
-          "friendlyName": "Time of lowest price (energy prices)",
-          "cSharpName": "EnergyPricesTimeOfLowestPriceToday"
+          "id": "sensor.energy_prices_time_of_lowest_price",
+          "friendlyName": "Time of lowest price (energy_prices)",
+          "cSharpName": "EnergyPricesTimeOfLowestPrice"
         },
         {
           "id": "sensor.ex5601_t1_extern_ip",
@@ -2876,38 +2901,38 @@
           "cSharpName": "EmmeloordRangeExtenderBattery"
         },
         {
-          "id": "sensor.energy_prices_average_electricity_price_today",
-          "friendlyName": "Average electricity price (energy prices)",
-          "cSharpName": "EnergyPricesAverageElectricityPriceToday"
+          "id": "sensor.energy_prices_average_electricity_price",
+          "friendlyName": "Average electricity price (energy_prices)",
+          "cSharpName": "EnergyPricesAverageElectricityPrice"
         },
         {
           "id": "sensor.energy_prices_current_electricity_market_price",
-          "friendlyName": "Current electricity market price (energy prices)",
+          "friendlyName": "Current electricity market price (energy_prices)",
           "cSharpName": "EnergyPricesCurrentElectricityMarketPrice"
         },
         {
           "id": "sensor.energy_prices_current_percentage_in_electricity_price_range",
-          "friendlyName": "Current percentage in electricity price range (energy prices)",
+          "friendlyName": "Current percentage in electricity price range (energy_prices)",
           "cSharpName": "EnergyPricesCurrentPercentageInElectricityPriceRange"
         },
         {
-          "id": "sensor.energy_prices_current_percentage_of_highest_electricity_price_today",
-          "friendlyName": "Current percentage of highest electricity price (energy prices)",
-          "cSharpName": "EnergyPricesCurrentPercentageOfHighestElectricityPriceToday"
+          "id": "sensor.energy_prices_current_percentage_of_highest_electricity_price",
+          "friendlyName": "Current percentage of highest electricity price (energy_prices)",
+          "cSharpName": "EnergyPricesCurrentPercentageOfHighestElectricityPrice"
         },
         {
-          "id": "sensor.energy_prices_highest_energy_price_today",
-          "friendlyName": "Highest energy price (energy prices)",
-          "cSharpName": "EnergyPricesHighestEnergyPriceToday"
+          "id": "sensor.energy_prices_highest_energy_price",
+          "friendlyName": "Highest energy price (energy_prices)",
+          "cSharpName": "EnergyPricesHighestEnergyPrice"
         },
         {
-          "id": "sensor.energy_prices_lowest_energy_price_today",
-          "friendlyName": "Lowest energy price (energy prices)",
-          "cSharpName": "EnergyPricesLowestEnergyPriceToday"
+          "id": "sensor.energy_prices_lowest_energy_price",
+          "friendlyName": "Lowest energy price (energy_prices)",
+          "cSharpName": "EnergyPricesLowestEnergyPrice"
         },
         {
           "id": "sensor.energy_prices_next_hour_electricity_market_price",
-          "friendlyName": "Next hour electricity market price (energy prices)",
+          "friendlyName": "Next hour electricity market price (energy_prices)",
           "cSharpName": "EnergyPricesNextHourElectricityMarketPrice"
         },
         {
@@ -3064,6 +3089,11 @@
           "id": "sensor.neerslagverwachting_gemiddeld",
           "friendlyName": "Neerslagverwachting gemiddeld",
           "cSharpName": "NeerslagverwachtingGemiddeld"
+        },
+        {
+          "id": "sensor.nordpool_kwh_nl_eur_3_10_021",
+          "friendlyName": "nordpool_kwh_nl_eur_3_10_021",
+          "cSharpName": "NordpoolKwhNlEur310021"
         },
         {
           "id": "sensor.our_home_circuit_0_current_flow_temperature",
@@ -3535,6 +3565,111 @@
         {
           "jsonName": "is_eco_mode",
           "cSharpName": "IsEcoMode",
+          "clrType": "System.Boolean"
+        },
+        {
+          "jsonName": "average",
+          "cSharpName": "Average",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "off_peak_1",
+          "cSharpName": "OffPeak1",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "off_peak_2",
+          "cSharpName": "OffPeak2",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "peak",
+          "cSharpName": "Peak",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "min",
+          "cSharpName": "Min",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "max",
+          "cSharpName": "Max",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "mean",
+          "cSharpName": "Mean",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "unit",
+          "cSharpName": "Unit",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "currency",
+          "cSharpName": "Currency",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "country",
+          "cSharpName": "Country",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "region",
+          "cSharpName": "Region",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "low_price",
+          "cSharpName": "LowPrice",
+          "clrType": "System.Boolean"
+        },
+        {
+          "jsonName": "price_percent_to_average",
+          "cSharpName": "PricePercentToAverage",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "today",
+          "cSharpName": "Today",
+          "clrType": "System.Collections.Generic.IReadOnlyList\u00601[System.Double]"
+        },
+        {
+          "jsonName": "tomorrow",
+          "cSharpName": "Tomorrow",
+          "clrType": "System.Collections.Generic.IReadOnlyList\u00601[System.Double]"
+        },
+        {
+          "jsonName": "tomorrow_valid",
+          "cSharpName": "TomorrowValid",
+          "clrType": "System.Boolean"
+        },
+        {
+          "jsonName": "raw_today",
+          "cSharpName": "RawToday",
+          "clrType": "System.Collections.Generic.IReadOnlyList\u00601[System.Object]"
+        },
+        {
+          "jsonName": "raw_tomorrow",
+          "cSharpName": "RawTomorrow",
+          "clrType": "System.Collections.Generic.IReadOnlyList\u00601[System.Object]"
+        },
+        {
+          "jsonName": "current_price",
+          "cSharpName": "CurrentPrice",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "additional_costs_current_hour",
+          "cSharpName": "AdditionalCostsCurrentHour",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "price_in_cents",
+          "cSharpName": "PriceInCents",
           "clrType": "System.Boolean"
         }
       ]
@@ -4095,7 +4230,7 @@
         },
         {
           "id": "update.material_rounded_theme_based_on_material_you_by_google_on_android_update",
-          "friendlyName": "Material Rounded Theme - Based on Material You by Google on Android update",
+          "friendlyName": "Material Rounded and Material You - Material Design 3 Themes update",
           "cSharpName": "MaterialRoundedThemeBasedOnMaterialYouByGoogleOnAndroidUpdate"
         },
         {
@@ -4142,6 +4277,11 @@
           "id": "update.nginx_home_assistant_ssl_proxy_update",
           "friendlyName": "NGINX Home Assistant SSL proxy Update",
           "cSharpName": "NginxHomeAssistantSslProxyUpdate"
+        },
+        {
+          "id": "update.nordpool_update",
+          "friendlyName": "nordpool update",
+          "cSharpName": "NordpoolUpdate"
         },
         {
           "id": "update.plex_media_server_update",
@@ -4641,7 +4781,7 @@
       "entities": [
         {
           "id": "vacuum.q7_max",
-          "friendlyName": "Rocky",
+          "friendlyName": "Q7 Max",
           "cSharpName": "Q7Max"
         }
       ],
