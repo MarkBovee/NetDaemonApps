@@ -320,7 +320,7 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
                 // Set the temperature values for the heating program
                 if (useNightProgram)
                 {
-                    temperatureHeat = currentPrice < 0.23 ? 58 : 52;
+                    temperatureHeat = 58;
                 }
                 else if (useLegionellaProtection)
                 {
@@ -343,7 +343,7 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
                     Level.High => 54,
                     Level.Medium => 50,
                     Level.Low => currentPrice < _priceThreshold ? 45: 40,
-                    _ => bathMode ? 56 : 35
+                    _ => bathMode ? 58 : 35
                 };
             }
 
