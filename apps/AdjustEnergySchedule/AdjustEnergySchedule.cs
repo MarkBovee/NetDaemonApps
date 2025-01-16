@@ -51,11 +51,11 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
         /// The prices tomorrow
         /// </summary>
         private IDictionary<DateTime, double>? _pricesTomorrow;
-
+        
         /// <summary>
-        /// The is heater on indication
+        /// The heater on
         /// </summary>
-        private bool _isHeaterOn;
+        private bool _heaterOn;
 
         /// <summary>
         /// The heating time
@@ -267,6 +267,12 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
             var heatingWater = _entities.WaterHeater.OurHomeDomesticHotWater0;
             var heatingCircuit = _entities.Climate.OurHomeZoneThuisCircuit0Climate;
 
+            // Check for price data
+            if (_pricesToday == null || _pricesTomorrow == null)
+            {
+                return;
+            }
+            
             // Get the current price
             var currentPrice = GetCurrentPrice();
             if (currentPrice == null)
@@ -292,7 +298,11 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
             }
 
             // Set the start and end time for the heating period
-            var startTime = useNightProgram ? _pricesToday.Where(p => p.Key.TimeOfDay < TimeSpan.FromHours(6)).OrderBy(p => p.Value).ThenBy(p => p.Key).First().Key : _pricesToday.Where(p => p.Key.TimeOfDay > TimeSpan.FromHours(8)).OrderBy(p => p.Value).ThenBy(p => p.Key).First().Key;
+            var lowestNightPrice = _pricesToday.Where(p => p.Key.TimeOfDay < TimeSpan.FromHours(6)).OrderBy(p => p.Value).ThenBy(p => p.Key).FirstOrDefault();
+            var lowestDayPrice = _pricesToday.Where(p => p.Key.TimeOfDay > TimeSpan.FromHours(8)).OrderBy(p => p.Value).ThenBy(p => p.Key).FirstOrDefault();
+            var nextNightPrice = _pricesTomorrow.Where(p => p.Key.TimeOfDay < TimeSpan.FromHours(6)).OrderBy(p => p.Value).ThenBy(p => p.Key).FirstOrDefault();
+            
+            var startTime = useNightProgram ? lowestNightPrice.Key : lowestDayPrice.Key;
 
             // Check if the value 1 hour before the start time is lower than 1 hour after the start time
             if (useLegionellaProtection && startTime.Hour is > 0 and < 23 && _pricesToday[startTime.AddHours(-1)] < _pricesToday[startTime.AddHours(1)])
@@ -303,10 +313,11 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
             // Set the end time 3 hours after the start time
             var endTime = startTime.AddHours(3);
 
-            // Set the temperature values
+            // Set the default temperature values
             var temperatureHeat = 35;
             var temperatureIdle = 35;
 
+            // Set the temperature values for the specific heating program
             if (awayMode)
             {
                 // Set the temperature to 60 degrees for the away mode for legionella protection
@@ -317,10 +328,21 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
             }
             else
             {
-                // Set the temperature values for the heating program
+                // Set the idle temperature
+                temperatureIdle = _energyProduction switch
+                {
+                    Level.Maximum => 58,
+                    Level.High => 54,
+                    Level.Medium => 50,
+                    Level.Low => currentPrice < _priceThreshold ? 45: 40,
+                    _ => bathMode ? 58 : 35
+                };
+                
+                // Set the heating temperature value based on the heating program
                 if (useNightProgram)
                 {
-                    temperatureHeat = 58;
+                    // Set the temperature to 56 degrees for the night program if the night price is lower than the day price 
+                    temperatureHeat = lowestNightPrice.Value < lowestDayPrice.Value ? 56 : 52;
                 }
                 else if (useLegionellaProtection)
                 {
@@ -334,17 +356,14 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
                         Level.Medium => 54,
                         _ => 50
                     };
+                    
+                    // Check if the next price for tomorrow is lower than the current price
+                    if (nextNightPrice.Value > 0 && nextNightPrice.Value < currentPrice)
+                    {
+                        // if so, set the temperature to idle and wait for the next cycle
+                        temperatureHeat = temperatureIdle;
+                    }
                 }
-                
-                // Set the idle temperature
-                temperatureIdle = _energyProduction switch
-                {
-                    Level.Maximum => 58,
-                    Level.High => 54,
-                    Level.Medium => 50,
-                    Level.Low => currentPrice < _priceThreshold ? 45: 40,
-                    _ => bathMode ? 58 : 35
-                };
             }
 
             // If prices are below zero, set the temperature to max!
@@ -372,14 +391,14 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
                 // Check if the heater is off and the current timestamp is within the schedule  
                 if (timeStamp.TimeOfDay >= startTime.TimeOfDay && timeStamp <= endTime)
                 {
-                    if (_isHeaterOn) return;
+                    if (_heaterOn) return;
                 
                     _logger.LogInformation($"Started {programType} program from: {startTime}, to: {endTime}", heatingWater.EntityId);
 
                     heatingWater.SetOperationMode("Manual");
                     heatingWater.SetTemperature(temperatureHeat);
 
-                    _isHeaterOn = true;
+                    _heaterOn = true;
                     _targetTemperature = temperatureHeat;
                 }
                 else
@@ -392,7 +411,7 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
                         _logger.LogInformation($"Continue heating to {_targetTemperature} for {_waitCycles} cycles");
                     
                     }
-                    else if (_isHeaterOn || _targetTemperature != temperatureIdle)
+                    else if (_heaterOn || _targetTemperature != temperatureIdle)
                     {
                         _targetTemperature = temperatureIdle;
                         _waitCycles = 3;
@@ -402,7 +421,7 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
                         heatingWater.SetOperationMode("Manual");
                         heatingWater.SetTemperature(temperatureIdle);
                     
-                        _isHeaterOn = false;
+                        _heaterOn = false;
                     }
                 }
             }
@@ -413,7 +432,7 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
                 // Reset the values
                 _targetTemperature = 0;
                 _waitCycles = 0;
-                _isHeaterOn = false;
+                _heaterOn = false;
             }
         }
 
