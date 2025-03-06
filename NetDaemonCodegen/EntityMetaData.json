@@ -4999,6 +4999,11 @@
           "cSharpName": "NetdaemonV4Net8Update"
         },
         {
+          "id": "update.netdaemon_v5_net_9_update",
+          "friendlyName": "NetDaemon V5 (.NET 9) Update",
+          "cSharpName": "NetdaemonV5Net9Update"
+        },
+        {
           "id": "update.nginx_home_assistant_ssl_proxy_update",
           "friendlyName": "NGINX Home Assistant SSL proxy Update",
           "cSharpName": "NginxHomeAssistantSslProxyUpdate"

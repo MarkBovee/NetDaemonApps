@@ -5057,9 +5057,9 @@
         }
       }
     },
-    "alexa_media_last_called": {
-      "name": "Send a notification via alexa_media_last_called",
-      "description": "Sends a notification message using the alexa_media_last_called integration.",
+    "alexa_media": {
+      "name": "Send a notification with alexa_media",
+      "description": "Sends a notification message using the alexa_media service.",
       "fields": {
         "message": {
           "required": true,
@@ -5088,9 +5088,9 @@
         }
       }
     },
-    "alexa_media": {
-      "name": "Send a notification with alexa_media",
-      "description": "Sends a notification message using the alexa_media service.",
+    "alexa_media_last_called": {
+      "name": "Send a notification via alexa_media_last_called",
+      "description": "Sends a notification message using the alexa_media_last_called integration.",
       "fields": {
         "message": {
           "required": true,
