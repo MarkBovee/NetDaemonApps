@@ -10,6 +10,7 @@ using System.Net.Http;
 using System.Text.Json;
 using System.Threading.Tasks;
 using HomeAssistantGenerated.models.enums;
+using Services = HomeAssistantGenerated.Services;
 
 namespace NetDaemonApps.apps.AdjustPowerSchedule
 {
@@ -167,10 +168,10 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
             {
                 // Check if the energy production is above the threshold
                 < 0.1 => Level.None,
-                > 0.1 and < 0.7 => Level.Low,
-                > 0.7 and < 1 => Level.Medium,
-                > 1 and < 2 => Level.High,
-                _ => Level.Maximum,
+                > 0.1 and <= 1 => Level.Low,
+                > 1 and <= 2 => Level.Medium,
+                > 2 and <= 3 => Level.High,
+                _ => Level.Maximum
             };
         }
 
@@ -181,13 +182,13 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
         {
             // Get the entities for the appliances
             var washingMachine = _entities.Switch.Wasmachine;
-            var washingMachineCurrentPower = _entities.Sensor.WasmachineCurrentPower;
+            var washingMachineCurrentPower = _entities.Sensor.WasmachineHuidigGebruik;
 
             var dryer = _entities.Switch.Droger;
-            var dryerCurrentPower = _entities.Sensor.DrogerCurrentPower;
+            var dryerCurrentPower = _entities.Sensor.DrogerHuidigGebruik;
 
             var dishwasher = _entities.Switch.Vaatwasser;
-            var dishwasherCurrentPower = _entities.Sensor.VaatwasserCurrentPower;
+            var dishwasherCurrentPower = _entities.Sensor.VaatwasserHuidigGebruik;
 
             var garage = _entities.Switch.Garage;
 
@@ -234,7 +235,7 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
                 // Turn on the appliances if they are off
                 if (washingMachine?.State == "off")
                 {
-                    _logger.LogInformation("Washing machine  enabled again");
+                    _logger.LogInformation("Washing machine enabled again");
                     washingMachine.TurnOn();
                 }
 
@@ -332,9 +333,9 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
                 temperatureIdle = _energyProduction switch
                 {
                     Level.Maximum => 58,
-                    Level.High => 54,
-                    Level.Medium => 50,
-                    Level.Low => currentPrice < _priceThreshold ? 45: 40,
+                    Level.High => 58,
+                    Level.Medium => currentPrice < _priceThreshold ? 50: 35,
+                    Level.Low => currentPrice < _priceThreshold ? 45: 35,
                     _ => bathMode ? 58 : 35
                 };
                 
@@ -381,7 +382,7 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
                 // Check if the start time is in the future
                 if (_heatingTime >= timeStamp)
                 {
-                    _services.PersistentNotification.Create(message: $"Next {programType} program planned at: {startTime} ", title: "Energy schedule assistant");
+                    DisplayMessage($"{programType} program planned at: {startTime:HH:mm} ");
                 }
             }
 
@@ -393,7 +394,7 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
                 {
                     if (_heaterOn) return;
                 
-                    _logger.LogInformation($"Started {programType} program from: {startTime}, to: {endTime}", heatingWater.EntityId);
+                    DisplayMessage($"{programType} program from: {startTime:HH:mm} to: {endTime:HH:mm}");
 
                     heatingWater.SetOperationMode("Manual");
                     heatingWater.SetTemperature(temperatureHeat);
@@ -407,22 +408,19 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
                     if (_waitCycles > 0 && temperatureIdle < _targetTemperature)
                     {
                         _waitCycles--;
-                    
-                        _logger.LogInformation($"Continue heating to {_targetTemperature} for {_waitCycles} cycles");
-                    
                     }
                     else if (_heaterOn || _targetTemperature != temperatureIdle)
                     {
                         _targetTemperature = temperatureIdle;
-                        _waitCycles = 3;
-                    
-                        _logger.LogInformation($"Started heating to {_targetTemperature} for {_waitCycles} cycles");
-                    
+                        _waitCycles = 10;
+                        
                         heatingWater.SetOperationMode("Manual");
                         heatingWater.SetTemperature(temperatureIdle);
                     
                         _heaterOn = false;
                     }
+                    
+                    DisplayMessage($"Heating to {_targetTemperature} for {_waitCycles} cycles");
                 }
             }
             catch (Exception ex)
@@ -434,6 +432,15 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
                 _waitCycles = 0;
                 _heaterOn = false;
             }
+        }
+
+        /// <summary>
+        /// Displays the message using the specified message
+        /// </summary>
+        /// <param name="message">The message</param>
+        private void DisplayMessage(string message)
+        {
+            _entities.InputText.HeatingScheduleStatus.SetValue(message);
         }
 
         /// <summary>
@@ -568,51 +575,49 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
             var pricesTomorrow = new Dictionary<DateTime, double>();
 
             // Parse the html
-            if (html != null)
+            if (html == null) return null;
+            
+            HtmlDocument document = new();
+            document.LoadHtml(html);
+
+            // Extract the table with the price information
+            var nodes = document.DocumentNode.SelectNodes("//div[@class='row boxinner']");
+
+            if (nodes == null) return null;
+                
+            foreach (var node in nodes)
             {
-                HtmlDocument document = new();
-                document.LoadHtml(html);
+                // Load the html of the row
+                HtmlDocument nodeHtml = new();
+                nodeHtml.LoadHtml($"<html>{node.OuterHtml}</html>");
 
-                // Extract the table with the price information
-                var nodes = document.DocumentNode.SelectNodes("//div[@class='row boxinner']");
+                // Parse the time text
+                var timeText = nodeHtml.DocumentNode.SelectSingleNode("//div[@class='col-6 col-md-2']").InnerText.Trim();
+                var timeStart = timeText.Substring(0, 5);
+                var day = timeText.Substring(11);
 
-                if (nodes != null)
+                // Parse the price text
+                HtmlDocument priceHtml = new();
+                priceHtml.LoadHtml($"<html>{nodeHtml.DocumentNode.SelectSingleNode("//div[@class='collapse']").OuterHtml}</html>");
+                var priceText = priceHtml.DocumentNode.SelectNodes("//strong").Last().InnerText.Trim();
+
+                if (day == "Vandaag" && double.TryParse(priceText, NumberStyles.Any, CultureInfo.InvariantCulture, out var priceToday))
                 {
-                    foreach (var node in nodes)
-                    {
-                        // Load the html of the row
-                        HtmlDocument nodeHtml = new();
-                        nodeHtml.LoadHtml($"<html>{node.OuterHtml}</html>");
+                    var date = DateTime.ParseExact(timeStart, "HH:mm", CultureInfo.InvariantCulture);
 
-                        // Parse the time text
-                        var timeText = nodeHtml.DocumentNode.SelectSingleNode("//div[@class='col-6 col-md-2']").InnerText.Trim();
-                        var timeStart = timeText.Substring(0, 5);
-                        var day = timeText.Substring(11);
+                    pricesToday[date] = priceToday;
+                }
 
-                        // Parse the price text
-                        HtmlDocument priceHtml = new();
-                        priceHtml.LoadHtml($"<html>{nodeHtml.DocumentNode.SelectSingleNode("//div[@class='collapse']").OuterHtml}</html>");
-                        var priceText = priceHtml.DocumentNode.SelectNodes("//strong").Last().InnerText.Trim();
+                if (day == "Morgen" && double.TryParse(priceText, NumberStyles.Any, CultureInfo.InvariantCulture, out var priceTomorrow))
+                {
+                    var date = DateTime.ParseExact(timeStart, "HH:mm", CultureInfo.InvariantCulture).AddDays(1);
 
-                        if (day == "Vandaag" && double.TryParse(priceText, NumberStyles.Any, CultureInfo.InvariantCulture, out var priceToday))
-                        {
-                            var date = DateTime.ParseExact(timeStart, "HH:mm", CultureInfo.InvariantCulture);
-
-                            pricesToday[date] = priceToday;
-                        }
-
-                        if (day == "Morgen" && double.TryParse(priceText, NumberStyles.Any, CultureInfo.InvariantCulture, out var priceTomorrow))
-                        {
-                            var date = DateTime.ParseExact(timeStart, "HH:mm", CultureInfo.InvariantCulture).AddDays(1);
-
-                            pricesTomorrow[date] = priceTomorrow;
-                        }
-                    }
-
-                    _pricesToday = pricesToday;
-                    _pricesTomorrow = pricesTomorrow;
+                    pricesTomorrow[date] = priceTomorrow;
                 }
             }
+
+            _pricesToday = pricesToday;
+            _pricesTomorrow = pricesTomorrow;
 
             return null;
         }
