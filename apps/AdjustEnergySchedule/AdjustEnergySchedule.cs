@@ -315,8 +315,9 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
             var endTime = startTime.AddHours(3);
 
             // Set the default temperature values
-            var temperatureHeat = 35;
-            var temperatureIdle = 35;
+            var programTemperature = 35;
+            var heatingTemperature = 35;
+            var idleTemperature = 35;
 
             // Set the temperature values for the specific heating program
             if (awayMode)
@@ -324,13 +325,13 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
                 // Set the temperature to 60 degrees for the away mode for legionella protection
                 if (useLegionellaProtection && useNightProgram == false)
                 {
-                    temperatureHeat = 60;
+                    programTemperature = 60;
                 }
             }
             else
             {
                 // Set the idle temperature
-                temperatureIdle = _energyProduction switch
+                heatingTemperature = _energyProduction switch
                 {
                     Level.Maximum => 58,
                     Level.High => 58,
@@ -343,15 +344,15 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
                 if (useNightProgram)
                 {
                     // Set the temperature to 56 degrees for the night program if the night price is lower than the day price 
-                    temperatureHeat = lowestNightPrice.Value < lowestDayPrice.Value ? 56 : 52;
+                    programTemperature = lowestNightPrice.Value < lowestDayPrice.Value ? 56 : 52;
                 }
                 else if (useLegionellaProtection)
                 {
-                    temperatureHeat = 62;
+                    programTemperature = 62;
                 }
                 else
                 {
-                    temperatureHeat = _energyProduction switch
+                    programTemperature = _energyProduction switch
                     {
                         Level.High => 58,
                         Level.Medium => 54,
@@ -362,7 +363,7 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
                     if (nextNightPrice.Value > 0 && nextNightPrice.Value < currentPrice)
                     {
                         // if so, set the temperature to idle and wait for the next cycle
-                        temperatureHeat = temperatureIdle;
+                        programTemperature = heatingTemperature;
                     }
                 }
             }
@@ -370,57 +371,61 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
             // If prices are below zero, set the temperature to max!
             if (currentPrice < 0.1)
             {
-                temperatureHeat = 70;
-                temperatureIdle = 70;
+                programTemperature = 70;
+                heatingTemperature = 70;
             }
             
-            // Set notification for the start of the heating period
-            if (_heatingTime != startTime)
-            {
-                _heatingTime = startTime;
-
-                // Check if the start time is in the future
-                if (_heatingTime >= timeStamp)
-                {
-                    DisplayMessage($"{programType} program planned at: {startTime:HH:mm} ");
-                }
-            }
-
             // Set the water heating temperature
             try
             {
                 // Check if the heater is off and the current timestamp is within the schedule  
                 if (timeStamp.TimeOfDay >= startTime.TimeOfDay && timeStamp <= endTime)
                 {
+                    // Started program
                     if (_heaterOn) return;
                 
                     DisplayMessage($"{programType} program from: {startTime:HH:mm} to: {endTime:HH:mm}");
 
                     heatingWater.SetOperationMode("Manual");
-                    heatingWater.SetTemperature(temperatureHeat);
+                    heatingWater.SetTemperature(programTemperature);
 
                     _heaterOn = true;
-                    _targetTemperature = temperatureHeat;
+                    _targetTemperature = programTemperature;
                 }
                 else
                 {
-                    // Set the heater to idle temperature after the heating period
-                    if (_waitCycles > 0 && temperatureIdle < _targetTemperature)
+                    // Set the heater heating temperature if no program is running
+                    if (_waitCycles > 0 && heatingTemperature < _targetTemperature)
                     {
                         _waitCycles--;
+                        
+                        DisplayMessage($"Heating to {_targetTemperature} for {_waitCycles} cycles");
                     }
-                    else if (_heaterOn || _targetTemperature != temperatureIdle)
+                    else
                     {
-                        _targetTemperature = temperatureIdle;
+                        if (!_heaterOn && _targetTemperature == heatingTemperature) return;
+                        
+                        _targetTemperature = heatingTemperature;
                         _waitCycles = 10;
+                        _heaterOn = false;
                         
                         heatingWater.SetOperationMode("Manual");
-                        heatingWater.SetTemperature(temperatureIdle);
-                    
-                        _heaterOn = false;
+                        heatingWater.SetTemperature(heatingTemperature);
+
+                        if (heatingTemperature > idleTemperature)
+                        {
+                            DisplayMessage($"Heating to {_targetTemperature} for {_waitCycles} cycles");
+                        }
+                        else
+                        {
+                            // Set the next planned program
+                            if (_heatingTime == startTime) return;
+                                
+                            _heatingTime = startTime;
+                                
+                            DisplayMessage(_heatingTime >= timeStamp ? $"{programType} program planned at: {startTime:HH:mm}" : $"Idle");
+                        }
                     }
-                    
-                    DisplayMessage($"Heating to {_targetTemperature} for {_waitCycles} cycles");
                 }
             }
             catch (Exception ex)
