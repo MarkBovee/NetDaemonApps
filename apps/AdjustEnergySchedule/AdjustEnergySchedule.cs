@@ -99,7 +99,7 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
             _entities = new Entities(ha);
             
             _logger.LogInformation("Started Energy Schedule Assistant program");
-
+            
             if (Debugger.IsAttached)
             {
                 // Run once
@@ -125,7 +125,11 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
             SetEnergyPriceThreshold();
 
             // Set the heating schedule for the heat pump
-            SetHeatingSchedule();
+            SetWaterTemperature();
+            
+            // Set the heating schedule for the heating circuit
+            // SetHeatingTemperature();
+            // SetHeatingTemperature();
 
             // Disable the dishwasher, the washing machine and the dryer if the price is too high
             SetAppliancesSchedule();
@@ -259,14 +263,34 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
             }
         }
 
+        private void SetHeatingTemperature()
+        {
+            var heatingCircuit = _entities.Climate.OurHomeZoneThuisCircuit0Climate;
+
+            try
+            {
+                
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                throw;
+            }
+        }
+        
         /// <summary>
-        /// Sets the heating schedule
+        /// Sets the water temperature for the heat pump
         /// </summary>
-        private void SetHeatingSchedule()
+        private void SetWaterTemperature()
         {
             // Get the heat pump water entities
             var heatingWater = _entities.WaterHeater.OurHomeDomesticHotWater0;
-            var heatingCircuit = _entities.Climate.OurHomeZoneThuisCircuit0Climate;
+            
+            // Initialize the program variables
+            if (heatingWater.Attributes is { Temperature: not null })
+            {
+                _targetTemperature = (int)heatingWater.Attributes.Temperature!;
+            }
 
             // Check for price data
             if (_pricesToday == null || _pricesTomorrow == null)
@@ -330,17 +354,16 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
             }
             else
             {
-                // Set the idle temperature
+                // Set the heating temperature
                 heatingTemperature = _energyProduction switch
                 {
                     Level.Maximum => 58,
                     Level.High => 58,
                     Level.Medium => currentPrice < _priceThreshold ? 50: 35,
-                    Level.Low => currentPrice < _priceThreshold ? 45: 35,
                     _ => bathMode ? 58 : 35
                 };
                 
-                // Set the heating temperature value based on the heating program
+                // Set the program temperature value based on the heating program
                 if (useNightProgram)
                 {
                     // Set the temperature to 56 degrees for the night program if the night price is lower than the day price 
@@ -374,10 +397,19 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
                 programTemperature = 70;
                 heatingTemperature = 70;
             }
-            
+
             // Set the water heating temperature
             try
             {
+                // Set notification for the start of the heating period
+                if (_heatingTime != startTime)
+                {
+                    _heatingTime = startTime;
+
+                    // Check if the start time is in the future
+                    DisplayMessage(_heatingTime >= timeStamp ? $"Next {programType} program planned at: {startTime:HH:mm}" : "Idle");
+                }
+                
                 // Check if the heater is off and the current timestamp is within the schedule  
                 if (timeStamp.TimeOfDay >= startTime.TimeOfDay && timeStamp <= endTime)
                 {
@@ -395,7 +427,7 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
                 else
                 {
                     // Set the heater heating temperature if no program is running
-                    if (_waitCycles > 0 && heatingTemperature < _targetTemperature)
+                    if (_waitCycles > 0)
                     {
                         _waitCycles--;
                         
@@ -403,8 +435,7 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
                     }
                     else
                     {
-                        if (!_heaterOn && _targetTemperature == heatingTemperature) return;
-                        
+                        // Set the heater to heating temperature
                         _targetTemperature = heatingTemperature;
                         _waitCycles = 10;
                         _heaterOn = false;
@@ -418,12 +449,7 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
                         }
                         else
                         {
-                            // Set the next planned program
-                            if (_heatingTime == startTime) return;
-                                
-                            _heatingTime = startTime;
-                                
-                            DisplayMessage(_heatingTime >= timeStamp ? $"{programType} program planned at: {startTime:HH:mm}" : $"Idle");
+                            DisplayMessage(_heatingTime >= timeStamp ? $"{programType} program planned at: {startTime:HH:mm}" : "Idle");
                         }
                     }
                 }
