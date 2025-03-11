@@ -263,6 +263,9 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
             }
         }
 
+        /// <summary>
+        /// Sets the heating temperature
+        /// </summary>
         private void SetHeatingTemperature()
         {
             var heatingCircuit = _entities.Climate.OurHomeZoneThuisCircuit0Climate;
@@ -377,13 +380,14 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
                 {
                     programTemperature = _energyProduction switch
                     {
+                        Level.Maximum => 58,
                         Level.High => 58,
-                        Level.Medium => 54,
+                        Level.Medium => 58,
                         _ => 50
                     };
                     
                     // Check if the next price for tomorrow is lower than the current price
-                    if (nextNightPrice.Value > 0 && nextNightPrice.Value < currentPrice)
+                    if (nextNightPrice.Value > 0 && nextNightPrice.Value < currentPrice && _energyProduction < Level.Medium)
                     {
                         // if so, set the temperature to idle and wait for the next cycle
                         programTemperature = heatingTemperature;
@@ -414,15 +418,15 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
                 if (timeStamp.TimeOfDay >= startTime.TimeOfDay && timeStamp <= endTime)
                 {
                     // Started program
-                    if (_heaterOn) return;
-                
-                    DisplayMessage($"{programType} program from: {startTime:HH:mm} to: {endTime:HH:mm}");
-
-                    heatingWater.SetOperationMode("Manual");
-                    heatingWater.SetTemperature(programTemperature);
-
-                    _heaterOn = true;
+                    if (programTemperature <= _targetTemperature && _heaterOn) return;
+                    
                     _targetTemperature = programTemperature;
+                    _heaterOn = true;
+                    
+                    DisplayMessage($"{programType} program from: {startTime:HH:mm} to: {endTime:HH:mm}");
+                    
+                    heatingWater.SetOperationMode("Manual");
+                    heatingWater.SetTemperature(_targetTemperature);
                 }
                 else
                 {
