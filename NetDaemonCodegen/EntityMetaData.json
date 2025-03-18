@@ -4,6 +4,41 @@
       "domain": "light",
       "entities": [
         {
+          "id": "light.badkamer",
+          "friendlyName": "Badkamer",
+          "cSharpName": "Badkamer"
+        },
+        {
+          "id": "light.badkamer_1",
+          "friendlyName": "Badkamer 1",
+          "cSharpName": "Badkamer1"
+        },
+        {
+          "id": "light.badkamer_2",
+          "friendlyName": "Badkamer 2",
+          "cSharpName": "Badkamer2"
+        },
+        {
+          "id": "light.badkamer_3",
+          "friendlyName": "Badkamer 3",
+          "cSharpName": "Badkamer3"
+        },
+        {
+          "id": "light.badkamer_4",
+          "friendlyName": "Badkamer 4",
+          "cSharpName": "Badkamer4"
+        },
+        {
+          "id": "light.badkamer_5",
+          "friendlyName": "Badkamer 5",
+          "cSharpName": "Badkamer5"
+        },
+        {
+          "id": "light.badkamer_6",
+          "friendlyName": "Badkamer 6",
+          "cSharpName": "Badkamer6"
+        },
+        {
           "id": "light.badkamer_meubel_licht",
           "friendlyName": "Badkamer Meubel",
           "cSharpName": "BadkamerMeubelLicht"
@@ -211,9 +246,9 @@
           "cSharpName": "MarkSWiimUltra"
         },
         {
-          "id": "media_player.this_device_2",
+          "id": "media_player.this_device",
           "friendlyName": "This Device",
-          "cSharpName": "ThisDevice2"
+          "cSharpName": "ThisDevice"
         },
         {
           "id": "media_player.wiim_ultra_7a1e",
@@ -683,7 +718,7 @@
         },
         {
           "id": "binary_sensor.audio_overloaded",
-          "friendlyName": "Audio Overloaded",
+          "friendlyName": "Audio Overbelast",
           "cSharpName": "AudioOverloaded"
         },
         {
@@ -703,7 +738,7 @@
         },
         {
           "id": "binary_sensor.computer_overloaded",
-          "friendlyName": "Computer Overloaded",
+          "friendlyName": "Computer Overbelast",
           "cSharpName": "ComputerOverloaded"
         },
         {
@@ -728,7 +763,7 @@
         },
         {
           "id": "binary_sensor.droger_overloaded",
-          "friendlyName": "Droger Overloaded",
+          "friendlyName": "Droger Overbelast",
           "cSharpName": "DrogerOverloaded"
         },
         {
@@ -788,7 +823,7 @@
         },
         {
           "id": "binary_sensor.garage_overloaded",
-          "friendlyName": "Garage Overloaded",
+          "friendlyName": "Garage Overbelast",
           "cSharpName": "GarageOverloaded"
         },
         {
@@ -803,7 +838,7 @@
         },
         {
           "id": "binary_sensor.kantoor_overloaded",
-          "friendlyName": "Kantoor Overloaded",
+          "friendlyName": "Kantoor Overbelast",
           "cSharpName": "KantoorOverloaded"
         },
         {
@@ -893,7 +928,7 @@
         },
         {
           "id": "binary_sensor.spotjes_verlichting_overloaded",
-          "friendlyName": "Spotjes Verlichting Overloaded",
+          "friendlyName": "Spotjes Verlichting Overbelast",
           "cSharpName": "SpotjesVerlichtingOverloaded"
         },
         {
@@ -923,7 +958,7 @@
         },
         {
           "id": "binary_sensor.tuinhuis_verlichting_overloaded",
-          "friendlyName": "Tuinhuis verlichting  Overloaded",
+          "friendlyName": "Tuinhuis verlichting  Overbelast",
           "cSharpName": "TuinhuisVerlichtingOverloaded"
         },
         {
@@ -938,7 +973,7 @@
         },
         {
           "id": "binary_sensor.tv_en_media_overloaded",
-          "friendlyName": "TV en Media Overloaded",
+          "friendlyName": "TV en Media Overbelast",
           "cSharpName": "TvEnMediaOverloaded"
         },
         {
@@ -953,17 +988,22 @@
         },
         {
           "id": "binary_sensor.vaatwasser_overloaded",
-          "friendlyName": "Vaatwasser  Overloaded",
+          "friendlyName": "Vaatwasser  Overbelast",
           "cSharpName": "VaatwasserOverloaded"
         },
         {
+          "id": "binary_sensor.voordeur",
+          "friendlyName": "Voordeur ",
+          "cSharpName": "Voordeur"
+        },
+        {
           "id": "binary_sensor.voordeur_contact_sensor",
-          "friendlyName": "Voordeur Contact Sensor ",
+          "friendlyName": "",
           "cSharpName": "VoordeurContactSensor"
         },
         {
           "id": "binary_sensor.voordeur_contact_sensor_tamper",
-          "friendlyName": "Voordeur Contact Sensor Tamper",
+          "friendlyName": "Tamper",
           "cSharpName": "VoordeurContactSensorTamper"
         },
         {
@@ -977,6 +1017,11 @@
           "cSharpName": "VoordeurMotionSensorTamper2"
         },
         {
+          "id": "binary_sensor.voordeur_tamper",
+          "friendlyName": "Voordeur Tamper",
+          "cSharpName": "VoordeurTamper"
+        },
+        {
           "id": "binary_sensor.wasmachine_cloud_connection",
           "friendlyName": "Wasmachine  Cloud connection",
           "cSharpName": "WasmachineCloudConnection"
@@ -988,7 +1033,7 @@
         },
         {
           "id": "binary_sensor.wasmachine_overloaded",
-          "friendlyName": "Wasmachine  Overloaded",
+          "friendlyName": "Wasmachine  Overbelast",
           "cSharpName": "WasmachineOverloaded"
         },
         {
@@ -1674,7 +1719,7 @@
       "entities": [
         {
           "id": "number.audio_power_protection",
-          "friendlyName": "Audio Power protection",
+          "friendlyName": "Audio Stroombeveiliging",
           "cSharpName": "AudioPowerProtection"
         },
         {
@@ -1704,7 +1749,7 @@
         },
         {
           "id": "number.computer_power_protection",
-          "friendlyName": "Computer Power protection",
+          "friendlyName": "Computer Stroombeveiliging",
           "cSharpName": "ComputerPowerProtection"
         },
         {
@@ -1729,7 +1774,7 @@
         },
         {
           "id": "number.droger_power_protection",
-          "friendlyName": "Droger Power protection",
+          "friendlyName": "Droger Stroombeveiliging",
           "cSharpName": "DrogerPowerProtection"
         },
         {
@@ -1744,7 +1789,7 @@
         },
         {
           "id": "number.garage_power_protection",
-          "friendlyName": "Garage Power protection",
+          "friendlyName": "Garage Stroombeveiliging",
           "cSharpName": "GaragePowerProtection"
         },
         {
@@ -1754,7 +1799,7 @@
         },
         {
           "id": "number.kantoor_power_protection",
-          "friendlyName": "Kantoor Power protection",
+          "friendlyName": "Kantoor Stroombeveiliging",
           "cSharpName": "KantoorPowerProtection"
         },
         {
@@ -1809,7 +1854,7 @@
         },
         {
           "id": "number.spotjes_verlichting_power_protection",
-          "friendlyName": "Spotjes Verlichting Power protection",
+          "friendlyName": "Spotjes Verlichting Stroombeveiliging",
           "cSharpName": "SpotjesVerlichtingPowerProtection"
         },
         {
@@ -1839,7 +1884,7 @@
         },
         {
           "id": "number.tuinhuis_verlichting_power_protection",
-          "friendlyName": "Tuinhuis verlichting  Power protection",
+          "friendlyName": "Tuinhuis verlichting  Stroombeveiliging",
           "cSharpName": "TuinhuisVerlichtingPowerProtection"
         },
         {
@@ -1849,7 +1894,7 @@
         },
         {
           "id": "number.tv_en_media_power_protection",
-          "friendlyName": "TV en Media Power protection",
+          "friendlyName": "TV en Media Stroombeveiliging",
           "cSharpName": "TvEnMediaPowerProtection"
         },
         {
@@ -1859,7 +1904,7 @@
         },
         {
           "id": "number.vaatwasser_power_protection",
-          "friendlyName": "Vaatwasser  Power protection",
+          "friendlyName": "Vaatwasser  Stroombeveiliging",
           "cSharpName": "VaatwasserPowerProtection"
         },
         {
@@ -1874,7 +1919,7 @@
         },
         {
           "id": "number.wasmachine_power_protection",
-          "friendlyName": "Wasmachine  Power protection",
+          "friendlyName": "Wasmachine  Stroombeveiliging",
           "cSharpName": "WasmachinePowerProtection"
         },
         {
@@ -2141,13 +2186,23 @@
           "cSharpName": "TuinCameraSnapshotMode"
         },
         {
+          "id": "select.voordeur_bypass_mode",
+          "friendlyName": "Voordeur Bypass Mode",
+          "cSharpName": "VoordeurBypassMode"
+        },
+        {
+          "id": "select.voordeur_chirp_tone",
+          "friendlyName": "Voordeur Chirp Tone",
+          "cSharpName": "VoordeurChirpTone"
+        },
+        {
           "id": "select.voordeur_contact_sensor_bypass_mode",
-          "friendlyName": "Voordeur Contact Sensor Bypass Mode",
+          "friendlyName": "Bypass Mode",
           "cSharpName": "VoordeurContactSensorBypassMode"
         },
         {
           "id": "select.voordeur_contact_sensor_chirp_tone",
-          "friendlyName": "Voordeur Contact Sensor Chirp Tone",
+          "friendlyName": "Chirp Tone",
           "cSharpName": "VoordeurContactSensorChirpTone"
         },
         {
@@ -2191,6 +2246,16 @@
           "jsonName": "eventId",
           "cSharpName": "EventId",
           "clrType": "System.String"
+        },
+        {
+          "jsonName": "restored",
+          "cSharpName": "Restored",
+          "clrType": "System.Boolean"
+        },
+        {
+          "jsonName": "supported_features",
+          "cSharpName": "SupportedFeatures",
+          "clrType": "System.Double"
         }
       ]
     },
@@ -2613,19 +2678,19 @@
           "cSharpName": "SunNextSetting"
         },
         {
-          "id": "sensor.this_device_next_alarm_2",
+          "id": "sensor.this_device_next_alarm",
           "friendlyName": "This Device next Alarm",
-          "cSharpName": "ThisDeviceNextAlarm2"
+          "cSharpName": "ThisDeviceNextAlarm"
         },
         {
-          "id": "sensor.this_device_next_reminder_2",
+          "id": "sensor.this_device_next_reminder",
           "friendlyName": "This Device next Reminder",
-          "cSharpName": "ThisDeviceNextReminder2"
+          "cSharpName": "ThisDeviceNextReminder"
         },
         {
-          "id": "sensor.this_device_next_timer_2",
+          "id": "sensor.this_device_next_timer",
           "friendlyName": "This Device next Timer",
-          "cSharpName": "ThisDeviceNextTimer2"
+          "cSharpName": "ThisDeviceNextTimer"
         },
         {
           "id": "sensor.toetsenpaneel_ingang_info",
@@ -2684,8 +2749,13 @@
         },
         {
           "id": "sensor.voordeur_contact_sensor_info",
-          "friendlyName": "Voordeur Contact Sensor Info",
+          "friendlyName": "Info",
           "cSharpName": "VoordeurContactSensorInfo"
+        },
+        {
+          "id": "sensor.voordeur_info",
+          "friendlyName": "Voordeur Info",
+          "cSharpName": "VoordeurInfo"
         },
         {
           "id": "sensor.voordeur_last_activity",
@@ -3876,8 +3946,13 @@
           "cSharpName": "VoordeurBatterij"
         },
         {
+          "id": "sensor.voordeur_battery",
+          "friendlyName": "Voordeur Battery",
+          "cSharpName": "VoordeurBattery"
+        },
+        {
           "id": "sensor.voordeur_contact_sensor_battery",
-          "friendlyName": "Voordeur Contact Sensor Battery",
+          "friendlyName": "Battery",
           "cSharpName": "VoordeurContactSensorBattery"
         },
         {
@@ -4607,9 +4682,9 @@
           "cSharpName": "SpotjesVerlichtingLed"
         },
         {
-          "id": "switch.this_device_do_not_disturb_switch_2",
+          "id": "switch.this_device_do_not_disturb_switch",
           "friendlyName": "This Device do not disturb switch",
-          "cSharpName": "ThisDeviceDoNotDisturbSwitch2"
+          "cSharpName": "ThisDeviceDoNotDisturbSwitch"
         },
         {
           "id": "switch.toetsenpaneel_ingang_chirps",
@@ -4994,11 +5069,6 @@
           "cSharpName": "NetdaemonUpdate"
         },
         {
-          "id": "update.netdaemon_v4_net_8_update",
-          "friendlyName": "NetDaemon V4 (.NET 8) Update",
-          "cSharpName": "NetdaemonV4Net8Update"
-        },
-        {
           "id": "update.netdaemon_v5_net_9_update",
           "friendlyName": "NetDaemon V5 (.NET 9) Update",
           "cSharpName": "NetdaemonV5Net9Update"
@@ -5017,6 +5087,11 @@
           "id": "update.plex_media_server_update",
           "friendlyName": "Plex Media Server Update",
           "cSharpName": "PlexMediaServerUpdate"
+        },
+        {
+          "id": "update.qbittorrent_update",
+          "friendlyName": "qBittorrent Update",
+          "cSharpName": "QbittorrentUpdate"
         },
         {
           "id": "update.ring_mqtt_with_video_streaming_update",

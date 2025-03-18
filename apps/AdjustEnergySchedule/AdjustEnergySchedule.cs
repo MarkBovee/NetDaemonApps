@@ -67,6 +67,11 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
         /// Set the threshold for the price, above this value the appliances will be disabled
         /// </summary>
         private double _priceThreshold;
+        
+        /// <summary>
+        /// The current price
+        /// </summary>
+        private double? _currentPrice;
 
         /// <summary>
         /// The energy production
@@ -82,6 +87,11 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
         /// The wait cycles
         /// </summary>
         private int _waitCycles;
+
+        /// <summary>
+        /// The away mode
+        /// </summary>
+        private bool _awayMode;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="AdjustEnergySchedule"/> class
@@ -122,50 +132,27 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
             GetPrices();
 
             // Get the price threshold
-            SetEnergyPriceThreshold();
+            SetPropertyValues();
 
             // Set the heating schedule for the heat pump
             SetWaterTemperature();
-            
-            // Set the heating schedule for the heating circuit
-            // SetHeatingTemperature();
-            // SetHeatingTemperature();
 
             // Disable the dishwasher, the washing machine and the dryer if the price is too high
             SetAppliancesSchedule();
+            
+            // Set the heating schedule for the heating circuit
+            SetHeatingTemperature();
 
             // Set the car charging schedule
         }
-
+        
         /// <summary>
-        /// Sets the energy price threshold
+        /// Sets the property values
         /// </summary>
-        private void SetEnergyPriceThreshold()
+        private void SetPropertyValues()
         {
-            if (_entities.Sensor.NordpoolKwhNlEur310021.Attributes != null)
-            {
-                var avgPrice = _entities.Sensor.NordpoolKwhNlEur310021.Attributes.Average;
-                const double fallbackPrice = 0.28;
-
-                if (avgPrice != null)
-                {
-                    // Set the price to the average price
-                    _priceThreshold = avgPrice.Value;
-
-                    // Check if the price is below the fallback price
-                    if (_priceThreshold < fallbackPrice)
-                    {
-                        _priceThreshold = fallbackPrice;
-                    }
-                }
-                else
-                {
-                    // Set the price to a fallback default value
-                    _priceThreshold = fallbackPrice;
-                }
-            }
-
-            _priceThreshold = Math.Round(_priceThreshold, 2);
+            _priceThreshold = GetPriceThreshold();
+            _currentPrice = GetCurrentPrice();
             
             // Set the energy production level
             _energyProduction = _entities.Sensor.ElectricityMeterPowerProduction.State switch
@@ -177,6 +164,42 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
                 > 2 and <= 3 => Level.High,
                 _ => Level.Maximum
             };
+            
+            // Set the away mode
+            _awayMode = _entities.Switch.OurHomeAwayMode.State == "on";
+        }
+
+        /// <summary>
+        /// Gets the price threshold
+        /// </summary>
+        /// <returns>The double</returns>
+        private double GetPriceThreshold()
+        {
+            if (_entities.Sensor.NordpoolKwhNlEur310021.Attributes == null) return 0;
+            
+            var avgPrice = _entities.Sensor.NordpoolKwhNlEur310021.Attributes.Average;
+            double priceThreshold;
+            const double fallbackPrice = 0.28;
+
+            if (avgPrice != null)
+            {
+                // Set the price to the average price
+                priceThreshold = avgPrice.Value;
+
+                // Check if the price is below the fallback price
+                if (priceThreshold < fallbackPrice)
+                {
+                    priceThreshold = fallbackPrice;
+                }
+            }
+            else
+            {
+                // Set the price to a fallback default value
+                priceThreshold = fallbackPrice;
+            }
+
+            // Get the current price and price threshold
+            return Math.Round(priceThreshold, 2);
         }
 
         /// <summary>
@@ -195,16 +218,9 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
             var dishwasherCurrentPower = _entities.Sensor.VaatwasserHuidigGebruik;
 
             var garage = _entities.Switch.Garage;
-
-            // Get the current price
-            var currentPrice = GetCurrentPrice();
-            if (currentPrice == null)
-            {
-                return;
-            }
-
+            
             // Check if the price is above the threshold and there is no energy production
-            if (_energyProduction < Level.Low && currentPrice > _priceThreshold)
+            if (_energyProduction < Level.Low && _currentPrice > _priceThreshold)
             {
                 // Check if the washing machine is on and if no program is running
                 if (washingMachine?.State == "on" && washingMachineCurrentPower.State < 5)
@@ -269,16 +285,30 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
         private void SetHeatingTemperature()
         {
             var heatingCircuit = _entities.Climate.OurHomeZoneThuisCircuit0Climate;
+            var programType = _awayMode ? "away" : _energyProduction == Level.Maximum ? "boost" : "none";
+            var heatingTemperature = 21;
+            
+            // If prices are below zero, set the temperature to max!
+            if (_currentPrice <= 0.1)
+            {
+                programType = "boost";
+                heatingTemperature = 23;
+            }
 
-            try
+            if (heatingCircuit.Attributes?.PresetMode == programType || _waitCycles > 0) return;
+            
+            _logger.LogInformation($"Setting heating program to {programType} with temperature {heatingTemperature}");
+            
+            heatingCircuit.SetPresetMode(new ClimateSetPresetModeParameters
             {
-                
-            }
-            catch (Exception e)
+                PresetMode = programType
+            });
+            
+            heatingCircuit.SetTemperature(new ClimateSetTemperatureParameters
             {
-                Console.WriteLine(e);
-                throw;
-            }
+                TargetTempLow = heatingTemperature,
+                TargetTempHigh = heatingTemperature + 2
+            });
         }
         
         /// <summary>
@@ -289,31 +319,17 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
             // Get the heat pump water entities
             var heatingWater = _entities.WaterHeater.OurHomeDomesticHotWater0;
             
-            // Initialize the program variables
-            if (heatingWater.Attributes is { Temperature: not null })
-            {
-                _targetTemperature = (int)heatingWater.Attributes.Temperature!;
-            }
-
             // Check for price data
             if (_pricesToday == null || _pricesTomorrow == null)
             {
                 return;
             }
             
-            // Get the current price
-            var currentPrice = GetCurrentPrice();
-            if (currentPrice == null)
-            {
-                return;
-            }
-
             // Check what type of program should be used
             var timeStamp = DateTime.Now;
-            var awayMode = _entities.Switch.OurHomeAwayMode.State == "on";
             var useNightProgram = timeStamp.Hour < 6;
             var useLegionellaProtection = useNightProgram == false && timeStamp.DayOfWeek == DayOfWeek.Saturday;
-            var programType = awayMode ? "Away" : useNightProgram ? "Night" : useLegionellaProtection ? "Legionella Protection" : "Heating";
+            var programType = _awayMode ? "Away" : useNightProgram ? "Night" : useLegionellaProtection ? "Legionella Protection" : "Heating";
             
             // Check bath mode and turn off the bath mode if the water temperature is above 50 degrees
             var bathMode = _entities.InputBoolean.Bath.State == "on";
@@ -341,13 +357,24 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
             // Set the end time 3 hours after the start time
             var endTime = startTime.AddHours(3);
 
-            // Set the default temperature values
+            // Set the temperature values
             var programTemperature = 35;
             var heatingTemperature = 35;
             var idleTemperature = 35;
+            var currentTemperature = 35;
+            
+            if (heatingWater.Attributes is { Temperature: not null })
+            {
+                currentTemperature = (int)heatingWater.Attributes.CurrentTemperature!;
+
+                if (_targetTemperature < currentTemperature)
+                {
+                    _targetTemperature = currentTemperature;
+                }
+            }
 
             // Set the temperature values for the specific heating program
-            if (awayMode)
+            if (_awayMode)
             {
                 // Set the temperature to 60 degrees for the away mode for legionella protection
                 if (useLegionellaProtection && useNightProgram == false)
@@ -362,7 +389,7 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
                 {
                     Level.Maximum => 58,
                     Level.High => 58,
-                    Level.Medium => currentPrice < _priceThreshold ? 50: 35,
+                    Level.Medium => _currentPrice < _priceThreshold ? 50: 35,
                     _ => bathMode ? 58 : 35
                 };
                 
@@ -380,14 +407,14 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
                 {
                     programTemperature = _energyProduction switch
                     {
-                        Level.Maximum => 58,
+                        Level.Maximum => _currentPrice < 0.2 ? 60 : 58, 
                         Level.High => 58,
                         Level.Medium => 58,
                         _ => 50
                     };
                     
                     // Check if the next price for tomorrow is lower than the current price
-                    if (nextNightPrice.Value > 0 && nextNightPrice.Value < currentPrice && _energyProduction < Level.Medium)
+                    if (nextNightPrice.Value > 0 && nextNightPrice.Value < _currentPrice && _energyProduction < Level.Medium)
                     {
                         // if so, set the temperature to idle and wait for the next cycle
                         programTemperature = heatingTemperature;
@@ -396,7 +423,7 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
             }
 
             // If prices are below zero, set the temperature to max!
-            if (currentPrice < 0.1)
+            if (_currentPrice <= 0.1)
             {
                 programTemperature = 70;
                 heatingTemperature = 70;
@@ -423,10 +450,10 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
                     _targetTemperature = programTemperature;
                     _heaterOn = true;
                     
-                    DisplayMessage($"{programType} program from: {startTime:HH:mm} to: {endTime:HH:mm}");
-                    
                     heatingWater.SetOperationMode("Manual");
                     heatingWater.SetTemperature(_targetTemperature);
+                    
+                    DisplayMessage(currentTemperature < _targetTemperature ? $"{programType} program from: {startTime:HH:mm} to: {endTime:HH:mm}" : "Idle");
                 }
                 else
                 {
@@ -435,7 +462,7 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
                     {
                         _waitCycles--;
                         
-                        DisplayMessage($"Heating to {_targetTemperature} for {_waitCycles} cycles");
+                        DisplayMessage(currentTemperature < _targetTemperature ? $"Heating to {_targetTemperature} [{_waitCycles}]" : "Idle");
                     }
                     else
                     {
@@ -445,11 +472,11 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
                         _heaterOn = false;
                         
                         heatingWater.SetOperationMode("Manual");
-                        heatingWater.SetTemperature(heatingTemperature);
+                        heatingWater.SetTemperature(_targetTemperature);
 
-                        if (heatingTemperature > idleTemperature)
+                        if (_targetTemperature > idleTemperature)
                         {
-                            DisplayMessage($"Heating to {_targetTemperature} for {_waitCycles} cycles");
+                            DisplayMessage(currentTemperature < _targetTemperature ? $"Heating to {_targetTemperature} [{_waitCycles}]" : "Idle");
                         }
                         else
                         {
