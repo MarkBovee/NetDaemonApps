@@ -9,6 +9,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Text.Json;
 using System.Threading.Tasks;
+using HomeAssistantGenerated.helpers;
 using HomeAssistantGenerated.models.enums;
 using Services = HomeAssistantGenerated.Services;
 
@@ -284,31 +285,64 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
         /// </summary>
         private void SetHeatingTemperature()
         {
-            var heatingCircuit = _entities.Climate.OurHomeZoneThuisCircuit0Climate;
-            var programType = _awayMode ? "away" : _energyProduction == Level.Maximum ? "boost" : "none";
-            var heatingTemperature = 21;
+            var climate = _entities.Climate.OurHomeZoneThuisCircuit0Climate;
+            var curve = _entities.Number.OurHomeCircuit0HeatingCurve;
+            var programType = _awayMode ? "away" : "none";
+            var heatingTemperature = 20;
+            var targetCurve = 0.3;
+
+            switch (_energyProduction)
+            {
+                case Level.High:
+                    targetCurve = 0.4;
+                    break;
+                case Level.Maximum:
+                    // If we produce a lot of energy, set the temperature to 21 degrees
+                    programType = "boost";
+                    heatingTemperature = 21;
+                    targetCurve = 0.4;
+                    break;
+            }
             
             // If prices are below zero, set the temperature to max!
             if (_currentPrice <= 0.1)
             {
                 programType = "boost";
                 heatingTemperature = 23;
+                targetCurve = 0.5;
+            }
+            
+            // Set the heating curve
+            if (!Utils.AreDoublesEqual(curve.State,targetCurve))
+            {
+                curve.SetValue(new NumberSetValueParameters
+                {
+                    Value = targetCurve.ToString(CultureInfo.InvariantCulture)
+                });
             }
 
-            if (heatingCircuit.Attributes?.PresetMode == programType || _waitCycles > 0) return;
-            
-            _logger.LogInformation($"Setting heating program to {programType} with temperature {heatingTemperature}");
-            
-            heatingCircuit.SetPresetMode(new ClimateSetPresetModeParameters
+            // Set the heating program and temperature when the program is different or the temperature is different
+            if ((climate.Attributes?.PresetMode == "boost" && programType != "boost") || (programType == "boost" && (climate.Attributes?.PresetMode != "boost" || !Utils.AreDoublesEqual(climate.Attributes?.TargetTempLow, heatingTemperature))))
             {
-                PresetMode = programType
-            });
+                var msg = $"Setting heating program to {programType} with temperature {heatingTemperature}";
+                
+                _logger.LogInformation(msg);
+                DisplayMessage(msg);
+                
+                climate.SetPresetMode(new ClimateSetPresetModeParameters
+                {
+                    PresetMode = programType
+                });
             
-            heatingCircuit.SetTemperature(new ClimateSetTemperatureParameters
-            {
-                TargetTempLow = heatingTemperature,
-                TargetTempHigh = heatingTemperature + 2
-            });
+                if (programType == "boost")
+                {
+                    climate.SetTemperature(new ClimateSetTemperatureParameters
+                    {
+                        TargetTempLow = heatingTemperature,
+                        TargetTempHigh = 23
+                    });
+                }
+            }
         }
         
         /// <summary>
@@ -362,16 +396,15 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
             var heatingTemperature = 35;
             var idleTemperature = 35;
             var currentTemperature = 35;
+            var currentTargetTemperature = 35;
             
             if (heatingWater.Attributes is { Temperature: not null })
             {
                 currentTemperature = (int)heatingWater.Attributes.CurrentTemperature!;
-
-                if (_targetTemperature < currentTemperature)
-                {
-                    _targetTemperature = currentTemperature;
-                }
+                currentTargetTemperature = (int)heatingWater.Attributes.Temperature!;
             }
+            
+            var idleText = startTime >= timeStamp ? $"{programType} program planned at: {startTime:HH:mm}" : "Idle";
 
             // Set the temperature values for the specific heating program
             if (_awayMode)
@@ -379,7 +412,7 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
                 // Set the temperature to 60 degrees for the away mode for legionella protection
                 if (useLegionellaProtection && useNightProgram == false)
                 {
-                    programTemperature = 60;
+                    programTemperature = _currentPrice < 0.2 ? 66 : 60;
                 }
             }
             else
@@ -407,7 +440,7 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
                 {
                     programTemperature = _energyProduction switch
                     {
-                        Level.Maximum => _currentPrice < 0.2 ? 60 : 58, 
+                        Level.Maximum => _currentPrice < 0.2 ? 66 : 58, 
                         Level.High => 58,
                         Level.Medium => 58,
                         _ => 50
@@ -422,25 +455,22 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
                 }
             }
 
-            // If prices are below zero, set the temperature to max!
-            if (_currentPrice <= 0.1)
+            // If prices are very low, set the temperature to max!
+            switch (_currentPrice)
             {
-                programTemperature = 70;
-                heatingTemperature = 70;
+                case <= 0.12:
+                    programTemperature = 70;
+                    heatingTemperature = 70;
+                    break;
+                case <= 0.15:
+                    programTemperature = 66;
+                    heatingTemperature = 66;
+                    break;
             }
 
             // Set the water heating temperature
             try
             {
-                // Set notification for the start of the heating period
-                if (_heatingTime != startTime)
-                {
-                    _heatingTime = startTime;
-
-                    // Check if the start time is in the future
-                    DisplayMessage(_heatingTime >= timeStamp ? $"Next {programType} program planned at: {startTime:HH:mm}" : "Idle");
-                }
-                
                 // Check if the heater is off and the current timestamp is within the schedule  
                 if (timeStamp.TimeOfDay >= startTime.TimeOfDay && timeStamp <= endTime)
                 {
@@ -453,7 +483,7 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
                     heatingWater.SetOperationMode("Manual");
                     heatingWater.SetTemperature(_targetTemperature);
                     
-                    DisplayMessage(currentTemperature < _targetTemperature ? $"{programType} program from: {startTime:HH:mm} to: {endTime:HH:mm}" : "Idle");
+                    DisplayMessage(currentTemperature < _targetTemperature ? $"{programType} program from: {startTime:HH:mm} to: {endTime:HH:mm}" : idleText);
                 }
                 else
                 {
@@ -462,7 +492,7 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
                     {
                         _waitCycles--;
                         
-                        DisplayMessage(currentTemperature < _targetTemperature ? $"Heating to {_targetTemperature} [{_waitCycles}]" : "Idle");
+                        DisplayMessage(currentTemperature < _targetTemperature ? $"Heating to {_targetTemperature} [{_waitCycles}]" : idleText);
                     }
                     else
                     {
@@ -470,17 +500,20 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
                         _targetTemperature = heatingTemperature;
                         _waitCycles = 10;
                         _heaterOn = false;
-                        
-                        heatingWater.SetOperationMode("Manual");
-                        heatingWater.SetTemperature(_targetTemperature);
+
+                        if (currentTargetTemperature != _targetTemperature)
+                        {
+                            heatingWater.SetOperationMode("Manual");
+                            heatingWater.SetTemperature(_targetTemperature);    
+                        }
 
                         if (_targetTemperature > idleTemperature)
                         {
-                            DisplayMessage(currentTemperature < _targetTemperature ? $"Heating to {_targetTemperature} [{_waitCycles}]" : "Idle");
+                            DisplayMessage(currentTemperature < _targetTemperature ? $"Heating to {_targetTemperature} [{_waitCycles}]" : idleText);
                         }
                         else
                         {
-                            DisplayMessage(_heatingTime >= timeStamp ? $"{programType} program planned at: {startTime:HH:mm}" : "Idle");
+                            DisplayMessage(idleText);
                         }
                     }
                 }
@@ -532,7 +565,7 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
         private void GetPrices()
         {
             // Check if the prices are already loaded
-            if (_pricesToday != null && _pricesToday.First().Key.Date == DateTime.Today.Date)
+            if (_pricesToday != null && _pricesToday.First().Key.DayOfWeek == DateTime.Today.DayOfWeek)
             {
                 return;
             }
