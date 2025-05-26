@@ -85,9 +85,14 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
         private int _targetTemperature;
         
         /// <summary>
-        /// The wait cycles
+        /// The wait cycles for water
         /// </summary>
-        private int _waitCycles;
+        private int _waitCyclesWater;
+        
+        /// <summary>
+        /// The wait cycles for heating
+        /// </summary>
+        private int _waitCyclesHeating;
 
         /// <summary>
         /// The away mode
@@ -288,7 +293,7 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
             var climate = _entities.Climate.OurHomeZoneThuisCircuit0Climate;
             var curve = _entities.Number.OurHomeCircuit0HeatingCurve;
             var programType = _awayMode ? "away" : "none";
-            var heatingTemperature = 20;
+            var desiredTemperature = 20;
             var targetCurve = 0.3;
 
             switch (_energyProduction)
@@ -299,8 +304,8 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
                 case Level.Maximum:
                     // If we produce a lot of energy, set the temperature to 21 degrees
                     programType = "boost";
-                    heatingTemperature = 21;
-                    targetCurve = 0.4;
+                    desiredTemperature = 21;
+                    targetCurve = 0.5;
                     break;
             }
             
@@ -308,23 +313,32 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
             if (_currentPrice <= 0.1)
             {
                 programType = "boost";
-                heatingTemperature = 23;
+                desiredTemperature = 21;
                 targetCurve = 0.5;
             }
             
-            // Set the heating curve
+            if (_waitCyclesHeating > 0)
+            {
+                _waitCyclesHeating--;
+                return;
+            }
+            
+            // Set the heating curve for the next 10 cycles
             if (!Utils.AreDoublesEqual(curve.State,targetCurve))
             {
+                // Set the heating curve
                 curve.SetValue(new NumberSetValueParameters
                 {
                     Value = targetCurve.ToString(CultureInfo.InvariantCulture)
                 });
+
+                _waitCyclesHeating = 10;
             }
 
             // Set the heating program and temperature when the program is different or the temperature is different
-            if ((climate.Attributes?.PresetMode == "boost" && programType != "boost") || (programType == "boost" && (climate.Attributes?.PresetMode != "boost" || !Utils.AreDoublesEqual(climate.Attributes?.TargetTempLow, heatingTemperature))))
+            if ((climate.Attributes?.PresetMode == "boost" && programType != "boost") || (programType == "boost" && (climate.Attributes?.PresetMode != "boost" || !Utils.AreDoublesEqual(climate.Attributes?.TargetTempLow, desiredTemperature))))
             {
-                var msg = $"Setting heating program to {programType} with temperature {heatingTemperature}";
+                var msg = $"Setting heating program to {programType} with temperature {desiredTemperature}";
                 
                 _logger.LogInformation(msg);
                 DisplayMessage(msg);
@@ -338,10 +352,12 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
                 {
                     climate.SetTemperature(new ClimateSetTemperatureParameters
                     {
-                        TargetTempLow = heatingTemperature,
-                        TargetTempHigh = 23
+                        TargetTempLow = desiredTemperature,
+                        TargetTempHigh = 21
                     });
                 }
+
+                _waitCyclesHeating = 10;
             }
         }
         
@@ -420,7 +436,7 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
                 // Set the heating temperature
                 heatingTemperature = _energyProduction switch
                 {
-                    Level.Maximum => 58,
+                    Level.Maximum => 60,
                     Level.High => 58,
                     Level.Medium => _currentPrice < _priceThreshold ? 50: 35,
                     _ => bathMode ? 58 : 35
@@ -440,10 +456,10 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
                 {
                     programTemperature = _energyProduction switch
                     {
-                        Level.Maximum => _currentPrice < 0.2 ? 66 : 58, 
+                        Level.Maximum => _currentPrice < 0.12 ? 66 : 60, 
                         Level.High => 58,
                         Level.Medium => 58,
-                        _ => 50
+                        _ => _currentPrice < 0.35 ? 58 : 50
                     };
                     
                     // Check if the next price for tomorrow is lower than the current price
@@ -456,16 +472,10 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
             }
 
             // If prices are very low, set the temperature to max!
-            switch (_currentPrice)
+            if (_currentPrice <= 0.10)
             {
-                case <= 0.12:
-                    programTemperature = 70;
-                    heatingTemperature = 70;
-                    break;
-                case <= 0.15:
-                    programTemperature = 66;
-                    heatingTemperature = 66;
-                    break;
+                programTemperature = 70;
+                heatingTemperature = 70;
             }
 
             // Set the water heating temperature
@@ -488,17 +498,17 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
                 else
                 {
                     // Set the heater heating temperature if no program is running
-                    if (_waitCycles > 0)
+                    if (_waitCyclesWater > 0)
                     {
-                        _waitCycles--;
+                        _waitCyclesWater--;
                         
-                        DisplayMessage(currentTemperature < _targetTemperature ? $"Heating to {_targetTemperature} [{_waitCycles}]" : idleText);
+                        DisplayMessage(currentTemperature < _targetTemperature ? $"Heating to {_targetTemperature} [{_waitCyclesWater}]" : idleText);
                     }
                     else
                     {
                         // Set the heater to heating temperature
                         _targetTemperature = heatingTemperature;
-                        _waitCycles = 10;
+                        _waitCyclesWater = 10;
                         _heaterOn = false;
 
                         if (currentTargetTemperature != _targetTemperature)
@@ -509,7 +519,7 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
 
                         if (_targetTemperature > idleTemperature)
                         {
-                            DisplayMessage(currentTemperature < _targetTemperature ? $"Heating to {_targetTemperature} [{_waitCycles}]" : idleText);
+                            DisplayMessage(currentTemperature < _targetTemperature ? $"Heating to {_targetTemperature} [{_waitCyclesWater}]" : idleText);
                         }
                         else
                         {
@@ -524,7 +534,7 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
 
                 // Reset the values
                 _targetTemperature = 0;
-                _waitCycles = 0;
+                _waitCyclesWater = 0;
                 _heaterOn = false;
             }
         }
@@ -572,7 +582,7 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
 
             // Read power prices for today
             var powerPrices = _ha.Entity("sensor.nordpool_kwh_nl_eur_3_10_021");
-            if (powerPrices == null)
+            if (powerPrices is null)
             {
                 _logger.LogWarning("Power prices sensor not found");
                 return;
@@ -587,8 +597,8 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
 
             var json = jsonAttributes.Value.ToString();
 
-            // Check if the json is null
-            if (json == null || json == "null")
+            // Check if the JSON is null
+            if (json is null or "null")
             {
                 // Use the fallback data source
                 _logger.LogWarning("Power prices sensor has no data, using the fallback data source");
@@ -664,13 +674,13 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
         /// </summary>
         /// <param name="html">The html</param>
         /// <returns>A dictionary of date time and double</returns>
-        private Dictionary<DateTime, double>? ParseHtmlToPrices(string html)
+        private void ParseHtmlToPrices(string html)
         {
             var pricesToday = new Dictionary<DateTime, double>();
             var pricesTomorrow = new Dictionary<DateTime, double>();
 
-            // Parse the html
-            if (html == null) return null;
+            // Parse the HTML
+            if (html == null) return;
             
             HtmlDocument document = new();
             document.LoadHtml(html);
@@ -678,18 +688,18 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
             // Extract the table with the price information
             var nodes = document.DocumentNode.SelectNodes("//div[@class='row boxinner']");
 
-            if (nodes == null) return null;
+            if (nodes == null) return;
                 
             foreach (var node in nodes)
             {
-                // Load the html of the row
+                // Load the HTML of the row
                 HtmlDocument nodeHtml = new();
                 nodeHtml.LoadHtml($"<html>{node.OuterHtml}</html>");
 
                 // Parse the time text
                 var timeText = nodeHtml.DocumentNode.SelectSingleNode("//div[@class='col-6 col-md-2']").InnerText.Trim();
-                var timeStart = timeText.Substring(0, 5);
-                var day = timeText.Substring(11);
+                var timeStart = timeText[..5];
+                var day = timeText[11..];
 
                 // Parse the price text
                 HtmlDocument priceHtml = new();
@@ -713,8 +723,6 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
 
             _pricesToday = pricesToday;
             _pricesTomorrow = pricesTomorrow;
-
-            return null;
         }
     }
 }

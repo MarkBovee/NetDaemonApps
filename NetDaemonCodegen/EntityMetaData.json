@@ -186,6 +186,11 @@
       "domain": "media_player",
       "entities": [
         {
+          "id": "media_player.buiten_tv",
+          "friendlyName": "Buiten-TV",
+          "cSharpName": "BuitenTv"
+        },
+        {
           "id": "media_player.chromecast",
           "friendlyName": "Chromecast Slaapkamer",
           "cSharpName": "Chromecast"
@@ -481,6 +486,11 @@
           "jsonName": "previous_volume",
           "cSharpName": "PreviousVolume",
           "clrType": "System.Double"
+        },
+        {
+          "jsonName": "history_records",
+          "cSharpName": "HistoryRecords",
+          "clrType": "System.Collections.Generic.IReadOnlyList\u00601[System.Object]"
         }
       ]
     },
@@ -589,6 +599,21 @@
     {
       "domain": "automation",
       "entities": [
+        {
+          "id": "automation.airco_aan_bij_lage_prijzen",
+          "friendlyName": "Airco aan",
+          "cSharpName": "AircoAanBijLagePrijzen"
+        },
+        {
+          "id": "automation.airco_aan_met_lage_prijzen",
+          "friendlyName": "Airco aan met lage prijzen",
+          "cSharpName": "AircoAanMetLagePrijzen"
+        },
+        {
+          "id": "automation.airco_uit",
+          "friendlyName": "Airco uit",
+          "cSharpName": "AircoUit"
+        },
         {
           "id": "automation.apparatuur_uit_bij_alarm_aan",
           "friendlyName": "Apparatuur uit bij alarm aan",
@@ -905,6 +930,11 @@
           "id": "binary_sensor.q7_max_dweil_bevestigd",
           "friendlyName": "Q7 Max Dweil bevestigd",
           "cSharpName": "Q7MaxDweilBevestigd"
+        },
+        {
+          "id": "binary_sensor.q7_max_opladen",
+          "friendlyName": "Q7 Max Opladen",
+          "cSharpName": "Q7MaxOpladen"
         },
         {
           "id": "binary_sensor.q7_max_schoonmaken",
@@ -1653,6 +1683,11 @@
       "domain": "input_boolean",
       "entities": [
         {
+          "id": "input_boolean.airco",
+          "friendlyName": "Airco",
+          "cSharpName": "Airco"
+        },
+        {
           "id": "input_boolean.bath",
           "friendlyName": "Bath",
           "cSharpName": "Bath"
@@ -2052,6 +2087,11 @@
       "domain": "remote",
       "entities": [
         {
+          "id": "remote.buiten_tv",
+          "friendlyName": "Buiten-TV",
+          "cSharpName": "BuitenTv"
+        },
+        {
           "id": "remote.chromecast_huiskamer",
           "friendlyName": "Chromecast Huiskamer ",
           "cSharpName": "ChromecastHuiskamer"
@@ -2166,13 +2206,18 @@
           "cSharpName": "LampKantoorLightPreset"
         },
         {
+          "id": "select.q7_max_dock_lege_modus",
+          "friendlyName": "Q7 Max Dock Lege modus",
+          "cSharpName": "Q7MaxDockLegeModus"
+        },
+        {
           "id": "select.q7_max_intensiteit_van_dweilen",
           "friendlyName": "Q7 Max Intensiteit van dweilen",
           "cSharpName": "Q7MaxIntensiteitVanDweilen"
         },
         {
           "id": "select.q7_max_selected_map",
-          "friendlyName": "Q7 Max Selected map",
+          "friendlyName": "Q7 Max Geselecteerde kaart",
           "cSharpName": "Q7MaxSelectedMap"
         },
         {
@@ -2276,6 +2321,21 @@
           "id": "sensor.audio_signaalniveau",
           "friendlyName": "Audio Signaalniveau",
           "cSharpName": "AudioSignaalniveau"
+        },
+        {
+          "id": "sensor.backup_backup_manager_state",
+          "friendlyName": "Backup Backup Manager state",
+          "cSharpName": "BackupBackupManagerState"
+        },
+        {
+          "id": "sensor.backup_last_successful_automatic_backup",
+          "friendlyName": "Backup Last successful automatic backup",
+          "cSharpName": "BackupLastSuccessfulAutomaticBackup"
+        },
+        {
+          "id": "sensor.backup_next_scheduled_automatic_backup",
+          "friendlyName": "Backup Next scheduled automatic backup",
+          "cSharpName": "BackupNextScheduledAutomaticBackup"
         },
         {
           "id": "sensor.backup_state",
@@ -2609,13 +2669,18 @@
         },
         {
           "id": "sensor.q7_max_dock_error",
-          "friendlyName": "Q7 Max Dock error",
+          "friendlyName": "Q7 Max Dock Dock fout",
           "cSharpName": "Q7MaxDockError"
         },
         {
           "id": "sensor.q7_max_einde_laatste_schoonmaak",
           "friendlyName": "Q7 Max Einde laatste schoonmaak",
           "cSharpName": "Q7MaxEindeLaatsteSchoonmaak"
+        },
+        {
+          "id": "sensor.q7_max_huidige_kamer",
+          "friendlyName": "Q7 Max Huidige kamer",
+          "cSharpName": "Q7MaxHuidigeKamer"
         },
         {
           "id": "sensor.q7_max_start_laatste_schoonmaak",
@@ -2629,12 +2694,12 @@
         },
         {
           "id": "sensor.q7_max_total_cleaning_count",
-          "friendlyName": "Q7 Max Total cleaning count",
+          "friendlyName": "Q7 Max Totaal aantal schoonmaakbeurten",
           "cSharpName": "Q7MaxTotalCleaningCount"
         },
         {
           "id": "sensor.q7_max_vacuum_error",
-          "friendlyName": "Q7 Max Vacuum error",
+          "friendlyName": "Q7 Max Stofzuigerfout",
           "cSharpName": "Q7MaxVacuumError"
         },
         {
@@ -2776,6 +2841,11 @@
           "id": "sensor.wasmachine_signaalniveau",
           "friendlyName": "Wasmachine  Signaalniveau",
           "cSharpName": "WasmachineSignaalniveau"
+        },
+        {
+          "id": "sensor.windrichting",
+          "friendlyName": "Windrichting",
+          "cSharpName": "Windrichting"
         },
         {
           "id": "sensor.woonkamer_camera_info",
@@ -3333,6 +3403,16 @@
           "jsonName": "dhw_hysteresis_maximum",
           "cSharpName": "DhwHysteresisMaximum",
           "clrType": "System.Double"
+        },
+        {
+          "jsonName": "Stationname",
+          "cSharpName": "Stationname",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "Measured",
+          "cSharpName": "Measured",
+          "clrType": "System.String"
         }
       ]
     },
@@ -3647,7 +3727,7 @@
         },
         {
           "id": "sensor.our_home_device_0_arotherm_consumed_electrical_energy_domestic_hot_water_2",
-          "friendlyName": "Our home Device 0 aroTHERM Consumed Electrical Energy Domestic Hot Water",
+          "friendlyName": "Our home Device 0 aroTHERM Consumed Electrical Energy Cooling",
           "cSharpName": "OurHomeDevice0ArothermConsumedElectricalEnergyDomesticHotWater2"
         },
         {
@@ -3657,7 +3737,7 @@
         },
         {
           "id": "sensor.our_home_device_0_arotherm_consumed_electrical_energy_heating_2",
-          "friendlyName": "Our home Device 0 aroTHERM Consumed Electrical Energy Heating",
+          "friendlyName": "Our home Device 0 aroTHERM Consumed Electrical Energy Domestic Hot Water",
           "cSharpName": "OurHomeDevice0ArothermConsumedElectricalEnergyHeating2"
         },
         {
@@ -3667,7 +3747,7 @@
         },
         {
           "id": "sensor.our_home_device_0_arotherm_earned_environment_energy_domestic_hot_water_2",
-          "friendlyName": "Our home Device 0 aroTHERM Earned Environment Energy Domestic Hot Water",
+          "friendlyName": "Our home Device 0 aroTHERM Consumed Electrical Energy Heating",
           "cSharpName": "OurHomeDevice0ArothermEarnedEnvironmentEnergyDomesticHotWater2"
         },
         {
@@ -3677,7 +3757,7 @@
         },
         {
           "id": "sensor.our_home_device_0_arotherm_earned_environment_energy_heating_2",
-          "friendlyName": "Our home Device 0 aroTHERM Earned Environment Energy Heating",
+          "friendlyName": "Our home Device 0 aroTHERM Earned Environment Energy Cooling",
           "cSharpName": "OurHomeDevice0ArothermEarnedEnvironmentEnergyHeating2"
         },
         {
@@ -3687,7 +3767,7 @@
         },
         {
           "id": "sensor.our_home_device_0_arotherm_heat_generated_domestic_hot_water_2",
-          "friendlyName": "Our home Device 0 aroTHERM Heat Generated Domestic Hot Water",
+          "friendlyName": "Our home Device 0 aroTHERM Earned Environment Energy Heating",
           "cSharpName": "OurHomeDevice0ArothermHeatGeneratedDomesticHotWater2"
         },
         {
@@ -3697,7 +3777,7 @@
         },
         {
           "id": "sensor.our_home_device_0_arotherm_heat_generated_heating_2",
-          "friendlyName": "Our home Device 0 aroTHERM Heat Generated Heating",
+          "friendlyName": "Our home Device 0 aroTHERM Earned Environment Energy Domestic Hot Water",
           "cSharpName": "OurHomeDevice0ArothermHeatGeneratedHeating2"
         },
         {
@@ -3849,6 +3929,16 @@
           "id": "sensor.spotjes_verlichting_today_s_consumption",
           "friendlyName": "Spotjes Verlichting Today\u0027s consumption",
           "cSharpName": "SpotjesVerlichtingTodaySConsumption"
+        },
+        {
+          "id": "sensor.temperature",
+          "friendlyName": "Current Temperature",
+          "cSharpName": "Temperature"
+        },
+        {
+          "id": "sensor.temperatuur",
+          "friendlyName": "Temperatuur",
+          "cSharpName": "Temperatuur"
         },
         {
           "id": "sensor.toetsenpaneel_ingang_battery",
@@ -4231,6 +4321,21 @@
           "jsonName": "price_in_cents",
           "cSharpName": "PriceInCents",
           "clrType": "System.Boolean"
+        },
+        {
+          "jsonName": "Stationname",
+          "cSharpName": "Stationname",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "Measured",
+          "cSharpName": "Measured",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "entity_id",
+          "cSharpName": "EntityId",
+          "clrType": "System.String"
         }
       ]
     },
@@ -4653,7 +4758,7 @@
         },
         {
           "id": "switch.q7_max_kinderslot",
-          "friendlyName": "Q7 Max Kinderslot",
+          "friendlyName": "Q7 Max Dock Kinderslot",
           "cSharpName": "Q7MaxKinderslot"
         },
         {
@@ -4974,11 +5079,6 @@
           "cSharpName": "ClockWeatherCardUpdate"
         },
         {
-          "id": "update.dreo_smart_device_integration_update",
-          "friendlyName": "Dreo Smart Device Integration update",
-          "cSharpName": "DreoSmartDeviceIntegrationUpdate"
-        },
-        {
           "id": "update.duck_dns_update",
           "friendlyName": "Duck DNS Update",
           "cSharpName": "DuckDnsUpdate"
@@ -5029,11 +5129,6 @@
           "cSharpName": "LayoutCardUpdate"
         },
         {
-          "id": "update.material_rounded_theme_based_on_material_you_by_google_on_android_update",
-          "friendlyName": "Material You and Material Rounded - Material Design 3 Themes update",
-          "cSharpName": "MaterialRoundedThemeBasedOnMaterialYouByGoogleOnAndroidUpdate"
-        },
-        {
           "id": "update.matter_server_update",
           "friendlyName": "Matter Server Update",
           "cSharpName": "MatterServerUpdate"
@@ -5082,11 +5177,6 @@
           "id": "update.nordpool_update",
           "friendlyName": "nordpool update",
           "cSharpName": "NordpoolUpdate"
-        },
-        {
-          "id": "update.plex_media_server_update",
-          "friendlyName": "Plex Media Server Update",
-          "cSharpName": "PlexMediaServerUpdate"
         },
         {
           "id": "update.qbittorrent_update",
