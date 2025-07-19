@@ -35,11 +35,6 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
         private readonly ILogger<AdjustEnergySchedule> _logger;
 
         /// <summary>
-        /// The services
-        /// </summary>
-        private readonly Services _services;
-
-        /// <summary>
         /// The entities
         /// </summary>
         private readonly Entities _entities;
@@ -75,9 +70,9 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
         private double? _currentPrice;
 
         /// <summary>
-        /// The energy production
+        /// The energy price level, none is price of 0, highest is sky high
         /// </summary>
-        private Level _energyProduction;
+        private Level _energyPriceLevel;
 
         /// <summary>
         /// The target temperature for the water heater
@@ -111,7 +106,6 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
             _logger = logger;
 
             // Read the Home assistant services and entities
-            _services = new Services(ha);
             _entities = new Entities(ha);
             
             _logger.LogInformation("Started Energy Schedule Assistant program");
@@ -145,9 +139,6 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
 
             // Disable the dishwasher, the washing machine and the dryer if the price is too high
             SetAppliancesSchedule();
-            
-            // Set the heating schedule for the heating circuit
-            SetHeatingTemperature();
 
             // Set the car charging schedule
         }
@@ -160,15 +151,14 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
             _priceThreshold = GetPriceThreshold();
             _currentPrice = GetCurrentPrice();
             
-            // Set the energy production level
-            _energyProduction = _entities.Sensor.ElectricityMeterPowerProduction.State switch
+            // Set the energy price level based on the current price
+            _energyPriceLevel = _currentPrice switch
             {
-                // Check if the energy production is above the threshold
-                < 0.1 => Level.None,
-                > 0.1 and <= 1 => Level.Low,
-                > 1 and <= 2 => Level.Medium,
-                > 2 and <= 3 => Level.High,
-                _ => Level.Maximum
+                < 0 => Level.None,
+                < 0.1 => Level.Low, 
+                < 0.4 => _currentPrice < _priceThreshold ? Level.Medium : Level.High, 
+                < 0.5 => Level.High,
+                _ => Level.Maximum 
             };
             
             // Set the away mode
@@ -216,17 +206,14 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
             // Get the entities for the appliances
             var washingMachine = _entities.Switch.Wasmachine;
             var washingMachineCurrentPower = _entities.Sensor.WasmachineHuidigGebruik;
-
             var dryer = _entities.Switch.Droger;
             var dryerCurrentPower = _entities.Sensor.DrogerHuidigGebruik;
-
             var dishwasher = _entities.Switch.Vaatwasser;
             var dishwasherCurrentPower = _entities.Sensor.VaatwasserHuidigGebruik;
-
             var garage = _entities.Switch.Garage;
             
-            // Check if the price is above the threshold and there is no energy production
-            if (_energyProduction < Level.Low && _currentPrice > _priceThreshold)
+            // Check if the price is above the threshold
+            if (_energyPriceLevel > Level.Medium)
             {
                 // Check if the washing machine is on and if no program is running
                 if (washingMachine?.State == "on" && washingMachineCurrentPower.State < 5)
@@ -277,87 +264,11 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
                     dishwasher.TurnOn();
                 }
                 
-                if (garage?.State == "off" && _energyProduction == Level.Maximum)
+                if (garage?.State == "off")
                 {
                     _logger.LogInformation("Garage enabled again");
                     garage.TurnOn();
                 }
-            }
-        }
-
-        /// <summary>
-        /// Sets the heating temperature
-        /// </summary>
-        private void SetHeatingTemperature()
-        {
-            var climate = _entities.Climate.OurHomeZoneThuisCircuit0Climate;
-            var curve = _entities.Number.OurHomeCircuit0HeatingCurve;
-            var programType = _awayMode ? "away" : "none";
-            var desiredTemperature = 20;
-            var targetCurve = 0.3;
-
-            switch (_energyProduction)
-            {
-                case Level.High:
-                    targetCurve = 0.4;
-                    break;
-                case Level.Maximum:
-                    // If we produce a lot of energy, set the temperature to 21 degrees
-                    programType = "boost";
-                    desiredTemperature = 21;
-                    targetCurve = 0.5;
-                    break;
-            }
-            
-            // If prices are below zero, set the temperature to max!
-            if (_currentPrice <= 0.1)
-            {
-                programType = "boost";
-                desiredTemperature = 21;
-                targetCurve = 0.5;
-            }
-            
-            if (_waitCyclesHeating > 0)
-            {
-                _waitCyclesHeating--;
-                return;
-            }
-            
-            // Set the heating curve for the next 10 cycles
-            if (!Utils.AreDoublesEqual(curve.State,targetCurve))
-            {
-                // Set the heating curve
-                curve.SetValue(new NumberSetValueParameters
-                {
-                    Value = targetCurve.ToString(CultureInfo.InvariantCulture)
-                });
-
-                _waitCyclesHeating = 10;
-            }
-
-            // Set the heating program and temperature when the program is different or the temperature is different
-            if ((climate.Attributes?.PresetMode == "boost" && programType != "boost") || (programType == "boost" && (climate.Attributes?.PresetMode != "boost" || !Utils.AreDoublesEqual(climate.Attributes?.TargetTempLow, desiredTemperature))))
-            {
-                var msg = $"Setting heating program to {programType} with temperature {desiredTemperature}";
-                
-                _logger.LogInformation(msg);
-                DisplayMessage(msg);
-                
-                climate.SetPresetMode(new ClimateSetPresetModeParameters
-                {
-                    PresetMode = programType
-                });
-            
-                if (programType == "boost")
-                {
-                    climate.SetTemperature(new ClimateSetTemperatureParameters
-                    {
-                        TargetTempLow = desiredTemperature,
-                        TargetTempHigh = 21
-                    });
-                }
-
-                _waitCyclesHeating = 10;
             }
         }
         
@@ -433,12 +344,13 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
             }
             else
             {
-                // Set the heating temperature
-                heatingTemperature = _energyProduction switch
+                // Set the heating temperature based on the energy price level
+                heatingTemperature = _energyPriceLevel switch
                 {
-                    Level.Maximum => 60,
-                    Level.High => 58,
-                    Level.Medium => _currentPrice < _priceThreshold ? 50: 35,
+                    Level.None => 70,
+                    Level.Low => 60,
+                    Level.Medium => 58,
+                    Level.High => bathMode ? 58 :50,
                     _ => bathMode ? 58 : 35
                 };
                 
@@ -454,28 +366,21 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
                 }
                 else
                 {
-                    programTemperature = _energyProduction switch
+                    programTemperature = _energyPriceLevel switch
                     {
-                        Level.Maximum => _currentPrice < 0.12 ? 66 : 60, 
-                        Level.High => 58,
+                        Level.None => 70,
+                        Level.Low => 58, 
                         Level.Medium => 58,
-                        _ => _currentPrice < 0.35 ? 58 : 50
+                        _ => 50
                     };
                     
                     // Check if the next price for tomorrow is lower than the current price
-                    if (nextNightPrice.Value > 0 && nextNightPrice.Value < _currentPrice && _energyProduction < Level.Medium)
+                    if (nextNightPrice.Value > 0 && nextNightPrice.Value < _currentPrice && _energyPriceLevel > Level.Medium)
                     {
                         // if so, set the temperature to idle and wait for the next cycle
                         programTemperature = heatingTemperature;
                     }
                 }
-            }
-
-            // If prices are very low, set the temperature to max!
-            if (_currentPrice <= 0.10)
-            {
-                programTemperature = 70;
-                heatingTemperature = 70;
             }
 
             // Set the water heating temperature

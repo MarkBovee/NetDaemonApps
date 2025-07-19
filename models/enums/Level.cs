@@ -1,9 +1,7 @@
 namespace HomeAssistantGenerated.models.enums;
 
 /// <summary>
-
 /// The level enum
-
 /// </summary>
 
 public enum Level
