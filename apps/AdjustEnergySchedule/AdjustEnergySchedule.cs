@@ -348,8 +348,8 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
                 heatingTemperature = _energyPriceLevel switch
                 {
                     Level.None => 70,
-                    Level.Low => 60,
-                    Level.Medium => 58,
+                    Level.Low => 50,
+                    Level.Medium => 50,
                     Level.High => bathMode ? 58 :50,
                     _ => bathMode ? 58 : 35
                 };
@@ -362,7 +362,11 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
                 }
                 else if (useLegionellaProtection)
                 {
-                    programTemperature = 62;
+                    programTemperature = _energyPriceLevel switch
+                    {
+                        Level.None => 70,
+                        _ => 62
+                    };
                 }
                 else
                 {
