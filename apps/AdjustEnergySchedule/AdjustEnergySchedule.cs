@@ -350,7 +350,6 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
                     Level.None => 70,
                     Level.Low => 50,
                     Level.Medium => 50,
-                    Level.High => bathMode ? 58 :50,
                     _ => bathMode ? 58 : 35
                 };
                 
