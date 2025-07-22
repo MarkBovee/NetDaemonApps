@@ -156,8 +156,8 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
             {
                 < 0 => Level.None,
                 < 0.1 => Level.Low, 
-                < 0.4 => _currentPrice < _priceThreshold ? Level.Medium : Level.High, 
-                < 0.5 => Level.High,
+                < 0.3 => _currentPrice < _priceThreshold ? Level.Medium : Level.High, 
+                < 0.4 => Level.High,
                 _ => Level.Maximum 
             };
             
@@ -349,7 +349,6 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
                 {
                     Level.None => 70,
                     Level.Low => 50,
-                    Level.Medium => 50,
                     _ => bathMode ? 58 : 35
                 };
                 
@@ -372,9 +371,7 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
                     programTemperature = _energyPriceLevel switch
                     {
                         Level.None => 70,
-                        Level.Low => 58, 
-                        Level.Medium => 58,
-                        _ => 50
+                        _ => 58
                     };
                     
                     // Check if the next price for tomorrow is lower than the current price
