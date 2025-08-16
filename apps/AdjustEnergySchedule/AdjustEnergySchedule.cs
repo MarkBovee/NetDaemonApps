@@ -175,7 +175,7 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
             
             var avgPrice = _entities.Sensor.NordpoolKwhNlEur310021.Attributes.Average;
             double priceThreshold;
-            const double fallbackPrice = 0.28;
+            const double fallbackPrice = 0.25;
 
             if (avgPrice != null)
             {
@@ -183,7 +183,7 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
                 priceThreshold = avgPrice.Value;
 
                 // Check if the price is below the fallback price
-                if (priceThreshold < fallbackPrice)
+                if (priceThreshold > fallbackPrice)
                 {
                     priceThreshold = fallbackPrice;
                 }
@@ -206,8 +206,8 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
             // Get the entities for the appliances
             var washingMachine = _entities.Switch.Wasmachine;
             var washingMachineCurrentPower = _entities.Sensor.WasmachineHuidigGebruik;
-            var dryer = _entities.Switch.Droger;
-            var dryerCurrentPower = _entities.Sensor.DrogerHuidigGebruik;
+            var dryer = _entities.Switch.DrogerEnVriezer;
+            var dryerCurrentPower = _entities.Sensor.DrogerEnVriezerHuidigGebruik;
             var dishwasher = _entities.Switch.Vaatwasser;
             var dishwasherCurrentPower = _entities.Sensor.VaatwasserHuidigGebruik;
             var garage = _entities.Switch.Garage;
@@ -270,6 +270,84 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
                     garage.TurnOn();
                 }
             }
+        }
+        
+        /// <summary>
+        /// Sets the heating temperature
+        /// </summary>
+        private void SetHeatingTemperature()
+        {
+            // TODO: Refactor so we start cooling when the temperature outside is above 23 degrees and we have solar energy production.
+            
+            // var climate = _entities.Climate.OurHomeZoneThuisCircuit0Climate;
+            // var curve = _entities.Number.OurHomeCircuit0HeatingCurve;
+            // var programType = _awayMode ? "away" : "none";
+            // var desiredTemperature = 20;
+            // var targetCurve = 0.3;
+            //
+            // switch (_energyProduction)
+            // {
+            //     case Level.High:
+            //         targetCurve = 0.4;
+            //         break;
+            //     case Level.Maximum:
+            //         // If we produce a lot of energy, set the temperature to 21 degrees
+            //         programType = "boost";
+            //         desiredTemperature = 21;
+            //         targetCurve = 0.5;
+            //         break;
+            // }
+            //
+            // // If prices are below zero, set the temperature to max!
+            // if (_currentPrice <= 0.1)
+            // {
+            //     programType = "boost";
+            //     desiredTemperature = 21;
+            //     targetCurve = 0.5;
+            // }
+            //
+            // if (_waitCyclesHeating > 0)
+            // {
+            //     _waitCyclesHeating--;
+            //     return;
+            // }
+            //
+            // // Set the heating curve for the next 10 cycles
+            // if (!Utils.AreDoublesEqual(curve.State,targetCurve))
+            // {
+            //     // Set the heating curve
+            //     curve.SetValue(new NumberSetValueParameters
+            //     {
+            //         Value = targetCurve.ToString(CultureInfo.InvariantCulture)
+            //     });
+            //
+            //     _waitCyclesHeating = 10;
+            // }
+            //
+            // // Set the heating program and temperature when the program is different or the temperature is different
+            // if ((climate.Attributes?.PresetMode == "boost" && programType != "boost") || (programType == "boost" && (climate.Attributes?.PresetMode != "boost" || !Utils.AreDoublesEqual(climate.Attributes?.TargetTempLow, desiredTemperature))))
+            // {
+            //     var msg = $"Setting heating program to {programType} with temperature {desiredTemperature}";
+            //     
+            //     _logger.LogInformation(msg);
+            //     DisplayMessage(msg);
+            //     
+            //     climate.SetPresetMode(new ClimateSetPresetModeParameters
+            //     {
+            //         PresetMode = programType
+            //     });
+            //
+            //     if (programType == "boost")
+            //     {
+            //         climate.SetTemperature(new ClimateSetTemperatureParameters
+            //         {
+            //             TargetTempLow = desiredTemperature,
+            //             TargetTempHigh = 21
+            //         });
+            //     }
+            //
+            //     _waitCyclesHeating = 10;
+            // }
         }
         
         /// <summary>

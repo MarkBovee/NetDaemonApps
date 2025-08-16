@@ -192,7 +192,7 @@
         },
         {
           "id": "media_player.chromecast",
-          "friendlyName": "Chromecast Slaapkamer",
+          "friendlyName": null,
           "cSharpName": "Chromecast"
         },
         {
@@ -601,7 +601,7 @@
       "entities": [
         {
           "id": "automation.airco_aan_bij_lage_prijzen",
-          "friendlyName": "Airco aan",
+          "friendlyName": "Airco aan met warm weer",
           "cSharpName": "AircoAanBijLagePrijzen"
         },
         {
@@ -610,9 +610,34 @@
           "cSharpName": "AircoAanMetLagePrijzen"
         },
         {
+          "id": "automation.airco_aan_met_prijzen_onder_nul",
+          "friendlyName": "Airco aan met prijzen onder nul",
+          "cSharpName": "AircoAanMetPrijzenOnderNul"
+        },
+        {
+          "id": "automation.airco_aan_met_warm_weer_s_avonds",
+          "friendlyName": "Airco aan met warm weer \u0027s avonds",
+          "cSharpName": "AircoAanMetWarmWeerSAvonds"
+        },
+        {
+          "id": "automation.airco_aan_snachts_in_die_pleuris_hitte",
+          "friendlyName": "Airco aan snachts in die pleuris hitte",
+          "cSharpName": "AircoAanSnachtsInDiePleurisHitte"
+        },
+        {
           "id": "automation.airco_uit",
-          "friendlyName": "Airco uit",
+          "friendlyName": "Airco ventileren in de ochtend",
           "cSharpName": "AircoUit"
+        },
+        {
+          "id": "automation.airco_uit_als_temperatuur_laag_is",
+          "friendlyName": "Airco op ventileren als temperatuur laag is",
+          "cSharpName": "AircoUitAlsTemperatuurLaagIs"
+        },
+        {
+          "id": "automation.airco_uit_met_hoge_prijzen",
+          "friendlyName": "Airco uit met hoge prijzen",
+          "cSharpName": "AircoUitMetHogePrijzen"
         },
         {
           "id": "automation.apparatuur_uit_bij_alarm_aan",
@@ -738,7 +763,7 @@
         },
         {
           "id": "binary_sensor.audio_overheated",
-          "friendlyName": "Audio Overheated",
+          "friendlyName": "Overheated",
           "cSharpName": "AudioOverheated"
         },
         {
@@ -758,7 +783,7 @@
         },
         {
           "id": "binary_sensor.computer_overheated",
-          "friendlyName": "Computer Overheated",
+          "friendlyName": "Overheated",
           "cSharpName": "ComputerOverheated"
         },
         {
@@ -777,19 +802,19 @@
           "cSharpName": "DeurbelMotion"
         },
         {
-          "id": "binary_sensor.droger_cloud_connection",
-          "friendlyName": "Droger Cloud connection",
-          "cSharpName": "DrogerCloudConnection"
+          "id": "binary_sensor.droger_en_vriezer_cloud_connection",
+          "friendlyName": "Droger en Vriezer Cloud connection",
+          "cSharpName": "DrogerEnVriezerCloudConnection"
+        },
+        {
+          "id": "binary_sensor.droger_en_vriezer_overbelast",
+          "friendlyName": "Droger en Vriezer Overbelast",
+          "cSharpName": "DrogerEnVriezerOverbelast"
         },
         {
           "id": "binary_sensor.droger_overheated",
-          "friendlyName": "Droger Overheated",
+          "friendlyName": "Overheated",
           "cSharpName": "DrogerOverheated"
-        },
-        {
-          "id": "binary_sensor.droger_overloaded",
-          "friendlyName": "Droger Overbelast",
-          "cSharpName": "DrogerOverloaded"
         },
         {
           "id": "binary_sensor.eettafel_l_cloud_connection",
@@ -827,14 +852,19 @@
           "cSharpName": "EmmeloordRangeExtenderTamper"
         },
         {
+          "id": "binary_sensor.ems_cloud_connection",
+          "friendlyName": "EMS Cloud connection",
+          "cSharpName": "EmsCloudConnection"
+        },
+        {
+          "id": "binary_sensor.ems_overbelast",
+          "friendlyName": "EMS Overbelast",
+          "cSharpName": "EmsOverbelast"
+        },
+        {
           "id": "binary_sensor.energy_prices_tomorrow",
           "friendlyName": "energy_prices_tomorrow",
           "cSharpName": "EnergyPricesTomorrow"
-        },
-        {
-          "id": "binary_sensor.ex5601_t1_wan_status",
-          "friendlyName": "EX5601-T1 WAN status",
-          "cSharpName": "Ex5601T1WanStatus"
         },
         {
           "id": "binary_sensor.garage_cloud_connection",
@@ -843,28 +873,13 @@
         },
         {
           "id": "binary_sensor.garage_overheated",
-          "friendlyName": "Garage Overheated",
+          "friendlyName": "Overheated",
           "cSharpName": "GarageOverheated"
         },
         {
           "id": "binary_sensor.garage_overloaded",
           "friendlyName": "Garage Overbelast",
           "cSharpName": "GarageOverloaded"
-        },
-        {
-          "id": "binary_sensor.kantoor_cloud_connection",
-          "friendlyName": "Kantoor Cloud connection",
-          "cSharpName": "KantoorCloudConnection"
-        },
-        {
-          "id": "binary_sensor.kantoor_overheated",
-          "friendlyName": "Kantoor Overheated",
-          "cSharpName": "KantoorOverheated"
-        },
-        {
-          "id": "binary_sensor.kantoor_overloaded",
-          "friendlyName": "Kantoor Overbelast",
-          "cSharpName": "KantoorOverloaded"
         },
         {
           "id": "binary_sensor.keuken_motion_sensor",
@@ -953,7 +968,7 @@
         },
         {
           "id": "binary_sensor.spotjes_verlichting_overheated",
-          "friendlyName": "Spotjes Verlichting Overheated",
+          "friendlyName": "Overheated",
           "cSharpName": "SpotjesVerlichtingOverheated"
         },
         {
@@ -983,7 +998,7 @@
         },
         {
           "id": "binary_sensor.tuinhuis_verlichting_overheated",
-          "friendlyName": "Tuinhuis verlichting  Overheated",
+          "friendlyName": "Overheated",
           "cSharpName": "TuinhuisVerlichtingOverheated"
         },
         {
@@ -998,7 +1013,7 @@
         },
         {
           "id": "binary_sensor.tv_en_media_overheated",
-          "friendlyName": "TV en Media Overheated",
+          "friendlyName": "Overheated",
           "cSharpName": "TvEnMediaOverheated"
         },
         {
@@ -1013,7 +1028,7 @@
         },
         {
           "id": "binary_sensor.vaatwasser_overheated",
-          "friendlyName": "Vaatwasser  Overheated",
+          "friendlyName": "Overheated",
           "cSharpName": "VaatwasserOverheated"
         },
         {
@@ -1058,7 +1073,7 @@
         },
         {
           "id": "binary_sensor.wasmachine_overheated",
-          "friendlyName": "Wasmachine  Overheated",
+          "friendlyName": "Overheated",
           "cSharpName": "WasmachineOverheated"
         },
         {
@@ -1420,9 +1435,9 @@
       "domain": "climate",
       "entities": [
         {
-          "id": "climate.ac_zolder",
-          "friendlyName": "AC-Zolder",
-          "cSharpName": "AcZolder"
+          "id": "climate.gree_climate",
+          "friendlyName": null,
+          "cSharpName": "GreeClimate"
         },
         {
           "id": "climate.our_home_zone_thuis_circuit_0_climate",
@@ -1545,6 +1560,26 @@
           "jsonName": "target_temp_low",
           "cSharpName": "TargetTempLow",
           "clrType": "System.Double"
+        },
+        {
+          "jsonName": "swing_horizontal_modes",
+          "cSharpName": "SwingHorizontalModes",
+          "clrType": "System.Collections.Generic.IReadOnlyList\u00601[System.String]"
+        },
+        {
+          "jsonName": "fan_mode",
+          "cSharpName": "FanMode",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "swing_mode",
+          "cSharpName": "SwingMode",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "swing_horizontal_mode",
+          "cSharpName": "SwingHorizontalMode",
+          "clrType": "System.String"
         }
       ]
     },
@@ -1683,11 +1718,6 @@
       "domain": "input_boolean",
       "entities": [
         {
-          "id": "input_boolean.airco",
-          "friendlyName": "Airco",
-          "cSharpName": "Airco"
-        },
-        {
           "id": "input_boolean.bath",
           "friendlyName": "Bath",
           "cSharpName": "Bath"
@@ -1808,19 +1838,29 @@
           "cSharpName": "DeurbelSnapshotInterval"
         },
         {
-          "id": "number.droger_power_protection",
-          "friendlyName": "Droger Stroombeveiliging",
-          "cSharpName": "DrogerPowerProtection"
+          "id": "number.droger_en_vriezer_stroombeveiliging",
+          "friendlyName": "Droger en Vriezer Stroombeveiliging",
+          "cSharpName": "DrogerEnVriezerStroombeveiliging"
         },
         {
-          "id": "number.droger_turn_off_in",
-          "friendlyName": "Droger Turn off in",
-          "cSharpName": "DrogerTurnOffIn"
+          "id": "number.droger_en_vriezer_turn_off_in",
+          "friendlyName": "Droger en Vriezer Turn off in",
+          "cSharpName": "DrogerEnVriezerTurnOffIn"
         },
         {
           "id": "number.emmeloord_base_station_volume",
           "friendlyName": "Emmeloord Base Station Volume",
           "cSharpName": "EmmeloordBaseStationVolume"
+        },
+        {
+          "id": "number.ems_stroombeveiliging",
+          "friendlyName": "EMS Stroombeveiliging",
+          "cSharpName": "EmsStroombeveiliging"
+        },
+        {
+          "id": "number.ems_turn_off_in",
+          "friendlyName": "EMS Turn off in",
+          "cSharpName": "EmsTurnOffIn"
         },
         {
           "id": "number.garage_power_protection",
@@ -1831,16 +1871,6 @@
           "id": "number.garage_turn_off_in",
           "friendlyName": "Garage Turn off in",
           "cSharpName": "GarageTurnOffIn"
-        },
-        {
-          "id": "number.kantoor_power_protection",
-          "friendlyName": "Kantoor Stroombeveiliging",
-          "cSharpName": "KantoorPowerProtection"
-        },
-        {
-          "id": "number.kantoor_turn_off_in",
-          "friendlyName": "Kantoor Turn off in",
-          "cSharpName": "KantoorTurnOffIn"
         },
         {
           "id": "number.keuken_chime_snooze_minutes",
@@ -1881,6 +1911,11 @@
           "id": "number.our_home_zone_thuis_circuit_0_quick_veto_duration",
           "friendlyName": "Our home Zone Thuis (Circuit 0) Quick Veto Duration",
           "cSharpName": "OurHomeZoneThuisCircuit0QuickVetoDuration"
+        },
+        {
+          "id": "number.power_usage",
+          "friendlyName": "Power Usage",
+          "cSharpName": "PowerUsage"
         },
         {
           "id": "number.q7_max_volume",
@@ -2211,14 +2246,14 @@
           "cSharpName": "Q7MaxDockLegeModus"
         },
         {
+          "id": "select.q7_max_geselecteerde_kaart",
+          "friendlyName": "Q7 Max Geselecteerde kaart",
+          "cSharpName": "Q7MaxGeselecteerdeKaart"
+        },
+        {
           "id": "select.q7_max_intensiteit_van_dweilen",
           "friendlyName": "Q7 Max Intensiteit van dweilen",
           "cSharpName": "Q7MaxIntensiteitVanDweilen"
-        },
-        {
-          "id": "select.q7_max_selected_map",
-          "friendlyName": "Q7 Max Geselecteerde kaart",
-          "cSharpName": "Q7MaxSelectedMap"
         },
         {
           "id": "select.tuin_camera_event_select",
@@ -2314,7 +2349,7 @@
         },
         {
           "id": "sensor.audio_auto_off_at",
-          "friendlyName": "Audio Auto off at",
+          "friendlyName": "Audio Auto-off at",
           "cSharpName": "AudioAutoOffAt"
         },
         {
@@ -2326,6 +2361,11 @@
           "id": "sensor.backup_backup_manager_state",
           "friendlyName": "Backup Backup Manager state",
           "cSharpName": "BackupBackupManagerState"
+        },
+        {
+          "id": "sensor.backup_last_attempted_automatic_backup",
+          "friendlyName": "Backup Last attempted automatic backup",
+          "cSharpName": "BackupLastAttemptedAutomaticBackup"
         },
         {
           "id": "sensor.backup_last_successful_automatic_backup",
@@ -2343,8 +2383,38 @@
           "cSharpName": "BackupState"
         },
         {
+          "id": "sensor.battery_b2n0200j2403e01735_bat_soh",
+          "friendlyName": "Battery B2N0200J2403E01735 Bat Soh",
+          "cSharpName": "BatteryB2n0200j2403e01735BatSoh"
+        },
+        {
+          "id": "sensor.battery_b2u4250j2511e06231_bat_soh",
+          "friendlyName": "Battery B2U4250J2511E06231 Bat Soh",
+          "cSharpName": "BatteryB2u4250j2511e06231BatSoh"
+        },
+        {
+          "id": "sensor.battery_b2u4250j2511e06243_bat_soh",
+          "friendlyName": "Battery B2U4250J2511E06243 Bat Soh",
+          "cSharpName": "BatteryB2u4250j2511e06243BatSoh"
+        },
+        {
+          "id": "sensor.battery_b2u4250j2511e06244_bat_soh",
+          "friendlyName": "Battery B2U4250J2511E06244 Bat Soh",
+          "cSharpName": "BatteryB2u4250j2511e06244BatSoh"
+        },
+        {
+          "id": "sensor.battery_b2u4250j2511e06245_bat_soh",
+          "friendlyName": "Battery B2U4250J2511E06245 Bat Soh",
+          "cSharpName": "BatteryB2u4250j2511e06245BatSoh"
+        },
+        {
+          "id": "sensor.battery_b2u4250j2511e06247_bat_soh",
+          "friendlyName": "Battery B2U4250J2511E06247 Bat Soh",
+          "cSharpName": "BatteryB2u4250j2511e06247BatSoh"
+        },
+        {
           "id": "sensor.computer_auto_off_at",
-          "friendlyName": "Computer Auto off at",
+          "friendlyName": "Computer Auto-off at",
           "cSharpName": "ComputerAutoOffAt"
         },
         {
@@ -2358,14 +2428,14 @@
           "cSharpName": "DeurbelInfo3"
         },
         {
-          "id": "sensor.droger_auto_off_at",
-          "friendlyName": "Droger Auto off at",
-          "cSharpName": "DrogerAutoOffAt"
+          "id": "sensor.droger_en_vriezer_auto_off_at",
+          "friendlyName": "Droger en Vriezer Auto-off at",
+          "cSharpName": "DrogerEnVriezerAutoOffAt"
         },
         {
-          "id": "sensor.droger_signaalniveau",
-          "friendlyName": "Droger Signaalniveau",
-          "cSharpName": "DrogerSignaalniveau"
+          "id": "sensor.droger_en_vriezer_signaalniveau",
+          "friendlyName": "Droger en Vriezer Signaalniveau",
+          "cSharpName": "DrogerEnVriezerSignaalniveau"
         },
         {
           "id": "sensor.echo_pop_mark_next_alarm",
@@ -2413,24 +2483,24 @@
           "cSharpName": "EmmeloordRangeExtenderInfo"
         },
         {
-          "id": "sensor.ex5601_t1_extern_ip",
-          "friendlyName": "EX5601-T1 Extern IP",
-          "cSharpName": "Ex5601T1ExternIp"
+          "id": "sensor.ems_auto_off_at",
+          "friendlyName": "EMS Auto-off at",
+          "cSharpName": "EmsAutoOffAt"
+        },
+        {
+          "id": "sensor.ems_signaalniveau",
+          "friendlyName": "EMS Signaalniveau",
+          "cSharpName": "EmsSignaalniveau"
         },
         {
           "id": "sensor.garage_auto_off_at",
-          "friendlyName": "Garage Auto off at",
+          "friendlyName": "Garage Auto-off at",
           "cSharpName": "GarageAutoOffAt"
         },
         {
           "id": "sensor.garage_signaalniveau",
           "friendlyName": "Garage Signaalniveau",
           "cSharpName": "GarageSignaalniveau"
-        },
-        {
-          "id": "sensor.gas_meter_gas_consumption",
-          "friendlyName": "Gasverbruik",
-          "cSharpName": "GasMeterGasConsumption"
         },
         {
           "id": "sensor.gedetailleerde_staat",
@@ -2441,6 +2511,11 @@
           "id": "sensor.gedetailleerde_staat_1d",
           "friendlyName": "Gedetailleerde staat 1d",
           "cSharpName": "GedetailleerdeStaat1d"
+        },
+        {
+          "id": "sensor.inverter_hst2083j2446e06861_today_alarm_num",
+          "friendlyName": "Inverter HST2083J2446E06861 Today Alarm Num",
+          "cSharpName": "InverterHst2083j2446e06861TodayAlarmNum"
         },
         {
           "id": "sensor.iphone_mark_app_version",
@@ -2491,16 +2566,6 @@
           "id": "sensor.iphone_mark_ssid_2",
           "friendlyName": "iPhone Mark SSID",
           "cSharpName": "IphoneMarkSsid2"
-        },
-        {
-          "id": "sensor.kantoor_auto_off_at",
-          "friendlyName": "Kantoor Auto off at",
-          "cSharpName": "KantoorAutoOffAt"
-        },
-        {
-          "id": "sensor.kantoor_signaalniveau",
-          "friendlyName": "Kantoor Signaalniveau",
-          "cSharpName": "KantoorSignaalniveau"
         },
         {
           "id": "sensor.keuken_chime_info_2",
@@ -2668,9 +2733,29 @@
           "cSharpName": "OurHomeZoneThuisCircuit0HeatingState"
         },
         {
-          "id": "sensor.q7_max_dock_error",
+          "id": "sensor.plant_markbovee_last_upload_time",
+          "friendlyName": "Plant Markbovee last Upload Time",
+          "cSharpName": "PlantMarkboveeLastUploadTime"
+        },
+        {
+          "id": "sensor.plant_markbovee_status",
+          "friendlyName": "Plant Markbovee Status",
+          "cSharpName": "PlantMarkboveeStatus"
+        },
+        {
+          "id": "sensor.power_highest_peak_time_today",
+          "friendlyName": "Solar production forecast Tijdstip hoogste vermogenspiek - vandaag",
+          "cSharpName": "PowerHighestPeakTimeToday"
+        },
+        {
+          "id": "sensor.power_highest_peak_time_tomorrow",
+          "friendlyName": "Solar production forecast Tijdstip hoogste vermogenspiek - morgen",
+          "cSharpName": "PowerHighestPeakTimeTomorrow"
+        },
+        {
+          "id": "sensor.q7_max_dock_dock_fout",
           "friendlyName": "Q7 Max Dock Dock fout",
-          "cSharpName": "Q7MaxDockError"
+          "cSharpName": "Q7MaxDockDockFout"
         },
         {
           "id": "sensor.q7_max_einde_laatste_schoonmaak",
@@ -2693,18 +2778,18 @@
           "cSharpName": "Q7MaxStatus"
         },
         {
-          "id": "sensor.q7_max_total_cleaning_count",
-          "friendlyName": "Q7 Max Totaal aantal schoonmaakbeurten",
-          "cSharpName": "Q7MaxTotalCleaningCount"
+          "id": "sensor.q7_max_stofzuigerfout",
+          "friendlyName": "Q7 Max Stofzuigerfout",
+          "cSharpName": "Q7MaxStofzuigerfout"
         },
         {
-          "id": "sensor.q7_max_vacuum_error",
-          "friendlyName": "Q7 Max Stofzuigerfout",
-          "cSharpName": "Q7MaxVacuumError"
+          "id": "sensor.q7_max_totaal_aantal_schoonmaakbeurten",
+          "friendlyName": "Q7 Max Totaal aantal schoonmaakbeurten",
+          "cSharpName": "Q7MaxTotaalAantalSchoonmaakbeurten"
         },
         {
           "id": "sensor.spotjes_verlichting_auto_off_at",
-          "friendlyName": "Spotjes Verlichting Auto off at",
+          "friendlyName": "Spotjes Verlichting Auto-off at",
           "cSharpName": "SpotjesVerlichtingAutoOffAt"
         },
         {
@@ -2774,7 +2859,7 @@
         },
         {
           "id": "sensor.tuinhuis_verlichting_auto_off_at",
-          "friendlyName": "Tuinhuis verlichting  Auto off at",
+          "friendlyName": "Tuinhuis verlichting  Auto-off at",
           "cSharpName": "TuinhuisVerlichtingAutoOffAt"
         },
         {
@@ -2784,7 +2869,7 @@
         },
         {
           "id": "sensor.tv_en_media_auto_off_at",
-          "friendlyName": "TV en Media Auto off at",
+          "friendlyName": "TV en Media Auto-off at",
           "cSharpName": "TvEnMediaAutoOffAt"
         },
         {
@@ -2794,7 +2879,7 @@
         },
         {
           "id": "sensor.vaatwasser_auto_off_at",
-          "friendlyName": "Vaatwasser  Auto off at",
+          "friendlyName": "Vaatwasser  Auto-off at",
           "cSharpName": "VaatwasserAutoOffAt"
         },
         {
@@ -2834,7 +2919,7 @@
         },
         {
           "id": "sensor.wasmachine_auto_off_at",
-          "friendlyName": "Wasmachine  Auto off at",
+          "friendlyName": "Wasmachine  Auto-off at",
           "cSharpName": "WasmachineAutoOffAt"
         },
         {
@@ -3413,6 +3498,101 @@
           "jsonName": "Measured",
           "cSharpName": "Measured",
           "clrType": "System.String"
+        },
+        {
+          "jsonName": "Plant UId",
+          "cSharpName": "PlantUId",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "Plant Total Co2 Reduction",
+          "cSharpName": "PlantTotalCo2Reduction",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "Plant total standard coal saved",
+          "cSharpName": "Planttotalstandardcoalsaved",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "Plant Total Trees Planted",
+          "cSharpName": "PlantTotalTreesPlanted",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "Plant this year Co2 Reduction (t)",
+          "cSharpName": "PlantthisyearCo2Reductiont",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "Plant this year standard coal saved (t)",
+          "cSharpName": "Plantthisyearstandardcoalsavedt",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "Plant this year trees planted (m3)",
+          "cSharpName": "Plantthisyeartreesplantedm3",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "Latitude of the plant",
+          "cSharpName": "Latitudeoftheplant",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "Longitude of the plant",
+          "cSharpName": "Longitudeoftheplant",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "Picture of the plant",
+          "cSharpName": "Pictureoftheplant",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "Plant Address",
+          "cSharpName": "PlantAddress",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "First online datetime",
+          "cSharpName": "Firstonlinedatetime",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "Owner name",
+          "cSharpName": "Ownername",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "Owner email",
+          "cSharpName": "Owneremail",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "Plant No.",
+          "cSharpName": "PlantNo_",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "Plant ID",
+          "cSharpName": "PlantID",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "Solar Power",
+          "cSharpName": "SolarPower",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "Plant today alarm number",
+          "cSharpName": "Planttodayalarmnumber",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "Alarm list",
+          "cSharpName": "Alarmlist",
+          "clrType": "System.Collections.Generic.IReadOnlyList\u00601[System.Object]"
         }
       ]
     },
@@ -3491,6 +3671,71 @@
           "cSharpName": "AveragePrice"
         },
         {
+          "id": "sensor.battery_b2n0200j2403e01735_bat_soc",
+          "friendlyName": "Battery B2N0200J2403E01735 Bat Soc",
+          "cSharpName": "BatteryB2n0200j2403e01735BatSoc"
+        },
+        {
+          "id": "sensor.battery_b2n0200j2403e01735_bat_temperature",
+          "friendlyName": "Battery B2N0200J2403E01735 Bat Temperature",
+          "cSharpName": "BatteryB2n0200j2403e01735BatTemperature"
+        },
+        {
+          "id": "sensor.battery_b2u4250j2511e06231_bat_soc",
+          "friendlyName": "Battery B2U4250J2511E06231 Bat Soc",
+          "cSharpName": "BatteryB2u4250j2511e06231BatSoc"
+        },
+        {
+          "id": "sensor.battery_b2u4250j2511e06231_bat_temperature",
+          "friendlyName": "Battery B2U4250J2511E06231 Bat Temperature",
+          "cSharpName": "BatteryB2u4250j2511e06231BatTemperature"
+        },
+        {
+          "id": "sensor.battery_b2u4250j2511e06243_bat_soc",
+          "friendlyName": "Battery B2U4250J2511E06243 Bat Soc",
+          "cSharpName": "BatteryB2u4250j2511e06243BatSoc"
+        },
+        {
+          "id": "sensor.battery_b2u4250j2511e06243_bat_temperature",
+          "friendlyName": "Battery B2U4250J2511E06243 Bat Temperature",
+          "cSharpName": "BatteryB2u4250j2511e06243BatTemperature"
+        },
+        {
+          "id": "sensor.battery_b2u4250j2511e06244_bat_soc",
+          "friendlyName": "Battery B2U4250J2511E06244 Bat Soc",
+          "cSharpName": "BatteryB2u4250j2511e06244BatSoc"
+        },
+        {
+          "id": "sensor.battery_b2u4250j2511e06244_bat_temperature",
+          "friendlyName": "Battery B2U4250J2511E06244 Bat Temperature",
+          "cSharpName": "BatteryB2u4250j2511e06244BatTemperature"
+        },
+        {
+          "id": "sensor.battery_b2u4250j2511e06245_bat_soc",
+          "friendlyName": "Battery B2U4250J2511E06245 Bat Soc",
+          "cSharpName": "BatteryB2u4250j2511e06245BatSoc"
+        },
+        {
+          "id": "sensor.battery_b2u4250j2511e06245_bat_temperature",
+          "friendlyName": "Battery B2U4250J2511E06245 Bat Temperature",
+          "cSharpName": "BatteryB2u4250j2511e06245BatTemperature"
+        },
+        {
+          "id": "sensor.battery_b2u4250j2511e06247_bat_soc",
+          "friendlyName": "Battery B2U4250J2511E06247 Bat Soc",
+          "cSharpName": "BatteryB2u4250j2511e06247BatSoc"
+        },
+        {
+          "id": "sensor.battery_b2u4250j2511e06247_bat_temperature",
+          "friendlyName": "Battery B2U4250J2511E06247 Bat Temperature",
+          "cSharpName": "BatteryB2u4250j2511e06247BatTemperature"
+        },
+        {
+          "id": "sensor.battery_grid_power",
+          "friendlyName": "Battery Grid Power",
+          "cSharpName": "BatteryGridPower"
+        },
+        {
           "id": "sensor.computer_huidig_gebruik",
           "friendlyName": "Computer Huidig gebruik",
           "cSharpName": "ComputerHuidigGebruik"
@@ -3526,29 +3771,29 @@
           "cSharpName": "DeurbelWireless"
         },
         {
-          "id": "sensor.droger_huidig_gebruik",
-          "friendlyName": "Droger Huidig gebruik",
-          "cSharpName": "DrogerHuidigGebruik"
+          "id": "sensor.droger_en_vriezer_huidig_gebruik",
+          "friendlyName": "Droger en Vriezer Huidig gebruik",
+          "cSharpName": "DrogerEnVriezerHuidigGebruik"
         },
         {
-          "id": "sensor.droger_spanning",
-          "friendlyName": "Droger Spanning",
-          "cSharpName": "DrogerSpanning"
+          "id": "sensor.droger_en_vriezer_spanning",
+          "friendlyName": "Droger en Vriezer Spanning",
+          "cSharpName": "DrogerEnVriezerSpanning"
         },
         {
-          "id": "sensor.droger_stroom",
-          "friendlyName": "Droger Stroom",
-          "cSharpName": "DrogerStroom"
+          "id": "sensor.droger_en_vriezer_stroom",
+          "friendlyName": "Droger en Vriezer Stroom",
+          "cSharpName": "DrogerEnVriezerStroom"
         },
         {
-          "id": "sensor.droger_this_month_s_consumption",
-          "friendlyName": "Droger This month\u0027s consumption",
-          "cSharpName": "DrogerThisMonthSConsumption"
+          "id": "sensor.droger_en_vriezer_this_month_s_consumption",
+          "friendlyName": "Droger en Vriezer This month\u0027s consumption",
+          "cSharpName": "DrogerEnVriezerThisMonthSConsumption"
         },
         {
-          "id": "sensor.droger_today_s_consumption",
-          "friendlyName": "Droger Today\u0027s consumption",
-          "cSharpName": "DrogerTodaySConsumption"
+          "id": "sensor.droger_en_vriezer_today_s_consumption",
+          "friendlyName": "Droger en Vriezer Today\u0027s consumption",
+          "cSharpName": "DrogerEnVriezerTodaySConsumption"
         },
         {
           "id": "sensor.electricity_meter_energy_consumption_tarif_1",
@@ -3606,24 +3851,54 @@
           "cSharpName": "EmmeloordRangeExtenderBattery"
         },
         {
-          "id": "sensor.ex5601_t1_data_ontvangen",
-          "friendlyName": "EX5601-T1 Data ontvangen",
-          "cSharpName": "Ex5601T1DataOntvangen"
+          "id": "sensor.ems_huidig_gebruik",
+          "friendlyName": "EMS Huidig gebruik",
+          "cSharpName": "EmsHuidigGebruik"
         },
         {
-          "id": "sensor.ex5601_t1_data_verzonden",
-          "friendlyName": "EX5601-T1 Data verzonden",
-          "cSharpName": "Ex5601T1DataVerzonden"
+          "id": "sensor.ems_spanning",
+          "friendlyName": "EMS Spanning",
+          "cSharpName": "EmsSpanning"
         },
         {
-          "id": "sensor.ex5601_t1_downloadsnelheid",
-          "friendlyName": "EX5601-T1 Downloadsnelheid",
-          "cSharpName": "Ex5601T1Downloadsnelheid"
+          "id": "sensor.ems_stroom",
+          "friendlyName": "EMS Stroom",
+          "cSharpName": "EmsStroom"
         },
         {
-          "id": "sensor.ex5601_t1_uploadsnelheid",
-          "friendlyName": "EX5601-T1 Uploadsnelheid",
-          "cSharpName": "Ex5601T1Uploadsnelheid"
+          "id": "sensor.ems_this_month_s_consumption",
+          "friendlyName": "EMS This month\u0027s consumption",
+          "cSharpName": "EmsThisMonthSConsumption"
+        },
+        {
+          "id": "sensor.ems_today_s_consumption",
+          "friendlyName": "EMS Today\u0027s consumption",
+          "cSharpName": "EmsTodaySConsumption"
+        },
+        {
+          "id": "sensor.energy_current_hour",
+          "friendlyName": "Solar production forecast Geschatte energieproductie - dit uur",
+          "cSharpName": "EnergyCurrentHour"
+        },
+        {
+          "id": "sensor.energy_next_hour",
+          "friendlyName": "Solar production forecast Geschatte energieproductie - volgend uur",
+          "cSharpName": "EnergyNextHour"
+        },
+        {
+          "id": "sensor.energy_production_today",
+          "friendlyName": "Solar production forecast Geschatte energieproductie - vandaag",
+          "cSharpName": "EnergyProductionToday"
+        },
+        {
+          "id": "sensor.energy_production_today_remaining",
+          "friendlyName": "Solar production forecast Geschatte energieproductie - resterend vandaag",
+          "cSharpName": "EnergyProductionTodayRemaining"
+        },
+        {
+          "id": "sensor.energy_production_tomorrow",
+          "friendlyName": "Solar production forecast Geschatte energieproductie - morgen",
+          "cSharpName": "EnergyProductionTomorrow"
         },
         {
           "id": "sensor.garage_huidig_gebruik",
@@ -3651,9 +3926,109 @@
           "cSharpName": "GarageTodaySConsumption"
         },
         {
+          "id": "sensor.gree_climate_temperature",
+          "friendlyName": "Gree Climate Temperature",
+          "cSharpName": "GreeClimateTemperature"
+        },
+        {
           "id": "sensor.ikea_of_sweden_remote_control_n2_batterij",
           "friendlyName": "IKEA of Sweden Remote Control N2 Batterij",
           "cSharpName": "IkeaOfSwedenRemoteControlN2Batterij"
+        },
+        {
+          "id": "sensor.inverter_hst2083j2446e06861_battery_state_of_charge",
+          "friendlyName": "Inverter HST2083J2446E06861 Battery State Of Charge",
+          "cSharpName": "InverterHst2083j2446e06861BatteryStateOfCharge"
+        },
+        {
+          "id": "sensor.inverter_hst2083j2446e06861_energy_month",
+          "friendlyName": "Inverter HST2083J2446E06861 Energy Month",
+          "cSharpName": "InverterHst2083j2446e06861EnergyMonth"
+        },
+        {
+          "id": "sensor.inverter_hst2083j2446e06861_energy_today",
+          "friendlyName": "Inverter HST2083J2446E06861 Energy Today",
+          "cSharpName": "InverterHst2083j2446e06861EnergyToday"
+        },
+        {
+          "id": "sensor.inverter_hst2083j2446e06861_energy_total",
+          "friendlyName": "Inverter HST2083J2446E06861 Energy Total",
+          "cSharpName": "InverterHst2083j2446e06861EnergyTotal"
+        },
+        {
+          "id": "sensor.inverter_hst2083j2446e06861_gc1r",
+          "friendlyName": "Inverter HST2083J2446E06861 GC1r",
+          "cSharpName": "InverterHst2083j2446e06861Gc1r"
+        },
+        {
+          "id": "sensor.inverter_hst2083j2446e06861_gc2s",
+          "friendlyName": "Inverter HST2083J2446E06861 GC2s",
+          "cSharpName": "InverterHst2083j2446e06861Gc2s"
+        },
+        {
+          "id": "sensor.inverter_hst2083j2446e06861_gc3t",
+          "friendlyName": "Inverter HST2083J2446E06861 GC3t",
+          "cSharpName": "InverterHst2083j2446e06861Gc3t"
+        },
+        {
+          "id": "sensor.inverter_hst2083j2446e06861_grid_power",
+          "friendlyName": "Inverter HST2083J2446E06861 grid power",
+          "cSharpName": "InverterHst2083j2446e06861GridPower"
+        },
+        {
+          "id": "sensor.inverter_hst2083j2446e06861_gv1r",
+          "friendlyName": "Inverter HST2083J2446E06861 GV1r",
+          "cSharpName": "InverterHst2083j2446e06861Gv1r"
+        },
+        {
+          "id": "sensor.inverter_hst2083j2446e06861_gv2s",
+          "friendlyName": "Inverter HST2083J2446E06861 GV2s",
+          "cSharpName": "InverterHst2083j2446e06861Gv2s"
+        },
+        {
+          "id": "sensor.inverter_hst2083j2446e06861_gv3t",
+          "friendlyName": "Inverter HST2083J2446E06861 GV3t",
+          "cSharpName": "InverterHst2083j2446e06861Gv3t"
+        },
+        {
+          "id": "sensor.inverter_hst2083j2446e06861_pc1",
+          "friendlyName": "Inverter HST2083J2446E06861 PC1",
+          "cSharpName": "InverterHst2083j2446e06861Pc1"
+        },
+        {
+          "id": "sensor.inverter_hst2083j2446e06861_pc2",
+          "friendlyName": "Inverter HST2083J2446E06861 PC2",
+          "cSharpName": "InverterHst2083j2446e06861Pc2"
+        },
+        {
+          "id": "sensor.inverter_hst2083j2446e06861_peak_power",
+          "friendlyName": "Inverter HST2083J2446E06861 Peak Power",
+          "cSharpName": "InverterHst2083j2446e06861PeakPower"
+        },
+        {
+          "id": "sensor.inverter_hst2083j2446e06861_power",
+          "friendlyName": "Inverter HST2083J2446E06861 Power",
+          "cSharpName": "InverterHst2083j2446e06861Power"
+        },
+        {
+          "id": "sensor.inverter_hst2083j2446e06861_pv1",
+          "friendlyName": "Inverter HST2083J2446E06861 PV1",
+          "cSharpName": "InverterHst2083j2446e06861Pv1"
+        },
+        {
+          "id": "sensor.inverter_hst2083j2446e06861_pv2",
+          "friendlyName": "Inverter HST2083J2446E06861 PV2",
+          "cSharpName": "InverterHst2083j2446e06861Pv2"
+        },
+        {
+          "id": "sensor.inverter_hst2083j2446e06861_string_1_power",
+          "friendlyName": "Inverter HST2083J2446E06861 string 1 power",
+          "cSharpName": "InverterHst2083j2446e06861String1Power"
+        },
+        {
+          "id": "sensor.inverter_hst2083j2446e06861_string_2_power",
+          "friendlyName": "Inverter HST2083J2446E06861 string 2 power",
+          "cSharpName": "InverterHst2083j2446e06861String2Power"
         },
         {
           "id": "sensor.iphone_mark_battery_level_2",
@@ -3664,31 +4039,6 @@
           "id": "sensor.iphone_mark_storage_2",
           "friendlyName": "iPhone Mark Storage",
           "cSharpName": "IphoneMarkStorage2"
-        },
-        {
-          "id": "sensor.kantoor_huidig_gebruik",
-          "friendlyName": "Kantoor Huidig gebruik",
-          "cSharpName": "KantoorHuidigGebruik"
-        },
-        {
-          "id": "sensor.kantoor_spanning",
-          "friendlyName": "Kantoor Spanning",
-          "cSharpName": "KantoorSpanning"
-        },
-        {
-          "id": "sensor.kantoor_stroom",
-          "friendlyName": "Kantoor Stroom",
-          "cSharpName": "KantoorStroom"
-        },
-        {
-          "id": "sensor.kantoor_this_month_s_consumption",
-          "friendlyName": "Kantoor This month\u0027s consumption",
-          "cSharpName": "KantoorThisMonthSConsumption"
-        },
-        {
-          "id": "sensor.kantoor_today_s_consumption",
-          "friendlyName": "Kantoor Today\u0027s consumption",
-          "cSharpName": "KantoorTodaySConsumption"
         },
         {
           "id": "sensor.keuken_chime_wireless",
@@ -3761,6 +4111,11 @@
           "cSharpName": "OurHomeDevice0ArothermEarnedEnvironmentEnergyHeating2"
         },
         {
+          "id": "sensor.our_home_device_0_arotherm_heat_generated_cooling",
+          "friendlyName": "Our home Device 0 aroTHERM Heat Generated Cooling",
+          "cSharpName": "OurHomeDevice0ArothermHeatGeneratedCooling"
+        },
+        {
           "id": "sensor.our_home_device_0_arotherm_heat_generated_domestic_hot_water",
           "friendlyName": "Our home Device 0 aroTHERM Heat Generated Domestic Hot Water",
           "cSharpName": "OurHomeDevice0ArothermHeatGeneratedDomesticHotWater"
@@ -3771,6 +4126,11 @@
           "cSharpName": "OurHomeDevice0ArothermHeatGeneratedDomesticHotWater2"
         },
         {
+          "id": "sensor.our_home_device_0_arotherm_heat_generated_domestic_hot_water_3",
+          "friendlyName": "Our home Device 0 aroTHERM Heat Generated Domestic Hot Water",
+          "cSharpName": "OurHomeDevice0ArothermHeatGeneratedDomesticHotWater3"
+        },
+        {
           "id": "sensor.our_home_device_0_arotherm_heat_generated_heating",
           "friendlyName": "Our home Device 0 aroTHERM Heat Generated Heating",
           "cSharpName": "OurHomeDevice0ArothermHeatGeneratedHeating"
@@ -3779,6 +4139,11 @@
           "id": "sensor.our_home_device_0_arotherm_heat_generated_heating_2",
           "friendlyName": "Our home Device 0 aroTHERM Earned Environment Energy Domestic Hot Water",
           "cSharpName": "OurHomeDevice0ArothermHeatGeneratedHeating2"
+        },
+        {
+          "id": "sensor.our_home_device_0_arotherm_heat_generated_heating_3",
+          "friendlyName": "Our home Device 0 aroTHERM Heat Generated Heating",
+          "cSharpName": "OurHomeDevice0ArothermHeatGeneratedHeating3"
         },
         {
           "id": "sensor.our_home_device_1_hydraulic_station_consumed_electrical_energy_domestic_hot_water",
@@ -3856,24 +4221,169 @@
           "cSharpName": "OurHomeZoneThuisCircuit0Humidity"
         },
         {
+          "id": "sensor.plant_markbovee_energy_month",
+          "friendlyName": "Plant Markbovee Energy Month",
+          "cSharpName": "PlantMarkboveeEnergyMonth"
+        },
+        {
+          "id": "sensor.plant_markbovee_energy_today",
+          "friendlyName": "Plant Markbovee Energy Today ",
+          "cSharpName": "PlantMarkboveeEnergyToday"
+        },
+        {
+          "id": "sensor.plant_markbovee_energy_total",
+          "friendlyName": "Plant Markbovee Energy Total ",
+          "cSharpName": "PlantMarkboveeEnergyTotal"
+        },
+        {
+          "id": "sensor.plant_markbovee_energy_year",
+          "friendlyName": "Plant Markbovee Energy Year",
+          "cSharpName": "PlantMarkboveeEnergyYear"
+        },
+        {
+          "id": "sensor.plant_markbovee_month_bat_chg_energy",
+          "friendlyName": "Plant Markbovee Month Bat Chg Energy",
+          "cSharpName": "PlantMarkboveeMonthBatChgEnergy"
+        },
+        {
+          "id": "sensor.plant_markbovee_month_bat_dischg_energy",
+          "friendlyName": "Plant Markbovee Month Bat Dischg Energy",
+          "cSharpName": "PlantMarkboveeMonthBatDischgEnergy"
+        },
+        {
+          "id": "sensor.plant_markbovee_month_buy_energy",
+          "friendlyName": "Plant Markbovee Month Buy Energy",
+          "cSharpName": "PlantMarkboveeMonthBuyEnergy"
+        },
+        {
+          "id": "sensor.plant_markbovee_month_load_energy",
+          "friendlyName": "Plant Markbovee Month Load Energy",
+          "cSharpName": "PlantMarkboveeMonthLoadEnergy"
+        },
+        {
+          "id": "sensor.plant_markbovee_month_sell_energy",
+          "friendlyName": "Plant Markbovee Month Sell Energy",
+          "cSharpName": "PlantMarkboveeMonthSellEnergy"
+        },
+        {
+          "id": "sensor.plant_markbovee_peak_power",
+          "friendlyName": "Plant Markbovee Peak Power",
+          "cSharpName": "PlantMarkboveePeakPower"
+        },
+        {
+          "id": "sensor.plant_markbovee_state_of_charge",
+          "friendlyName": "Plant Markbovee State Of Charge",
+          "cSharpName": "PlantMarkboveeStateOfCharge"
+        },
+        {
+          "id": "sensor.plant_markbovee_today_buy_energy",
+          "friendlyName": "Plant Markbovee Today Buy Energy",
+          "cSharpName": "PlantMarkboveeTodayBuyEnergy"
+        },
+        {
+          "id": "sensor.plant_markbovee_today_charge_energy",
+          "friendlyName": "Plant Markbovee Today Charge Energy",
+          "cSharpName": "PlantMarkboveeTodayChargeEnergy"
+        },
+        {
+          "id": "sensor.plant_markbovee_today_dis_charge_energy",
+          "friendlyName": "Plant Markbovee Today Dis Charge Energy",
+          "cSharpName": "PlantMarkboveeTodayDisChargeEnergy"
+        },
+        {
+          "id": "sensor.plant_markbovee_today_equivalent_hours",
+          "friendlyName": "Plant Markbovee today Equivalent Hours",
+          "cSharpName": "PlantMarkboveeTodayEquivalentHours"
+        },
+        {
+          "id": "sensor.plant_markbovee_today_load_energy",
+          "friendlyName": "Plant Markbovee Today Load Energy",
+          "cSharpName": "PlantMarkboveeTodayLoadEnergy"
+        },
+        {
+          "id": "sensor.plant_markbovee_today_sell_energy",
+          "friendlyName": "Plant Markbovee Today Sell Energy",
+          "cSharpName": "PlantMarkboveeTodaySellEnergy"
+        },
+        {
+          "id": "sensor.plant_markbovee_total_buy_energy",
+          "friendlyName": "Plant Markbovee Total Buy Energy",
+          "cSharpName": "PlantMarkboveeTotalBuyEnergy"
+        },
+        {
+          "id": "sensor.plant_markbovee_total_charge_energy",
+          "friendlyName": "Plant Markbovee Total Charge Energy",
+          "cSharpName": "PlantMarkboveeTotalChargeEnergy"
+        },
+        {
+          "id": "sensor.plant_markbovee_total_dis_charge_energy",
+          "friendlyName": "Plant Markbovee Total Dis Charge Energy",
+          "cSharpName": "PlantMarkboveeTotalDisChargeEnergy"
+        },
+        {
+          "id": "sensor.plant_markbovee_total_load_energy",
+          "friendlyName": "Plant Markbovee Total Load Energy",
+          "cSharpName": "PlantMarkboveeTotalLoadEnergy"
+        },
+        {
+          "id": "sensor.plant_markbovee_total_sell_energy",
+          "friendlyName": "Plant Markbovee Total Sell Energy",
+          "cSharpName": "PlantMarkboveeTotalSellEnergy"
+        },
+        {
+          "id": "sensor.plant_markbovee_year_bat_chg_energy",
+          "friendlyName": "Plant Markbovee Year Bat Chg Energy",
+          "cSharpName": "PlantMarkboveeYearBatChgEnergy"
+        },
+        {
+          "id": "sensor.plant_markbovee_year_bat_dischg_energy",
+          "friendlyName": "Plant Markbovee Year Bat Dischg Energy",
+          "cSharpName": "PlantMarkboveeYearBatDischgEnergy"
+        },
+        {
+          "id": "sensor.plant_markbovee_year_buy_energy",
+          "friendlyName": "Plant Markbovee Year Buy Energy",
+          "cSharpName": "PlantMarkboveeYearBuyEnergy"
+        },
+        {
+          "id": "sensor.plant_markbovee_year_load_energy",
+          "friendlyName": "Plant Markbovee Year Load Energy",
+          "cSharpName": "PlantMarkboveeYearLoadEnergy"
+        },
+        {
+          "id": "sensor.plant_markbovee_year_sell_energy",
+          "friendlyName": "Plant Markbovee Year Sell Energy",
+          "cSharpName": "PlantMarkboveeYearSellEnergy"
+        },
+        {
+          "id": "sensor.power_production_now",
+          "friendlyName": "Solar production forecast Geschatte energieproductie - nu",
+          "cSharpName": "PowerProductionNow"
+        },
+        {
           "id": "sensor.q7_max_batterij",
           "friendlyName": "Q7 Max Batterij",
           "cSharpName": "Q7MaxBatterij"
         },
         {
-          "id": "sensor.q7_max_cleaning_time",
-          "friendlyName": "Q7 Max Schoonmaaktijd",
-          "cSharpName": "Q7MaxCleaningTime"
-        },
-        {
-          "id": "sensor.q7_max_filter_time_left",
+          "id": "sensor.q7_max_resterende_tijd_filter",
           "friendlyName": "Q7 Max Resterende tijd filter",
-          "cSharpName": "Q7MaxFilterTimeLeft"
+          "cSharpName": "Q7MaxResterendeTijdFilter"
         },
         {
-          "id": "sensor.q7_max_main_brush_time_left",
+          "id": "sensor.q7_max_resterende_tijd_hoofdborstel",
           "friendlyName": "Q7 Max Resterende tijd hoofdborstel",
-          "cSharpName": "Q7MaxMainBrushTimeLeft"
+          "cSharpName": "Q7MaxResterendeTijdHoofdborstel"
+        },
+        {
+          "id": "sensor.q7_max_resterende_tijd_sensor",
+          "friendlyName": "Q7 Max Resterende tijd sensor",
+          "cSharpName": "Q7MaxResterendeTijdSensor"
+        },
+        {
+          "id": "sensor.q7_max_resterende_tijd_zijborstel",
+          "friendlyName": "Q7 Max Resterende tijd zijborstel",
+          "cSharpName": "Q7MaxResterendeTijdZijborstel"
         },
         {
           "id": "sensor.q7_max_schoonmaakgebied",
@@ -3881,14 +4391,9 @@
           "cSharpName": "Q7MaxSchoonmaakgebied"
         },
         {
-          "id": "sensor.q7_max_sensor_time_left",
-          "friendlyName": "Q7 Max Resterende tijd sensor",
-          "cSharpName": "Q7MaxSensorTimeLeft"
-        },
-        {
-          "id": "sensor.q7_max_side_brush_time_left",
-          "friendlyName": "Q7 Max Resterende tijd zijborstel",
-          "cSharpName": "Q7MaxSideBrushTimeLeft"
+          "id": "sensor.q7_max_schoonmaaktijd",
+          "friendlyName": "Q7 Max Schoonmaaktijd",
+          "cSharpName": "Q7MaxSchoonmaaktijd"
         },
         {
           "id": "sensor.q7_max_totaal_schoonmaakgebied",
@@ -3896,9 +4401,9 @@
           "cSharpName": "Q7MaxTotaalSchoonmaakgebied"
         },
         {
-          "id": "sensor.q7_max_total_cleaning_time",
+          "id": "sensor.q7_max_totale_schoonmaaktijd",
           "friendlyName": "Q7 Max Totale schoonmaaktijd",
-          "cSharpName": "Q7MaxTotalCleaningTime"
+          "cSharpName": "Q7MaxTotaleSchoonmaaktijd"
         },
         {
           "id": "sensor.regenkans_1d",
@@ -4336,6 +4841,346 @@
           "jsonName": "entity_id",
           "cSharpName": "EntityId",
           "clrType": "System.String"
+        },
+        {
+          "jsonName": "Total income",
+          "cSharpName": "Totalincome",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "Today income",
+          "cSharpName": "Todayincome",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "Yesterday income",
+          "cSharpName": "Yesterdayincome",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "Month income",
+          "cSharpName": "Monthincome",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "Last month income",
+          "cSharpName": "Lastmonthincome",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "Plant Name",
+          "cSharpName": "PlantName",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "Plant UId",
+          "cSharpName": "PlantUId",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "Grid Direction",
+          "cSharpName": "GridDirection",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "Battery Direction",
+          "cSharpName": "BatteryDirection",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "Today equivalent hours",
+          "cSharpName": "Todayequivalenthours",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "Total equivalent hours",
+          "cSharpName": "Totalequivalenthours",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "Module signal strength (dBm)",
+          "cSharpName": "ModulesignalstrengthdBm",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "Device PC",
+          "cSharpName": "DevicePC",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "Device type",
+          "cSharpName": "Devicetype",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "Display firmware",
+          "cSharpName": "Displayfirmware",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "Installer name",
+          "cSharpName": "Installername",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "Master MCU firmware",
+          "cSharpName": "MasterMCUfirmware",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "Module firmware",
+          "cSharpName": "Modulefirmware",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "Module PC",
+          "cSharpName": "ModulePC",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "Module serial number",
+          "cSharpName": "Moduleserialnumber",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "Inverter Model",
+          "cSharpName": "InverterModel",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "Inverter SN",
+          "cSharpName": "InverterSN",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "Battery Capacity",
+          "cSharpName": "BatteryCapacity",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "Battery Current",
+          "cSharpName": "BatteryCurrent",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "Battery Power",
+          "cSharpName": "BatteryPower",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "Grid Power",
+          "cSharpName": "GridPower",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "Input/Output Power",
+          "cSharpName": "InputOutputPower",
+          "clrType": null
+        },
+        {
+          "jsonName": "Output Direction",
+          "cSharpName": "OutputDirection",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "Photovoltaics Power",
+          "cSharpName": "PhotovoltaicsPower",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "Photovoltaics Direction",
+          "cSharpName": "PhotovoltaicsDirection",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "Total Load Power",
+          "cSharpName": "TotalLoadPower",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "Home Load Power",
+          "cSharpName": "HomeLoadPower",
+          "clrType": null
+        },
+        {
+          "jsonName": "Backup Load Power",
+          "cSharpName": "BackupLoadPower",
+          "clrType": null
+        },
+        {
+          "jsonName": "Solar Power",
+          "cSharpName": "SolarPower",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "Battery Charge Today Energy",
+          "cSharpName": "BatteryChargeTodayEnergy",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "Battery Discharge Today Energy",
+          "cSharpName": "BatteryDischargeTodayEnergy",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "Battery Charge Total Energy",
+          "cSharpName": "BatteryChargeTotalEnergy",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "Battery Discharge Total Energy",
+          "cSharpName": "BatteryDischargeTotalEnergy",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "AC1",
+          "cSharpName": "AC1",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "AC2",
+          "cSharpName": "AC2",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "AC3",
+          "cSharpName": "AC3",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "batCode",
+          "cSharpName": "BatCode",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "batHeatFilmStatus",
+          "cSharpName": "BatHeatFilmStatus",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "batHeatFilmStatusName",
+          "cSharpName": "BatHeatFilmStatusName",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "batInstallType",
+          "cSharpName": "BatInstallType",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "batModel",
+          "cSharpName": "BatModel",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "batModule",
+          "cSharpName": "BatModule",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "batSoh",
+          "cSharpName": "BatSoh",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "batType",
+          "cSharpName": "BatType",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "batteryBoxType",
+          "cSharpName": "BatteryBoxType",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "batteryType",
+          "cSharpName": "BatteryType",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "bmsSn",
+          "cSharpName": "BmsSn",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "clusterId",
+          "cSharpName": "ClusterId",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "dcdcHardwareVersion",
+          "cSharpName": "DcdcHardwareVersion",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "dcdcSoftwareVersion",
+          "cSharpName": "DcdcSoftwareVersion",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "enableShowBatteryClusterRealDataBtn",
+          "cSharpName": "EnableShowBatteryClusterRealDataBtn",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "enableShowBatteryRealDataBtn",
+          "cSharpName": "EnableShowBatteryRealDataBtn",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "enableShowSingleVoltageBtn",
+          "cSharpName": "EnableShowSingleVoltageBtn",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "enableShowWarranty",
+          "cSharpName": "EnableShowWarranty",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "groupId",
+          "cSharpName": "GroupId",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "isHistory",
+          "cSharpName": "IsHistory",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "offlineGray",
+          "cSharpName": "OfflineGray",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "runningState",
+          "cSharpName": "RunningState",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "showByGroup",
+          "cSharpName": "ShowByGroup",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "showNewBatteryUi",
+          "cSharpName": "ShowNewBatteryUi",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "unitOfTemperature",
+          "cSharpName": "UnitOfTemperature",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "warrantyEndTime",
+          "cSharpName": "WarrantyEndTime",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "warrantyStartTime",
+          "cSharpName": "WarrantyStartTime",
+          "clrType": "System.String"
         }
       ]
     },
@@ -4483,12 +5328,12 @@
         },
         {
           "id": "switch.audio_auto_off_enabled",
-          "friendlyName": "Audio Auto off enabled",
+          "friendlyName": "Audio Auto-off enabled",
           "cSharpName": "AudioAutoOffEnabled"
         },
         {
           "id": "switch.audio_auto_update_enabled",
-          "friendlyName": "Audio Auto update enabled",
+          "friendlyName": "Audio Auto-update enabled",
           "cSharpName": "AudioAutoUpdateEnabled"
         },
         {
@@ -4503,12 +5348,12 @@
         },
         {
           "id": "switch.computer_auto_off_enabled",
-          "friendlyName": "Computer Auto off enabled",
+          "friendlyName": "Computer Auto-off enabled",
           "cSharpName": "ComputerAutoOffEnabled"
         },
         {
           "id": "switch.computer_auto_update_enabled",
-          "friendlyName": "Computer Auto update enabled",
+          "friendlyName": "Computer Auto-update enabled",
           "cSharpName": "ComputerAutoUpdateEnabled"
         },
         {
@@ -4532,24 +5377,24 @@
           "cSharpName": "DeurbelMotionDetection"
         },
         {
-          "id": "switch.droger",
-          "friendlyName": "Droger",
-          "cSharpName": "Droger"
+          "id": "switch.droger_en_vriezer",
+          "friendlyName": "Droger en Vriezer",
+          "cSharpName": "DrogerEnVriezer"
         },
         {
-          "id": "switch.droger_auto_off_enabled",
-          "friendlyName": "Droger Auto off enabled",
-          "cSharpName": "DrogerAutoOffEnabled"
+          "id": "switch.droger_en_vriezer_auto_off_enabled",
+          "friendlyName": "Droger en Vriezer Auto-off enabled",
+          "cSharpName": "DrogerEnVriezerAutoOffEnabled"
         },
         {
-          "id": "switch.droger_auto_update_enabled",
-          "friendlyName": "Droger Auto update enabled",
-          "cSharpName": "DrogerAutoUpdateEnabled"
+          "id": "switch.droger_en_vriezer_auto_update_enabled",
+          "friendlyName": "Droger en Vriezer Auto-update enabled",
+          "cSharpName": "DrogerEnVriezerAutoUpdateEnabled"
         },
         {
-          "id": "switch.droger_led",
-          "friendlyName": "Droger LED",
-          "cSharpName": "DrogerLed"
+          "id": "switch.droger_en_vriezer_led",
+          "friendlyName": "Droger en Vriezer LED",
+          "cSharpName": "DrogerEnVriezerLed"
         },
         {
           "id": "switch.echo_pop_mark_do_not_disturb_switch",
@@ -4570,6 +5415,26 @@
           "id": "switch.emmeloord_alarm_siren",
           "friendlyName": "Emmeloord Alarm Siren",
           "cSharpName": "EmmeloordAlarmSiren"
+        },
+        {
+          "id": "switch.ems",
+          "friendlyName": "EMS",
+          "cSharpName": "Ems"
+        },
+        {
+          "id": "switch.ems_auto_off_enabled",
+          "friendlyName": "EMS Auto-off enabled",
+          "cSharpName": "EmsAutoOffEnabled"
+        },
+        {
+          "id": "switch.ems_auto_update_enabled",
+          "friendlyName": "EMS Auto-update enabled",
+          "cSharpName": "EmsAutoUpdateEnabled"
+        },
+        {
+          "id": "switch.ems_led",
+          "friendlyName": "EMS LED",
+          "cSharpName": "EmsLed"
         },
         {
           "id": "switch.everywhere_do_not_disturb_switch",
@@ -4593,38 +5458,18 @@
         },
         {
           "id": "switch.garage_auto_off_enabled",
-          "friendlyName": "Garage Auto off enabled",
+          "friendlyName": "Garage Auto-off enabled",
           "cSharpName": "GarageAutoOffEnabled"
         },
         {
           "id": "switch.garage_auto_update_enabled",
-          "friendlyName": "Garage Auto update enabled",
+          "friendlyName": "Garage Auto-update enabled",
           "cSharpName": "GarageAutoUpdateEnabled"
         },
         {
           "id": "switch.garage_led",
           "friendlyName": "Garage LED",
           "cSharpName": "GarageLed"
-        },
-        {
-          "id": "switch.kantoor",
-          "friendlyName": "Kantoor",
-          "cSharpName": "Kantoor"
-        },
-        {
-          "id": "switch.kantoor_auto_off_enabled",
-          "friendlyName": "Kantoor Auto off enabled",
-          "cSharpName": "KantoorAutoOffEnabled"
-        },
-        {
-          "id": "switch.kantoor_auto_update_enabled",
-          "friendlyName": "Kantoor Auto update enabled",
-          "cSharpName": "KantoorAutoUpdateEnabled"
-        },
-        {
-          "id": "switch.kantoor_led",
-          "friendlyName": "Kantoor LED",
-          "cSharpName": "KantoorLed"
         },
         {
           "id": "switch.keuken_chime_play_ding_sound",
@@ -4757,9 +5602,9 @@
           "cSharpName": "OurHomeZoneThuisCircuit0VentilationBoost"
         },
         {
-          "id": "switch.q7_max_kinderslot",
+          "id": "switch.q7_max_dock_kinderslot",
           "friendlyName": "Q7 Max Dock Kinderslot",
-          "cSharpName": "Q7MaxKinderslot"
+          "cSharpName": "Q7MaxDockKinderslot"
         },
         {
           "id": "switch.q7_max_niet_storen",
@@ -4773,12 +5618,12 @@
         },
         {
           "id": "switch.spotjes_verlichting_auto_off_enabled",
-          "friendlyName": "Spotjes Verlichting Auto off enabled",
+          "friendlyName": "Spotjes Verlichting Auto-off enabled",
           "cSharpName": "SpotjesVerlichtingAutoOffEnabled"
         },
         {
           "id": "switch.spotjes_verlichting_auto_update_enabled",
-          "friendlyName": "Spotjes Verlichting Auto update enabled",
+          "friendlyName": "Spotjes Verlichting Auto-update enabled",
           "cSharpName": "SpotjesVerlichtingAutoUpdateEnabled"
         },
         {
@@ -4833,12 +5678,12 @@
         },
         {
           "id": "switch.tuinhuis_verlichting_auto_off_enabled",
-          "friendlyName": "Tuinhuis verlichting  Auto off enabled",
+          "friendlyName": "Tuinhuis verlichting  Auto-off enabled",
           "cSharpName": "TuinhuisVerlichtingAutoOffEnabled"
         },
         {
           "id": "switch.tuinhuis_verlichting_auto_update_enabled",
-          "friendlyName": "Tuinhuis verlichting  Auto update enabled",
+          "friendlyName": "Tuinhuis verlichting  Auto-update enabled",
           "cSharpName": "TuinhuisVerlichtingAutoUpdateEnabled"
         },
         {
@@ -4853,12 +5698,12 @@
         },
         {
           "id": "switch.tv_en_media_auto_off_enabled",
-          "friendlyName": "TV en Media Auto off enabled",
+          "friendlyName": "TV en Media Auto-off enabled",
           "cSharpName": "TvEnMediaAutoOffEnabled"
         },
         {
           "id": "switch.tv_en_media_auto_update_enabled",
-          "friendlyName": "TV en Media Auto update enabled",
+          "friendlyName": "TV en Media Auto-update enabled",
           "cSharpName": "TvEnMediaAutoUpdateEnabled"
         },
         {
@@ -4873,12 +5718,12 @@
         },
         {
           "id": "switch.vaatwasser_auto_off_enabled",
-          "friendlyName": "Vaatwasser  Auto off enabled",
+          "friendlyName": "Vaatwasser  Auto-off enabled",
           "cSharpName": "VaatwasserAutoOffEnabled"
         },
         {
           "id": "switch.vaatwasser_auto_update_enabled",
-          "friendlyName": "Vaatwasser  Auto update enabled",
+          "friendlyName": "Vaatwasser  Auto-update enabled",
           "cSharpName": "VaatwasserAutoUpdateEnabled"
         },
         {
@@ -4898,12 +5743,12 @@
         },
         {
           "id": "switch.wasmachine_auto_off_enabled",
-          "friendlyName": "Wasmachine  Auto off enabled",
+          "friendlyName": "Wasmachine  Auto-off enabled",
           "cSharpName": "WasmachineAutoOffEnabled"
         },
         {
           "id": "switch.wasmachine_auto_update_enabled",
-          "friendlyName": "Wasmachine  Auto update enabled",
+          "friendlyName": "Wasmachine  Auto-update enabled",
           "cSharpName": "WasmachineAutoUpdateEnabled"
         },
         {
@@ -5094,6 +5939,11 @@
           "cSharpName": "GraphiteThemeUpdate"
         },
         {
+          "id": "update.gree_a_c_update",
+          "friendlyName": "Gree A/C update",
+          "cSharpName": "GreeACUpdate"
+        },
+        {
           "id": "update.hacs_update",
           "friendlyName": "HACS update",
           "cSharpName": "HacsUpdate"
@@ -5122,6 +5972,11 @@
           "id": "update.ikea_of_sweden_remote_control_n2_firmware",
           "friendlyName": "IKEA of Sweden Remote Control N2 Firmware",
           "cSharpName": "IkeaOfSwedenRemoteControlN2Firmware"
+        },
+        {
+          "id": "update.jellyfin_nas_update",
+          "friendlyName": "Jellyfin NAS Update",
+          "cSharpName": "JellyfinNasUpdate"
         },
         {
           "id": "update.layout_card_update",
@@ -5179,6 +6034,11 @@
           "cSharpName": "NordpoolUpdate"
         },
         {
+          "id": "update.power_flow_card_plus_update",
+          "friendlyName": "Power Flow Card Plus update",
+          "cSharpName": "PowerFlowCardPlusUpdate"
+        },
+        {
           "id": "update.qbittorrent_update",
           "friendlyName": "qBittorrent Update",
           "cSharpName": "QbittorrentUpdate"
@@ -5189,9 +6049,14 @@
           "cSharpName": "RingMqttWithVideoStreamingUpdate"
         },
         {
-          "id": "update.samba_share_update",
-          "friendlyName": "Samba share Update",
-          "cSharpName": "SambaShareUpdate"
+          "id": "update.saj_elekeeper_update",
+          "friendlyName": "SAJ Elekeeper update",
+          "cSharpName": "SajElekeeperUpdate"
+        },
+        {
+          "id": "update.samba_nas_update",
+          "friendlyName": "Samba NAS Update",
+          "cSharpName": "SambaNasUpdate"
         },
         {
           "id": "update.ssh_web_terminal_update",
@@ -5443,6 +6308,16 @@
           "jsonName": "supported_features",
           "cSharpName": "SupportedFeatures",
           "clrType": "System.Double"
+        },
+        {
+          "jsonName": "apparent_temperature",
+          "cSharpName": "ApparentTemperature",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "wind_gust_speed",
+          "cSharpName": "WindGustSpeed",
+          "clrType": "System.Double"
         }
       ]
     },
@@ -5549,6 +6424,11 @@
       "domain": "event",
       "entities": [
         {
+          "id": "event.backup_automatic_backup",
+          "friendlyName": "Backup Automatic backup",
+          "cSharpName": "BackupAutomaticBackup"
+        },
+        {
           "id": "event.tuin_beweging",
           "friendlyName": "Tuin Beweging",
           "cSharpName": "TuinBeweging"
@@ -5594,6 +6474,16 @@
           "jsonName": "friendly_name",
           "cSharpName": "FriendlyName",
           "clrType": "System.String"
+        },
+        {
+          "jsonName": "backup_stage",
+          "cSharpName": "BackupStage",
+          "clrType": null
+        },
+        {
+          "jsonName": "failed_reason",
+          "cSharpName": "FailedReason",
+          "clrType": null
         }
       ]
     },
@@ -5727,6 +6617,63 @@
           "jsonName": "mode",
           "cSharpName": "Mode",
           "clrType": "System.String"
+        },
+        {
+          "jsonName": "icon",
+          "cSharpName": "Icon",
+          "clrType": "System.String"
+        },
+        {
+          "jsonName": "friendly_name",
+          "cSharpName": "FriendlyName",
+          "clrType": "System.String"
+        }
+      ]
+    },
+    {
+      "domain": "input_datetime",
+      "entities": [
+        {
+          "id": "input_datetime.lastwaterhygieneprogram",
+          "friendlyName": "LastWaterHygieneProgram",
+          "cSharpName": "Lastwaterhygieneprogram"
+        }
+      ],
+      "attributes": [
+        {
+          "jsonName": "has_date",
+          "cSharpName": "HasDate",
+          "clrType": "System.Boolean"
+        },
+        {
+          "jsonName": "has_time",
+          "cSharpName": "HasTime",
+          "clrType": "System.Boolean"
+        },
+        {
+          "jsonName": "editable",
+          "cSharpName": "Editable",
+          "clrType": "System.Boolean"
+        },
+        {
+          "jsonName": "year",
+          "cSharpName": "Year",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "month",
+          "cSharpName": "Month",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "day",
+          "cSharpName": "Day",
+          "clrType": "System.Double"
+        },
+        {
+          "jsonName": "timestamp",
+          "cSharpName": "Timestamp",
+          "clrType": "System.Double"
         },
         {
           "jsonName": "icon",
