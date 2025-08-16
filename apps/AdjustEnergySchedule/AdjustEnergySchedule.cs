@@ -175,17 +175,19 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
             
             var avgPrice = _entities.Sensor.NordpoolKwhNlEur310021.Attributes.Average;
             double priceThreshold;
-            const double fallbackPrice = 0.25;
+            const double fallbackPrice = 0.23;
 
             if (avgPrice != null)
             {
                 // Set the price to the average price
-                priceThreshold = avgPrice.Value;
-
                 // Check if the price is below the fallback price
-                if (priceThreshold > fallbackPrice)
+                if (avgPrice.Value < fallbackPrice)
                 {
                     priceThreshold = fallbackPrice;
+                }
+                else
+                {
+                    priceThreshold = avgPrice.Value;
                 }
             }
             else
