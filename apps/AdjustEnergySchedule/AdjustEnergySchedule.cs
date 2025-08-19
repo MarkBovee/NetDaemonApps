@@ -134,11 +134,11 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
             // Get the price threshold
             SetPropertyValues();
 
-            // Set the heating schedule for the heat pump
-            SetWaterTemperature();
-
             // Disable the dishwasher, the washing machine and the dryer if the price is too high
             SetAppliancesSchedule();
+            
+            // Set the heating schedule for the heat pump
+            SetWaterTemperature();
 
             // Set the car charging schedule
         }
@@ -175,7 +175,7 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
             
             var avgPrice = _entities.Sensor.NordpoolKwhNlEur310021.Attributes.Average;
             double priceThreshold;
-            const double fallbackPrice = 0.23;
+            const double fallbackPrice = 0.26;
 
             if (avgPrice != null)
             {
@@ -213,33 +213,34 @@ namespace NetDaemonApps.apps.AdjustPowerSchedule
             var dishwasher = _entities.Switch.Vaatwasser;
             var dishwasherCurrentPower = _entities.Sensor.VaatwasserHuidigGebruik;
             var garage = _entities.Switch.Garage;
+            var garageCurrentPower = _entities.Sensor.GarageHuidigGebruik;
             
-            // Check if the price is above the threshold
-            if (_energyPriceLevel > Level.Medium)
+            // Check if the price is above the threshold or if the away mode is active
+            if (_awayMode || _energyPriceLevel > Level.Medium)
             {
                 // Check if the washing machine is on and if no program is running
-                if (washingMachine?.State == "on" && washingMachineCurrentPower.State < 5)
+                if (washingMachine?.State == "on" && washingMachineCurrentPower.State < 3)
                 {
                     _logger.LogInformation("Washing machine disabled due to high power prices");
                     washingMachine.TurnOff();
                 }
 
                 // Check if the dryer is on
-                if (dryer?.State == "on" && dryerCurrentPower.State < 5)
+                if (dryer?.State == "on" && dryerCurrentPower.State < 3)
                 {
                     _logger.LogInformation("Dryer disabled due to high power prices");
                     dryer.TurnOff();
                 }
 
                 // Check if the dishwasher is on
-                if (dishwasher?.State == "on" && dishwasherCurrentPower.State < 5)
+                if (dishwasher?.State == "on" && dishwasherCurrentPower.State < 3)
                 {
                     _logger.LogInformation("Dishwasher disabled due to high power prices");
                     dishwasher.TurnOff();
                 }
 
                 // Check if the garage power is on
-                if (garage?.State == "on")
+                if (garage?.State == "on" && garageCurrentPower.State < 3)
                 {
                     _logger.LogInformation("Garage disabled due to high power prices");
                     garage.TurnOff();
