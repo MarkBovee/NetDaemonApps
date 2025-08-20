@@ -1,10 +1,13 @@
-using HomeAssistantGenerated;
-using NetDaemon.Extensions.Scheduler;
-using NetDaemonApps.apps.AdjustPowerSchedule;
-using System.Diagnostics;
-
-namespace NetDaemonApps.apps.VacationAlarm
+namespace NetDaemonApps.Apps.VacationAlarm
 {
+    using System.Diagnostics;
+
+    using AdjustEnergySchedule;
+
+    using HomeAssistantGenerated;
+
+    using NetDaemon.Extensions.Scheduler;
+
     /// <summary>
     /// The vacation alarm class
     /// </summary>
@@ -45,9 +48,9 @@ namespace NetDaemonApps.apps.VacationAlarm
             // Read the Home assistant services and entities
             _services = new Services(ha);
             _entities = new Entities(ha);
-            
+
             _logger.LogInformation("Started Vacation Alarm program");
-            
+
             if (Debugger.IsAttached)
             {
                 // Run once
@@ -64,33 +67,34 @@ namespace NetDaemonApps.apps.VacationAlarm
         }
 
         /// <summary>
-        /// Sets the alarm
+        /// Sets the alarm based on away mode and time of day.
         /// </summary>
         private void SetAlarm()
         {
             // Check if away mode is active
             var awayMode = _entities.Switch.OurHomeAwayMode.State == "on";
 
-            // Start the away mode alarm
+            // Start the away mode alarm if away mode is active
             if (awayMode)
             {
-                // Check if the current time is between 00:00 and 07:00
+                // Get the current time
                 var now = DateTime.Now;
 
+                // If the current time is between 00:00 and 07:00, arm the alarm
                 if (now.Hour >= 0 && now.Hour < 7)
                 {
-                    // Check if the alarm is active
+                    // Check if the alarm is already armed
                     var alarmSet = _entities.AlarmControlPanel.EmmeloordAlarm.State != "disarmed";
 
                     if (!alarmSet)
                     {
-                        // Turn on the alarm
+                        // Arm the alarm
                         _entities.AlarmControlPanel.EmmeloordAlarm.AlarmArmAway();
                     }
                 }
                 else
                 {
-                    // Turn off the alarm
+                    // Disarm the alarm outside of night hours
                     _entities.AlarmControlPanel.EmmeloordAlarm.AlarmDisarm();
                 }
             }

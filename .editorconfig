@@ -1,0 +1,40 @@
+﻿# EditorConfig helps maintain consistent coding styles for everyone working on the project
+# For more information: https://EditorConfig.org
+
+root = true
+
+[*.cs]
+indent_style = space
+indent_size = 4
+insert_final_newline = true
+charset = utf-8
+trim_trailing_whitespace = true
+
+# Require braces for all control blocks
+csharp_prefer_braces = always:suggestion
+
+# Newline preferences
+csharp_new_line_before_open_brace = all:warning
+csharp_new_line_between_query_expression_clauses = true
+
+# Add blank lines between members
+csharp_new_line_between_members = true
+
+# Require documentation comments for publicly visible types and members
+csharp_style_require_documentation_comments = true:suggestion
+
+# Place 'using' directives inside namespaces
+dotnet_sort_system_directives_first = true
+csharp_using_directive_placement = inside_namespace
+
+# File encoding
+end_of_line = crlf
+
+# Optional: Visual Studio specific
+[*.{cs,vb}]
+dotnet_separate_import_directive_groups = true
+
+dotnet_diagnostic.CS8981.severity = none
+dotnet_diagnostic.CS8618.severity = none
+dotnet_diagnostic.CS0108.severity = none
+dotnet_diagnostic.CS1998.severity = none

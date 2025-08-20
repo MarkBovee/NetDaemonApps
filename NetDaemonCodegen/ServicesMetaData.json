@@ -1,4 +1,57 @@
 {
+  "persistent_notification": {
+    "create": {
+      "name": "Create",
+      "description": "Shows a notification on the notifications panel.",
+      "fields": {
+        "message": {
+          "required": true,
+          "example": "Please check your configuration.yaml.",
+          "selector": {
+            "text": {}
+          },
+          "name": "Message",
+          "description": "Message body of the notification."
+        },
+        "title": {
+          "example": "Test notification",
+          "selector": {
+            "text": {}
+          },
+          "name": "Title",
+          "description": "Optional title of the notification."
+        },
+        "notification_id": {
+          "example": 1234,
+          "selector": {
+            "text": {}
+          },
+          "name": "Notification ID",
+          "description": "ID of the notification. This new notification will overwrite an existing notification with the same ID."
+        }
+      }
+    },
+    "dismiss": {
+      "name": "Dismiss",
+      "description": "Deletes a notification from the notifications panel.",
+      "fields": {
+        "notification_id": {
+          "required": true,
+          "example": 1234,
+          "selector": {
+            "text": {}
+          },
+          "name": "Notification ID",
+          "description": "ID of the notification to be deleted."
+        }
+      }
+    },
+    "dismiss_all": {
+      "name": "Dismiss all",
+      "description": "Deletes all notifications from the notifications panel.",
+      "fields": {}
+    }
+  },
   "homeassistant": {
     "save_persistent_states": {
       "name": "Save persistent states",
@@ -153,59 +206,6 @@
       "fields": {}
     }
   },
-  "persistent_notification": {
-    "create": {
-      "name": "Create",
-      "description": "Shows a notification on the notifications panel.",
-      "fields": {
-        "message": {
-          "required": true,
-          "example": "Please check your configuration.yaml.",
-          "selector": {
-            "text": {}
-          },
-          "name": "Message",
-          "description": "Message body of the notification."
-        },
-        "title": {
-          "example": "Test notification",
-          "selector": {
-            "text": {}
-          },
-          "name": "Title",
-          "description": "Optional title of the notification."
-        },
-        "notification_id": {
-          "example": 1234,
-          "selector": {
-            "text": {}
-          },
-          "name": "Notification ID",
-          "description": "ID of the notification. This new notification will overwrite an existing notification with the same ID."
-        }
-      }
-    },
-    "dismiss": {
-      "name": "Dismiss",
-      "description": "Deletes a notification from the notifications panel.",
-      "fields": {
-        "notification_id": {
-          "required": true,
-          "example": 1234,
-          "selector": {
-            "text": {}
-          },
-          "name": "Notification ID",
-          "description": "ID of the notification to be deleted."
-        }
-      }
-    },
-    "dismiss_all": {
-      "name": "Dismiss all",
-      "description": "Deletes all notifications from the notifications panel.",
-      "fields": {}
-    }
-  },
   "system_log": {
     "clear": {
       "name": "Clear",
@@ -237,9 +237,9 @@
                 "critical"
               ],
               "translation_key": "level",
+              "custom_value": false,
               "multiple": false,
-              "sort": false,
-              "custom_value": false
+              "sort": false
             }
           },
           "name": "Level",
@@ -273,9 +273,9 @@
                 "critical"
               ],
               "translation_key": "level",
+              "custom_value": false,
               "multiple": false,
-              "sort": false,
-              "custom_value": false
+              "sort": false
             }
           },
           "name": "Level",
@@ -314,9 +314,9 @@
                 "light"
               ],
               "translation_key": "mode",
+              "custom_value": false,
               "multiple": false,
-              "sort": false,
-              "custom_value": false
+              "sort": false
             }
           },
           "name": "Mode",
@@ -473,9 +473,9 @@
                 "week",
                 "month"
               ],
+              "custom_value": false,
               "multiple": false,
-              "sort": false,
-              "custom_value": false
+              "sort": false
             }
           },
           "name": "Period",
@@ -499,8 +499,8 @@
                 "sum"
               ],
               "multiple": true,
-              "sort": false,
-              "custom_value": false
+              "custom_value": false,
+              "sort": false
             }
           },
           "name": "Types",
@@ -1411,9 +1411,9 @@
                     "yellow",
                     "yellowgreen"
                   ],
+                  "custom_value": false,
                   "multiple": false,
-                  "sort": false,
-                  "custom_value": false
+                  "sort": false
                 }
               }
             },
@@ -1552,9 +1552,9 @@
                     "long",
                     "short"
                   ],
+                  "custom_value": false,
                   "multiple": false,
-                  "sort": false,
-                  "custom_value": false
+                  "sort": false
                 }
               }
             }
@@ -1609,9 +1609,9 @@
                     "long",
                     "short"
                   ],
+                  "custom_value": false,
                   "multiple": false,
-                  "sort": false,
-                  "custom_value": false
+                  "sort": false
                 }
               }
             }
@@ -1932,9 +1932,9 @@
                     "yellow",
                     "yellowgreen"
                   ],
+                  "custom_value": false,
                   "multiple": false,
-                  "sort": false,
-                  "custom_value": false
+                  "sort": false
                 }
               }
             },
@@ -2050,9 +2050,9 @@
                     "long",
                     "short"
                   ],
+                  "custom_value": false,
                   "multiple": false,
-                  "sort": false,
-                  "custom_value": false
+                  "sort": false
                 }
               }
             }
@@ -2378,9 +2378,9 @@
               "options": [
                 "hls"
               ],
+              "custom_value": false,
               "multiple": false,
-              "sort": false,
-              "custom_value": false
+              "sort": false
             }
           },
           "name": "Format",
@@ -2903,34 +2903,6 @@
       "fields": {}
     }
   },
-  "zone": {
-    "reload": {
-      "name": "Reload",
-      "description": "Reloads zones from the YAML-configuration.",
-      "fields": {}
-    }
-  },
-  "input_button": {
-    "reload": {
-      "name": "Reload",
-      "description": "Reloads helpers from the YAML-configuration.",
-      "fields": {}
-    },
-    "press": {
-      "name": "Press",
-      "description": "Mimics the physical button press on the device.",
-      "fields": {},
-      "target": {
-        "entity": [
-          {
-            "domain": [
-              "input_button"
-            ]
-          }
-        ]
-      }
-    }
-  },
   "input_boolean": {
     "reload": {
       "name": "Reload",
@@ -2980,137 +2952,32 @@
       }
     }
   },
-  "cast": {
-    "show_lovelace_view": {
-      "name": "Show dashboard view",
-      "description": "Shows a dashboard view on a Chromecast device.",
-      "fields": {
-        "entity_id": {
-          "required": true,
-          "selector": {
-            "entity": {
-              "integration": "cast",
-              "domain": [
-                "media_player"
-              ],
-              "reorder": false,
-              "multiple": false
-            }
-          },
-          "name": "Entity",
-          "description": "Media player entity to show the dashboard view on."
-        },
-        "dashboard_path": {
-          "example": "lovelace-cast",
-          "selector": {
-            "text": {}
-          },
-          "name": "Dashboard path",
-          "description": "The URL path of the dashboard to show, defaults to lovelace if not specified."
-        },
-        "view_path": {
-          "required": true,
-          "example": "downstairs",
-          "selector": {
-            "text": {}
-          },
-          "name": "View path",
-          "description": "The URL path of the dashboard view to show."
-        }
-      }
-    }
-  },
-  "mqtt": {
-    "publish": {
-      "name": "Publish",
-      "description": "Publishes a message to an MQTT topic.",
-      "fields": {
-        "topic": {
-          "required": true,
-          "example": "/homeassistant/hello",
-          "selector": {
-            "text": {}
-          },
-          "name": "Topic",
-          "description": "Topic to publish to."
-        },
-        "payload": {
-          "example": "The temperature is {{ states(\u0027sensor.temperature\u0027) }}",
-          "selector": {
-            "template": {}
-          },
-          "name": "Payload",
-          "description": "The payload to publish. Publishes an empty message if not provided."
-        },
-        "evaluate_payload": {
-          "advanced": true,
-          "default": false,
-          "selector": {
-            "boolean": {}
-          },
-          "name": "Evaluate payload",
-          "description": "If \u0027Payload\u0027 is a Python bytes literal, evaluate the bytes literal and publish the raw data."
-        },
-        "qos": {
-          "advanced": true,
-          "default": 0,
-          "selector": {
-            "select": {
-              "options": [
-                "0",
-                "1",
-                "2"
-              ],
-              "multiple": false,
-              "sort": false,
-              "custom_value": false
-            }
-          },
-          "name": "QoS",
-          "description": "Quality of Service to use. 0: At most once. 1: At least once. 2: Exactly once."
-        },
-        "retain": {
-          "default": false,
-          "selector": {
-            "boolean": {}
-          },
-          "name": "Retain",
-          "description": "If the message should have the retain flag set. If set, the broker stores the most recent message on a topic."
-        }
-      }
-    },
-    "dump": {
-      "name": "Export",
-      "description": "Writes all messages on a specific topic into the \u0060mqtt_dump.txt\u0060 file in your configuration folder.",
-      "fields": {
-        "topic": {
-          "example": "OpenZWave/#",
-          "selector": {
-            "text": {}
-          },
-          "name": "Topic",
-          "description": "Topic to listen to."
-        },
-        "duration": {
-          "default": 5,
-          "selector": {
-            "number": {
-              "min": 1.0,
-              "max": 300.0,
-              "unit_of_measurement": "seconds",
-              "step": 1.0,
-              "mode": "slider"
-            }
-          },
-          "name": "Duration",
-          "description": "How long we should listen for messages in seconds."
-        }
-      }
-    },
+  "zone": {
     "reload": {
       "name": "Reload",
-      "description": "Reloads MQTT entities from the YAML-configuration.",
+      "description": "Reloads zones from the YAML-configuration.",
       "fields": {}
+    }
+  },
+  "input_button": {
+    "reload": {
+      "name": "Reload",
+      "description": "Reloads helpers from the YAML-configuration.",
+      "fields": {}
+    },
+    "press": {
+      "name": "Press",
+      "description": "Mimics the physical button press on the device.",
+      "fields": {},
+      "target": {
+        "entity": [
+          {
+            "domain": [
+              "input_button"
+            ]
+          }
+        ]
+      }
     }
   },
   "button": {
@@ -3199,9 +3066,9 @@
                 "heat"
               ],
               "translation_key": "hvac_mode",
+              "custom_value": false,
               "multiple": false,
-              "sort": false,
-              "custom_value": false
+              "sort": false
             }
           },
           "name": "HVAC mode",
@@ -3315,9 +3182,9 @@
                 "heat"
               ],
               "translation_key": "hvac_mode",
+              "custom_value": false,
               "multiple": false,
-              "sort": false,
-              "custom_value": false
+              "sort": false
             }
           },
           "name": "HVAC mode",
@@ -3840,9 +3707,9 @@
                 "reverse"
               ],
               "translation_key": "direction",
+              "custom_value": false,
               "multiple": false,
-              "sort": false,
-              "custom_value": false
+              "sort": false
             }
           },
           "name": "Direction",
@@ -4586,6 +4453,353 @@
       }
     }
   },
+  "input_text": {
+    "reload": {
+      "name": "Reload",
+      "description": "Reloads helpers from the YAML-configuration.",
+      "fields": {}
+    },
+    "set_value": {
+      "name": "Set",
+      "description": "Sets the value.",
+      "fields": {
+        "value": {
+          "required": true,
+          "example": "This is an example text",
+          "selector": {
+            "text": {}
+          },
+          "name": "Value",
+          "description": "The target value."
+        }
+      },
+      "target": {
+        "entity": [
+          {
+            "domain": [
+              "input_text"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "cast": {
+    "show_lovelace_view": {
+      "name": "Show dashboard view",
+      "description": "Shows a dashboard view on a Chromecast device.",
+      "fields": {
+        "entity_id": {
+          "required": true,
+          "selector": {
+            "entity": {
+              "integration": "cast",
+              "domain": [
+                "media_player"
+              ],
+              "reorder": false,
+              "multiple": false
+            }
+          },
+          "name": "Entity",
+          "description": "Media player entity to show the dashboard view on."
+        },
+        "dashboard_path": {
+          "example": "lovelace-cast",
+          "selector": {
+            "text": {}
+          },
+          "name": "Dashboard path",
+          "description": "The URL path of the dashboard to show, defaults to lovelace if not specified."
+        },
+        "view_path": {
+          "required": true,
+          "example": "downstairs",
+          "selector": {
+            "text": {}
+          },
+          "name": "View path",
+          "description": "The URL path of the dashboard view to show."
+        }
+      }
+    }
+  },
+  "schedule": {
+    "reload": {
+      "name": "Reload",
+      "description": "Reloads schedules from the YAML-configuration.",
+      "fields": {}
+    },
+    "get_schedule": {
+      "name": "Get schedule",
+      "description": "Retrieves the configured time ranges of one or multiple schedules.",
+      "fields": {},
+      "target": {
+        "entity": [
+          {
+            "domain": [
+              "schedule"
+            ]
+          }
+        ]
+      },
+      "response": {
+        "optional": false
+      }
+    }
+  },
+  "input_datetime": {
+    "reload": {
+      "name": "Reload",
+      "description": "Reloads helpers from the YAML-configuration.",
+      "fields": {}
+    },
+    "set_datetime": {
+      "name": "Set",
+      "description": "Sets the date and/or time.",
+      "fields": {
+        "date": {
+          "example": "\u00222019-04-20\u0022",
+          "selector": {
+            "text": {}
+          },
+          "name": "Date",
+          "description": "The target date."
+        },
+        "time": {
+          "example": "\u002205:04:20\u0022",
+          "selector": {
+            "time": {}
+          },
+          "name": "Time",
+          "description": "The target time."
+        },
+        "datetime": {
+          "example": "\u00222019-04-20 05:04:20\u0022",
+          "selector": {
+            "text": {}
+          },
+          "name": "Date \u0026 time",
+          "description": "The target date \u0026 time."
+        },
+        "timestamp": {
+          "selector": {
+            "number": {
+              "min": 0.0,
+              "max": 9.223372036854776e18,
+              "mode": "box",
+              "step": 1.0
+            }
+          },
+          "name": "Timestamp",
+          "description": "The target date \u0026 time, expressed by a UNIX timestamp."
+        }
+      },
+      "target": {
+        "entity": [
+          {
+            "domain": [
+              "input_datetime"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "mqtt": {
+    "publish": {
+      "name": "Publish",
+      "description": "Publishes a message to an MQTT topic.",
+      "fields": {
+        "topic": {
+          "required": true,
+          "example": "/homeassistant/hello",
+          "selector": {
+            "text": {}
+          },
+          "name": "Topic",
+          "description": "Topic to publish to."
+        },
+        "payload": {
+          "example": "The temperature is {{ states(\u0027sensor.temperature\u0027) }}",
+          "selector": {
+            "template": {}
+          },
+          "name": "Payload",
+          "description": "The payload to publish. Publishes an empty message if not provided."
+        },
+        "evaluate_payload": {
+          "advanced": true,
+          "default": false,
+          "selector": {
+            "boolean": {}
+          },
+          "name": "Evaluate payload",
+          "description": "If \u0027Payload\u0027 is a Python bytes literal, evaluate the bytes literal and publish the raw data."
+        },
+        "qos": {
+          "advanced": true,
+          "default": 0,
+          "selector": {
+            "select": {
+              "options": [
+                "0",
+                "1",
+                "2"
+              ],
+              "custom_value": false,
+              "multiple": false,
+              "sort": false
+            }
+          },
+          "name": "QoS",
+          "description": "Quality of Service to use. 0: At most once. 1: At least once. 2: Exactly once."
+        },
+        "retain": {
+          "default": false,
+          "selector": {
+            "boolean": {}
+          },
+          "name": "Retain",
+          "description": "If the message should have the retain flag set. If set, the broker stores the most recent message on a topic."
+        }
+      }
+    },
+    "dump": {
+      "name": "Export",
+      "description": "Writes all messages on a specific topic into the \u0060mqtt_dump.txt\u0060 file in your configuration folder.",
+      "fields": {
+        "topic": {
+          "example": "OpenZWave/#",
+          "selector": {
+            "text": {}
+          },
+          "name": "Topic",
+          "description": "Topic to listen to."
+        },
+        "duration": {
+          "default": 5,
+          "selector": {
+            "number": {
+              "min": 1.0,
+              "max": 300.0,
+              "unit_of_measurement": "seconds",
+              "step": 1.0,
+              "mode": "slider"
+            }
+          },
+          "name": "Duration",
+          "description": "How long we should listen for messages in seconds."
+        }
+      }
+    },
+    "reload": {
+      "name": "Reload",
+      "description": "Reloads MQTT entities from the YAML-configuration.",
+      "fields": {}
+    }
+  },
+  "counter": {
+    "increment": {
+      "name": "Increment",
+      "description": "Increments a counter by its step size.",
+      "fields": {},
+      "target": {
+        "entity": [
+          {
+            "domain": [
+              "counter"
+            ]
+          }
+        ]
+      }
+    },
+    "decrement": {
+      "name": "Decrement",
+      "description": "Decrements a counter by its step size.",
+      "fields": {},
+      "target": {
+        "entity": [
+          {
+            "domain": [
+              "counter"
+            ]
+          }
+        ]
+      }
+    },
+    "reset": {
+      "name": "Reset",
+      "description": "Resets a counter to its initial value.",
+      "fields": {},
+      "target": {
+        "entity": [
+          {
+            "domain": [
+              "counter"
+            ]
+          }
+        ]
+      }
+    },
+    "set_value": {
+      "name": "Set",
+      "description": "Sets the counter to a specific value.",
+      "fields": {
+        "value": {
+          "required": true,
+          "selector": {
+            "number": {
+              "min": 0.0,
+              "max": 9.223372036854776e18,
+              "mode": "box",
+              "step": 1.0
+            }
+          },
+          "name": "Value",
+          "description": "The new counter value the entity should be set to."
+        }
+      },
+      "target": {
+        "entity": [
+          {
+            "domain": [
+              "counter"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "tibber": {
+    "get_prices": {
+      "name": "Get energy prices",
+      "description": "Fetches hourly energy prices including price level.",
+      "fields": {
+        "start": {
+          "required": false,
+          "example": "2024-01-01 00:00:00",
+          "selector": {
+            "datetime": {}
+          },
+          "name": "Start",
+          "description": "Specifies the date and time from which to retrieve prices. Defaults to today if omitted."
+        },
+        "end": {
+          "required": false,
+          "example": "2024-01-01 23:00:00",
+          "selector": {
+            "datetime": {}
+          },
+          "name": "End",
+          "description": "Specifies the date and time until which to retrieve prices. Defaults to the last hour of today if omitted."
+        }
+      },
+      "response": {
+        "optional": false
+      }
+    }
+  },
   "nordpool": {
     "hourly": {
       "name": "hourly",
@@ -4680,302 +4894,46 @@
       }
     }
   },
-  "schedule": {
-    "reload": {
-      "name": "Reload",
-      "description": "Reloads schedules from the YAML-configuration.",
-      "fields": {}
-    },
-    "get_schedule": {
-      "name": "Get schedule",
-      "description": "Retrieves the configured time ranges of one or multiple schedules.",
-      "fields": {},
+  "weather": {
+    "get_forecasts": {
+      "name": "Get forecasts",
+      "description": "Retrieves the forecast from selected weather services.",
+      "fields": {
+        "type": {
+          "required": true,
+          "selector": {
+            "select": {
+              "options": [
+                "daily",
+                "hourly",
+                "twice_daily"
+              ],
+              "translation_key": "forecast_type",
+              "custom_value": false,
+              "multiple": false,
+              "sort": false
+            }
+          },
+          "name": "Forecast type",
+          "description": "The scope of the weather forecast."
+        }
+      },
       "target": {
         "entity": [
           {
             "domain": [
-              "schedule"
+              "weather"
+            ],
+            "supported_features": [
+              1,
+              2,
+              4
             ]
           }
         ]
       },
       "response": {
         "optional": false
-      }
-    }
-  },
-  "tibber": {
-    "get_prices": {
-      "name": "Get energy prices",
-      "description": "Fetches hourly energy prices including price level.",
-      "fields": {
-        "start": {
-          "required": false,
-          "example": "2024-01-01 00:00:00",
-          "selector": {
-            "datetime": {}
-          },
-          "name": "Start",
-          "description": "Specifies the date and time from which to retrieve prices. Defaults to today if omitted."
-        },
-        "end": {
-          "required": false,
-          "example": "2024-01-01 23:00:00",
-          "selector": {
-            "datetime": {}
-          },
-          "name": "End",
-          "description": "Specifies the date and time until which to retrieve prices. Defaults to the last hour of today if omitted."
-        }
-      },
-      "response": {
-        "optional": false
-      }
-    }
-  },
-  "counter": {
-    "increment": {
-      "name": "Increment",
-      "description": "Increments a counter by its step size.",
-      "fields": {},
-      "target": {
-        "entity": [
-          {
-            "domain": [
-              "counter"
-            ]
-          }
-        ]
-      }
-    },
-    "decrement": {
-      "name": "Decrement",
-      "description": "Decrements a counter by its step size.",
-      "fields": {},
-      "target": {
-        "entity": [
-          {
-            "domain": [
-              "counter"
-            ]
-          }
-        ]
-      }
-    },
-    "reset": {
-      "name": "Reset",
-      "description": "Resets a counter to its initial value.",
-      "fields": {},
-      "target": {
-        "entity": [
-          {
-            "domain": [
-              "counter"
-            ]
-          }
-        ]
-      }
-    },
-    "set_value": {
-      "name": "Set",
-      "description": "Sets the counter to a specific value.",
-      "fields": {
-        "value": {
-          "required": true,
-          "selector": {
-            "number": {
-              "min": 0.0,
-              "max": 9.223372036854776e18,
-              "mode": "box",
-              "step": 1.0
-            }
-          },
-          "name": "Value",
-          "description": "The new counter value the entity should be set to."
-        }
-      },
-      "target": {
-        "entity": [
-          {
-            "domain": [
-              "counter"
-            ]
-          }
-        ]
-      }
-    }
-  },
-  "input_datetime": {
-    "reload": {
-      "name": "Reload",
-      "description": "Reloads helpers from the YAML-configuration.",
-      "fields": {}
-    },
-    "set_datetime": {
-      "name": "Set",
-      "description": "Sets the date and/or time.",
-      "fields": {
-        "date": {
-          "example": "\u00222019-04-20\u0022",
-          "selector": {
-            "text": {}
-          },
-          "name": "Date",
-          "description": "The target date."
-        },
-        "time": {
-          "example": "\u002205:04:20\u0022",
-          "selector": {
-            "time": {}
-          },
-          "name": "Time",
-          "description": "The target time."
-        },
-        "datetime": {
-          "example": "\u00222019-04-20 05:04:20\u0022",
-          "selector": {
-            "text": {}
-          },
-          "name": "Date \u0026 time",
-          "description": "The target date \u0026 time."
-        },
-        "timestamp": {
-          "selector": {
-            "number": {
-              "min": 0.0,
-              "max": 9.223372036854776e18,
-              "mode": "box",
-              "step": 1.0
-            }
-          },
-          "name": "Timestamp",
-          "description": "The target date \u0026 time, expressed by a UNIX timestamp."
-        }
-      },
-      "target": {
-        "entity": [
-          {
-            "domain": [
-              "input_datetime"
-            ]
-          }
-        ]
-      }
-    }
-  },
-  "input_text": {
-    "reload": {
-      "name": "Reload",
-      "description": "Reloads helpers from the YAML-configuration.",
-      "fields": {}
-    },
-    "set_value": {
-      "name": "Set",
-      "description": "Sets the value.",
-      "fields": {
-        "value": {
-          "required": true,
-          "example": "This is an example text",
-          "selector": {
-            "text": {}
-          },
-          "name": "Value",
-          "description": "The target value."
-        }
-      },
-      "target": {
-        "entity": [
-          {
-            "domain": [
-              "input_text"
-            ]
-          }
-        ]
-      }
-    }
-  },
-  "adguard": {
-    "add_url": {
-      "name": "Add URL",
-      "description": "Adds a new filter subscription to AdGuard Home.",
-      "fields": {
-        "name": {
-          "required": true,
-          "example": "Example",
-          "selector": {
-            "text": {}
-          },
-          "name": "Name",
-          "description": "The name of the filter subscription."
-        },
-        "url": {
-          "required": true,
-          "example": "https://www.example.com/filter/1.txt",
-          "selector": {
-            "text": {}
-          },
-          "name": "URL",
-          "description": "The filter URL to subscribe to, containing the filter rules."
-        }
-      }
-    },
-    "remove_url": {
-      "name": "Remove URL",
-      "description": "Removes a filter subscription from AdGuard Home.",
-      "fields": {
-        "url": {
-          "required": true,
-          "example": "https://www.example.com/filter/1.txt",
-          "selector": {
-            "text": {}
-          },
-          "name": "URL",
-          "description": "The filter subscription URL to remove."
-        }
-      }
-    },
-    "enable_url": {
-      "name": "Enable URL",
-      "description": "Enables a filter subscription in AdGuard Home.",
-      "fields": {
-        "url": {
-          "required": true,
-          "example": "https://www.example.com/filter/1.txt",
-          "selector": {
-            "text": {}
-          },
-          "name": "URL",
-          "description": "The filter subscription URL to enable."
-        }
-      }
-    },
-    "disable_url": {
-      "name": "Disable URL",
-      "description": "Disables a filter subscription in AdGuard Home.",
-      "fields": {
-        "url": {
-          "required": true,
-          "example": "https://www.example.com/filter/1.txt",
-          "selector": {
-            "text": {}
-          },
-          "name": "URL",
-          "description": "The filter subscription URL to disable."
-        }
-      }
-    },
-    "refresh": {
-      "name": "Refresh",
-      "description": "Refreshes all filter subscriptions in AdGuard Home.",
-      "fields": {
-        "force": {
-          "default": false,
-          "selector": {
-            "boolean": {}
-          },
-          "name": "Force",
-          "description": "Force update (bypasses AdGuard Home throttling), omit for a regular refresh."
-        }
       }
     }
   },
@@ -5974,9 +5932,9 @@
                 "replace"
               ],
               "translation_key": "enqueue",
+              "custom_value": false,
               "multiple": false,
-              "sort": false,
-              "custom_value": false
+              "sort": false
             }
           },
           "name": "Enqueue",
@@ -6169,9 +6127,9 @@
                 "one"
               ],
               "translation_key": "repeat",
+              "custom_value": false,
               "multiple": false,
-              "sort": false,
-              "custom_value": false
+              "sort": false
             }
           },
           "name": "Repeat mode",
@@ -6189,188 +6147,6 @@
             ]
           }
         ]
-      }
-    }
-  },
-  "webostv": {
-    "button": {
-      "name": "Button",
-      "description": "Sends a button press command.",
-      "fields": {
-        "entity_id": {
-          "required": true,
-          "selector": {
-            "entity": {
-              "integration": "webostv",
-              "domain": [
-                "media_player"
-              ],
-              "reorder": false,
-              "multiple": false
-            }
-          },
-          "name": "Entity",
-          "description": "Name(s) of the webOS TV entities where to run the API method."
-        },
-        "button": {
-          "required": true,
-          "example": "LEFT",
-          "selector": {
-            "text": {}
-          },
-          "name": "Button",
-          "description": "Name of the button to press.  Known possible values are LEFT, RIGHT, DOWN, UP, HOME, MENU, BACK, ENTER, DASH, INFO, ASTERISK, CC, EXIT, MUTE, RED, GREEN, BLUE, YELLOW, VOLUMEUP, VOLUMEDOWN, CHANNELUP, CHANNELDOWN, PLAY, PAUSE, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9."
-        }
-      }
-    },
-    "command": {
-      "name": "Command",
-      "description": "Sends a command.",
-      "fields": {
-        "entity_id": {
-          "required": true,
-          "selector": {
-            "entity": {
-              "integration": "webostv",
-              "domain": [
-                "media_player"
-              ],
-              "reorder": false,
-              "multiple": false
-            }
-          },
-          "name": "Entity",
-          "description": "Name(s) of the webOS TV entities where to run the API method."
-        },
-        "command": {
-          "required": true,
-          "example": "system.launcher/open",
-          "selector": {
-            "text": {}
-          },
-          "name": "Command",
-          "description": "Endpoint of the command."
-        },
-        "payload": {
-          "example": "target: https://www.google.com",
-          "advanced": true,
-          "selector": {
-            "object": {}
-          },
-          "name": "Payload",
-          "description": "An optional payload to provide to the endpoint in the format of key value pairs."
-        }
-      },
-      "response": {
-        "optional": true
-      }
-    },
-    "select_sound_output": {
-      "name": "Select sound output",
-      "description": "Sends the TV the command to change sound output.",
-      "fields": {
-        "entity_id": {
-          "required": true,
-          "selector": {
-            "entity": {
-              "integration": "webostv",
-              "domain": [
-                "media_player"
-              ],
-              "reorder": false,
-              "multiple": false
-            }
-          },
-          "name": "Entity",
-          "description": "Name(s) of the webOS TV entities to change sound output on."
-        },
-        "sound_output": {
-          "required": true,
-          "example": "external_speaker",
-          "selector": {
-            "text": {}
-          },
-          "name": "Sound output",
-          "description": "Name of the sound output to switch to."
-        }
-      },
-      "response": {
-        "optional": true
-      }
-    }
-  },
-  "linkplay": {
-    "play_preset": {
-      "name": "Play preset",
-      "description": "Plays a preset on the device.",
-      "fields": {
-        "preset_number": {
-          "example": 1,
-          "required": true,
-          "default": 1,
-          "selector": {
-            "number": {
-              "min": 1.0,
-              "mode": "box",
-              "step": 1.0
-            }
-          },
-          "name": "Preset number",
-          "description": "The number of the preset to play."
-        }
-      },
-      "target": {
-        "entity": [
-          {
-            "integration": "linkplay",
-            "domain": [
-              "media_player"
-            ]
-          }
-        ]
-      }
-    }
-  },
-  "weather": {
-    "get_forecasts": {
-      "name": "Get forecasts",
-      "description": "Retrieves the forecast from selected weather services.",
-      "fields": {
-        "type": {
-          "required": true,
-          "selector": {
-            "select": {
-              "options": [
-                "daily",
-                "hourly",
-                "twice_daily"
-              ],
-              "translation_key": "forecast_type",
-              "multiple": false,
-              "sort": false,
-              "custom_value": false
-            }
-          },
-          "name": "Forecast type",
-          "description": "The scope of the weather forecast."
-        }
-      },
-      "target": {
-        "entity": [
-          {
-            "domain": [
-              "weather"
-            ],
-            "supported_features": [
-              1,
-              2,
-              4
-            ]
-          }
-        ]
-      },
-      "response": {
-        "optional": false
       }
     }
   },
@@ -6532,9 +6308,9 @@
                 "ir",
                 "rf"
               ],
+              "custom_value": false,
               "multiple": false,
-              "sort": false,
-              "custom_value": false
+              "sort": false
             }
           },
           "name": "Command type",
@@ -6598,6 +6374,139 @@
           {
             "domain": [
               "remote"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "siren": {
+    "turn_on": {
+      "name": "Turn on",
+      "description": "Turns the siren on.",
+      "fields": {
+        "tone": {
+          "example": "fire",
+          "filter": {
+            "supported_features": [
+              4
+            ]
+          },
+          "required": false,
+          "selector": {
+            "text": {}
+          },
+          "name": "Tone",
+          "description": "The tone to emit. When \u0060available_tones\u0060 property is a map, either the key or the value can be used. Must be supported by the integration."
+        },
+        "volume_level": {
+          "example": 0.5,
+          "filter": {
+            "supported_features": [
+              8
+            ]
+          },
+          "required": false,
+          "selector": {
+            "number": {
+              "min": 0.0,
+              "max": 1.0,
+              "step": 0.05,
+              "mode": "slider"
+            }
+          },
+          "name": "Volume",
+          "description": "The volume. 0 is inaudible, 1 is the maximum volume. Must be supported by the integration."
+        },
+        "duration": {
+          "example": 15,
+          "filter": {
+            "supported_features": [
+              16
+            ]
+          },
+          "required": false,
+          "selector": {
+            "text": {}
+          },
+          "name": "Duration",
+          "description": "Number of seconds the sound is played. Must be supported by the integration."
+        }
+      },
+      "target": {
+        "entity": [
+          {
+            "domain": [
+              "siren"
+            ],
+            "supported_features": [
+              1
+            ]
+          }
+        ]
+      }
+    },
+    "turn_off": {
+      "name": "Turn off",
+      "description": "Turns the siren off.",
+      "fields": {},
+      "target": {
+        "entity": [
+          {
+            "domain": [
+              "siren"
+            ],
+            "supported_features": [
+              2
+            ]
+          }
+        ]
+      }
+    },
+    "toggle": {
+      "name": "Toggle",
+      "description": "Toggles the siren on/off.",
+      "fields": {},
+      "target": {
+        "entity": [
+          {
+            "domain": [
+              "siren"
+            ],
+            "supported_features": [
+              3
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "linkplay": {
+    "play_preset": {
+      "name": "Play preset",
+      "description": "Plays a preset on the device.",
+      "fields": {
+        "preset_number": {
+          "example": 1,
+          "required": true,
+          "default": 1,
+          "selector": {
+            "number": {
+              "min": 1.0,
+              "mode": "box",
+              "step": 1.0
+            }
+          },
+          "name": "Preset number",
+          "description": "The number of the preset to play."
+        }
+      },
+      "target": {
+        "entity": [
+          {
+            "integration": "linkplay",
+            "domain": [
+              "media_player"
             ]
           }
         ]
@@ -6785,6 +6694,279 @@
       }
     }
   },
+  "webostv": {
+    "button": {
+      "name": "Button",
+      "description": "Sends a button press command.",
+      "fields": {
+        "entity_id": {
+          "required": true,
+          "selector": {
+            "entity": {
+              "integration": "webostv",
+              "domain": [
+                "media_player"
+              ],
+              "reorder": false,
+              "multiple": false
+            }
+          },
+          "name": "Entity",
+          "description": "Name(s) of the webOS TV entities where to run the API method."
+        },
+        "button": {
+          "required": true,
+          "example": "LEFT",
+          "selector": {
+            "text": {}
+          },
+          "name": "Button",
+          "description": "Name of the button to press.  Known possible values are LEFT, RIGHT, DOWN, UP, HOME, MENU, BACK, ENTER, DASH, INFO, ASTERISK, CC, EXIT, MUTE, RED, GREEN, BLUE, YELLOW, VOLUMEUP, VOLUMEDOWN, CHANNELUP, CHANNELDOWN, PLAY, PAUSE, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9."
+        }
+      }
+    },
+    "command": {
+      "name": "Command",
+      "description": "Sends a command.",
+      "fields": {
+        "entity_id": {
+          "required": true,
+          "selector": {
+            "entity": {
+              "integration": "webostv",
+              "domain": [
+                "media_player"
+              ],
+              "reorder": false,
+              "multiple": false
+            }
+          },
+          "name": "Entity",
+          "description": "Name(s) of the webOS TV entities where to run the API method."
+        },
+        "command": {
+          "required": true,
+          "example": "system.launcher/open",
+          "selector": {
+            "text": {}
+          },
+          "name": "Command",
+          "description": "Endpoint of the command."
+        },
+        "payload": {
+          "example": "target: https://www.google.com",
+          "advanced": true,
+          "selector": {
+            "object": {}
+          },
+          "name": "Payload",
+          "description": "An optional payload to provide to the endpoint in the format of key value pairs."
+        }
+      },
+      "response": {
+        "optional": true
+      }
+    },
+    "select_sound_output": {
+      "name": "Select sound output",
+      "description": "Sends the TV the command to change sound output.",
+      "fields": {
+        "entity_id": {
+          "required": true,
+          "selector": {
+            "entity": {
+              "integration": "webostv",
+              "domain": [
+                "media_player"
+              ],
+              "reorder": false,
+              "multiple": false
+            }
+          },
+          "name": "Entity",
+          "description": "Name(s) of the webOS TV entities to change sound output on."
+        },
+        "sound_output": {
+          "required": true,
+          "example": "external_speaker",
+          "selector": {
+            "text": {}
+          },
+          "name": "Sound output",
+          "description": "Name of the sound output to switch to."
+        }
+      },
+      "response": {
+        "optional": true
+      }
+    }
+  },
+  "adguard": {
+    "add_url": {
+      "name": "Add URL",
+      "description": "Adds a new filter subscription to AdGuard Home.",
+      "fields": {
+        "name": {
+          "required": true,
+          "example": "Example",
+          "selector": {
+            "text": {}
+          },
+          "name": "Name",
+          "description": "The name of the filter subscription."
+        },
+        "url": {
+          "required": true,
+          "example": "https://www.example.com/filter/1.txt",
+          "selector": {
+            "text": {}
+          },
+          "name": "URL",
+          "description": "The filter URL to subscribe to, containing the filter rules."
+        }
+      }
+    },
+    "remove_url": {
+      "name": "Remove URL",
+      "description": "Removes a filter subscription from AdGuard Home.",
+      "fields": {
+        "url": {
+          "required": true,
+          "example": "https://www.example.com/filter/1.txt",
+          "selector": {
+            "text": {}
+          },
+          "name": "URL",
+          "description": "The filter subscription URL to remove."
+        }
+      }
+    },
+    "enable_url": {
+      "name": "Enable URL",
+      "description": "Enables a filter subscription in AdGuard Home.",
+      "fields": {
+        "url": {
+          "required": true,
+          "example": "https://www.example.com/filter/1.txt",
+          "selector": {
+            "text": {}
+          },
+          "name": "URL",
+          "description": "The filter subscription URL to enable."
+        }
+      }
+    },
+    "disable_url": {
+      "name": "Disable URL",
+      "description": "Disables a filter subscription in AdGuard Home.",
+      "fields": {
+        "url": {
+          "required": true,
+          "example": "https://www.example.com/filter/1.txt",
+          "selector": {
+            "text": {}
+          },
+          "name": "URL",
+          "description": "The filter subscription URL to disable."
+        }
+      }
+    },
+    "refresh": {
+      "name": "Refresh",
+      "description": "Refreshes all filter subscriptions in AdGuard Home.",
+      "fields": {
+        "force": {
+          "default": false,
+          "selector": {
+            "boolean": {}
+          },
+          "name": "Force",
+          "description": "Force update (bypasses AdGuard Home throttling), omit for a regular refresh."
+        }
+      }
+    }
+  },
+  "automation": {
+    "trigger": {
+      "name": "Trigger",
+      "description": "Triggers the actions of an automation.",
+      "fields": {
+        "skip_condition": {
+          "default": true,
+          "selector": {
+            "boolean": {}
+          },
+          "name": "Skip conditions",
+          "description": "Defines whether or not the conditions will be skipped."
+        }
+      },
+      "target": {
+        "entity": [
+          {
+            "domain": [
+              "automation"
+            ]
+          }
+        ]
+      }
+    },
+    "toggle": {
+      "name": "Toggle",
+      "description": "Toggles (enable / disable) an automation.",
+      "fields": {},
+      "target": {
+        "entity": [
+          {
+            "domain": [
+              "automation"
+            ]
+          }
+        ]
+      }
+    },
+    "turn_on": {
+      "name": "Turn on",
+      "description": "Enables an automation.",
+      "fields": {},
+      "target": {
+        "entity": [
+          {
+            "domain": [
+              "automation"
+            ]
+          }
+        ]
+      }
+    },
+    "turn_off": {
+      "name": "Turn off",
+      "description": "Disables an automation.",
+      "fields": {
+        "stop_actions": {
+          "default": true,
+          "selector": {
+            "boolean": {}
+          },
+          "name": "Stop actions",
+          "description": "Stops currently running actions."
+        }
+      },
+      "target": {
+        "entity": [
+          {
+            "domain": [
+              "automation"
+            ]
+          }
+        ]
+      }
+    },
+    "reload": {
+      "name": "Reload",
+      "description": "Reloads the automation configuration.",
+      "fields": {}
+    }
+  },
   "humidifier": {
     "turn_on": {
       "name": "Turn on",
@@ -6883,188 +7065,6 @@
           }
         ]
       }
-    }
-  },
-  "siren": {
-    "turn_on": {
-      "name": "Turn on",
-      "description": "Turns the siren on.",
-      "fields": {
-        "tone": {
-          "example": "fire",
-          "filter": {
-            "supported_features": [
-              4
-            ]
-          },
-          "required": false,
-          "selector": {
-            "text": {}
-          },
-          "name": "Tone",
-          "description": "The tone to emit. When \u0060available_tones\u0060 property is a map, either the key or the value can be used. Must be supported by the integration."
-        },
-        "volume_level": {
-          "example": 0.5,
-          "filter": {
-            "supported_features": [
-              8
-            ]
-          },
-          "required": false,
-          "selector": {
-            "number": {
-              "min": 0.0,
-              "max": 1.0,
-              "step": 0.05,
-              "mode": "slider"
-            }
-          },
-          "name": "Volume",
-          "description": "The volume. 0 is inaudible, 1 is the maximum volume. Must be supported by the integration."
-        },
-        "duration": {
-          "example": 15,
-          "filter": {
-            "supported_features": [
-              16
-            ]
-          },
-          "required": false,
-          "selector": {
-            "text": {}
-          },
-          "name": "Duration",
-          "description": "Number of seconds the sound is played. Must be supported by the integration."
-        }
-      },
-      "target": {
-        "entity": [
-          {
-            "domain": [
-              "siren"
-            ],
-            "supported_features": [
-              1
-            ]
-          }
-        ]
-      }
-    },
-    "turn_off": {
-      "name": "Turn off",
-      "description": "Turns the siren off.",
-      "fields": {},
-      "target": {
-        "entity": [
-          {
-            "domain": [
-              "siren"
-            ],
-            "supported_features": [
-              2
-            ]
-          }
-        ]
-      }
-    },
-    "toggle": {
-      "name": "Toggle",
-      "description": "Toggles the siren on/off.",
-      "fields": {},
-      "target": {
-        "entity": [
-          {
-            "domain": [
-              "siren"
-            ],
-            "supported_features": [
-              3
-            ]
-          }
-        ]
-      }
-    }
-  },
-  "automation": {
-    "trigger": {
-      "name": "Trigger",
-      "description": "Triggers the actions of an automation.",
-      "fields": {
-        "skip_condition": {
-          "default": true,
-          "selector": {
-            "boolean": {}
-          },
-          "name": "Skip conditions",
-          "description": "Defines whether or not the conditions will be skipped."
-        }
-      },
-      "target": {
-        "entity": [
-          {
-            "domain": [
-              "automation"
-            ]
-          }
-        ]
-      }
-    },
-    "toggle": {
-      "name": "Toggle",
-      "description": "Toggles (enable / disable) an automation.",
-      "fields": {},
-      "target": {
-        "entity": [
-          {
-            "domain": [
-              "automation"
-            ]
-          }
-        ]
-      }
-    },
-    "turn_on": {
-      "name": "Turn on",
-      "description": "Enables an automation.",
-      "fields": {},
-      "target": {
-        "entity": [
-          {
-            "domain": [
-              "automation"
-            ]
-          }
-        ]
-      }
-    },
-    "turn_off": {
-      "name": "Turn off",
-      "description": "Disables an automation.",
-      "fields": {
-        "stop_actions": {
-          "default": true,
-          "selector": {
-            "boolean": {}
-          },
-          "name": "Stop actions",
-          "description": "Stops currently running actions."
-        }
-      },
-      "target": {
-        "entity": [
-          {
-            "domain": [
-              "automation"
-            ]
-          }
-        ]
-      }
-    },
-    "reload": {
-      "name": "Reload",
-      "description": "Reloads the automation configuration.",
-      "fields": {}
     }
   },
   "image": {
@@ -7166,8 +7166,8 @@
           "selector": {
             "text": {
               "type": "number",
-              "multiline": false,
-              "multiple": false
+              "multiple": false,
+              "multiline": false
             }
           },
           "name": "X-coordinate",
@@ -7179,8 +7179,8 @@
           "selector": {
             "text": {
               "type": "number",
-              "multiline": false,
-              "multiple": false
+              "multiple": false,
+              "multiline": false
             }
           },
           "name": "Y-coordinate",
@@ -7322,32 +7322,6 @@
       }
     }
   },
-  "datetime": {
-    "set_value": {
-      "name": "Set date/time",
-      "description": "Sets the date/time for a datetime entity.",
-      "fields": {
-        "datetime": {
-          "required": true,
-          "example": "2023-10-07T21:35:22",
-          "selector": {
-            "datetime": {}
-          },
-          "name": "Date \u0026 Time",
-          "description": "The date/time to set. The time zone of the Home Assistant instance is assumed."
-        }
-      },
-      "target": {
-        "entity": [
-          {
-            "domain": [
-              "datetime"
-            ]
-          }
-        ]
-      }
-    }
-  },
   "mypyllant": {
     "set_quick_veto": {
       "name": "Set quick veto",
@@ -7419,9 +7393,9 @@
                 "heating",
                 "cooling"
               ],
+              "custom_value": false,
               "multiple": false,
-              "sort": false,
-              "custom_value": false
+              "sort": false
             }
           }
         }
@@ -7631,9 +7605,9 @@
                 "heating",
                 "cooling"
               ],
+              "custom_value": false,
               "multiple": false,
-              "sort": false,
-              "custom_value": false
+              "sort": false
             }
           }
         },
@@ -7668,9 +7642,9 @@
                 "heating",
                 "cooling"
               ],
+              "custom_value": false,
               "multiple": false,
-              "sort": false,
-              "custom_value": false
+              "sort": false
             }
           }
         },
@@ -7709,9 +7683,9 @@
                 "AUTO",
                 "TIME_CONTROLLED"
               ],
+              "custom_value": false,
               "multiple": false,
-              "sort": false,
-              "custom_value": false
+              "sort": false
             }
           }
         },
@@ -7725,9 +7699,9 @@
                 "heating",
                 "cooling"
               ],
+              "custom_value": false,
               "multiple": false,
-              "sort": false,
-              "custom_value": false
+              "sort": false
             }
           }
         }
@@ -7808,9 +7782,9 @@
                 "DAY",
                 "MONTH"
               ],
+              "custom_value": false,
               "multiple": false,
-              "sort": false,
-              "custom_value": false
+              "sort": false
             }
           }
         },
@@ -7862,6 +7836,32 @@
       },
       "response": {
         "optional": false
+      }
+    }
+  },
+  "datetime": {
+    "set_value": {
+      "name": "Set date/time",
+      "description": "Sets the date/time for a datetime entity.",
+      "fields": {
+        "datetime": {
+          "required": true,
+          "example": "2023-10-07T21:35:22",
+          "selector": {
+            "datetime": {}
+          },
+          "name": "Date \u0026 Time",
+          "description": "The date/time to set. The time zone of the Home Assistant instance is assumed."
+        }
+      },
+      "target": {
+        "entity": [
+          {
+            "domain": [
+              "datetime"
+            ]
+          }
+        ]
       }
     }
   },
@@ -7980,9 +7980,9 @@
                 "in",
                 "out"
               ],
+              "custom_value": false,
               "multiple": false,
-              "sort": false,
-              "custom_value": false
+              "sort": false
             }
           },
           "name": "Cluster type",
@@ -8068,9 +8068,9 @@
                 "in",
                 "out"
               ],
+              "custom_value": false,
               "multiple": false,
-              "sort": false,
-              "custom_value": false
+              "sort": false
             }
           },
           "name": "Cluster type",
@@ -8097,9 +8097,9 @@
                 "client",
                 "server"
               ],
+              "custom_value": false,
               "multiple": false,
-              "sort": false,
-              "custom_value": false
+              "sort": false
             }
           },
           "name": "Command Type",
@@ -8164,9 +8164,9 @@
                 "in",
                 "out"
               ],
+              "custom_value": false,
               "multiple": false,
-              "sort": false,
-              "custom_value": false
+              "sort": false
             }
           },
           "name": "Cluster type",

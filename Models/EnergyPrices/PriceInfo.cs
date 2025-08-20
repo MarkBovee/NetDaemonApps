@@ -1,29 +1,33 @@
-using System.Globalization;
-using System.Text.Json.Serialization;
+// -----------------------------------------------------------------------------
+// Model representing electricity price information for a time period
+// -----------------------------------------------------------------------------
 
-namespace NetDaemonApps.models.energy_prices
+namespace NetDaemonApps.Models.EnergyPrices
 {
+    using System.Globalization;
+    using System.Text.Json.Serialization;
+
     /// <summary>
-    /// The price info class
+    /// The price info class represents a price entry for a specific time.
     /// </summary>
     public class PriceInfo
     {
         /// <summary>
-        /// Gets or sets the value of the time
+        /// Gets or sets the value of the time.
         /// </summary>
         [JsonPropertyName("start")]
         public required string Time { get; set; }
 
         /// <summary>
-        /// Gets or sets the value of the price
+        /// Gets or sets the value of the price.
         /// </summary>
         [JsonPropertyName("value")]
         public double Price { get; set; }
 
         /// <summary>
-        /// Gets the time value
+        /// Parses the time string and returns the corresponding DateTime value.
         /// </summary>
-        /// <returns>The date time</returns>
+        /// <returns>The parsed DateTime value.</returns>
         public DateTime GetTimeValue()
         {
             try
@@ -39,7 +43,6 @@ namespace NetDaemonApps.models.energy_prices
                 //{
                 //    // Calculate the difference in days
                 //    int daysDifference = (DateTime.Today.Date - dateTime.Date).Days;
-
                 //    // Add it to the current date
                 //    dateTime = dateTime.AddDays(daysDifference);
                 //}
@@ -48,8 +51,8 @@ namespace NetDaemonApps.models.energy_prices
             }
             catch (FormatException)
             {
-                // Handle the case where the timestamp format is invalid
-                throw new FormatException("Time is not in a valid format");
+                // Return today's date if parsing fails
+                return DateTime.Today;
             }
         }
     }

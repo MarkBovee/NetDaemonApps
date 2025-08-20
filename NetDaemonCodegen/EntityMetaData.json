@@ -4061,9 +4061,9 @@
           "cSharpName": "NeerslagverwachtingGemiddeld"
         },
         {
-          "id": "sensor.nordpool_kwh_nl_eur_3_10_021",
-          "friendlyName": "nordpool_kwh_nl_eur_3_10_021",
-          "cSharpName": "NordpoolKwhNlEur310021"
+          "id": "sensor.nordpool_inc",
+          "friendlyName": "nordpool_inc",
+          "cSharpName": "NordpoolInc"
         },
         {
           "id": "sensor.our_home_circuit_0_current_flow_temperature",
