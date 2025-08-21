@@ -1,5 +1,10 @@
 ﻿{
   "Battery": {
-    "LastAppliedSchedule": "2025-08-21T13:26:58.8460639+02:00"
+    "LastAppliedSchedule": "2025-08-21T13:26:58.8460639\u002B02:00"
+  },
+  "WaterHeater": {
+    "TargetTemperature": 35,
+    "WaitCyclesWater": 10,
+    "HeaterOn": false
   }
 }

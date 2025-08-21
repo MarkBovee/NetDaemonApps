@@ -499,7 +499,7 @@
       "entities": [
         {
           "id": "alarm_control_panel.emmeloord_alarm",
-          "friendlyName": "Emmeloord Alarm ",
+          "friendlyName": "",
           "cSharpName": "EmmeloordAlarm"
         }
       ],
@@ -593,6 +593,11 @@
           "jsonName": "supported_features",
           "cSharpName": "SupportedFeatures",
           "clrType": "System.Double"
+        },
+        {
+          "jsonName": "restored",
+          "cSharpName": "Restored",
+          "clrType": "System.Boolean"
         }
       ]
     },
@@ -748,12 +753,12 @@
       "entities": [
         {
           "id": "binary_sensor.achterdeur_contact_sensor",
-          "friendlyName": "Achterdeur Contact Sensor ",
+          "friendlyName": "",
           "cSharpName": "AchterdeurContactSensor"
         },
         {
           "id": "binary_sensor.achterdeur_contact_sensor_tamper",
-          "friendlyName": "Achterdeur Contact Sensor Tamper",
+          "friendlyName": "Tamper",
           "cSharpName": "AchterdeurContactSensorTamper"
         },
         {
@@ -772,11 +777,6 @@
           "cSharpName": "AudioOverloaded"
         },
         {
-          "id": "binary_sensor.backups_stale",
-          "friendlyName": "Backups Stale",
-          "cSharpName": "BackupsStale"
-        },
-        {
           "id": "binary_sensor.computer_cloud_connection",
           "friendlyName": "Computer Cloud connection",
           "cSharpName": "ComputerCloudConnection"
@@ -793,12 +793,12 @@
         },
         {
           "id": "binary_sensor.deurbel_ding_2",
-          "friendlyName": "Deurbel Ding",
+          "friendlyName": "Ding",
           "cSharpName": "DeurbelDing2"
         },
         {
           "id": "binary_sensor.deurbel_motion",
-          "friendlyName": "Deurbel Motion",
+          "friendlyName": "Motion",
           "cSharpName": "DeurbelMotion"
         },
         {
@@ -838,17 +838,17 @@
         },
         {
           "id": "binary_sensor.emmeloord_alarm_tamper",
-          "friendlyName": "Emmeloord Alarm Tamper",
+          "friendlyName": "Tamper",
           "cSharpName": "EmmeloordAlarmTamper"
         },
         {
           "id": "binary_sensor.emmeloord_base_station_tamper",
-          "friendlyName": "Emmeloord Base Station Tamper",
+          "friendlyName": "Tamper",
           "cSharpName": "EmmeloordBaseStationTamper"
         },
         {
           "id": "binary_sensor.emmeloord_range_extender_tamper",
-          "friendlyName": "Emmeloord Range Extender Tamper",
+          "friendlyName": "Tamper",
           "cSharpName": "EmmeloordRangeExtenderTamper"
         },
         {
@@ -883,12 +883,12 @@
         },
         {
           "id": "binary_sensor.keuken_motion_sensor",
-          "friendlyName": "Keuken Motion Sensor ",
+          "friendlyName": "",
           "cSharpName": "KeukenMotionSensor"
         },
         {
           "id": "binary_sensor.keuken_motion_sensor_tamper",
-          "friendlyName": "Keuken Motion Sensor Tamper",
+          "friendlyName": "Tamper",
           "cSharpName": "KeukenMotionSensorTamper"
         },
         {
@@ -978,17 +978,17 @@
         },
         {
           "id": "binary_sensor.toetsenpaneel_ingang_motion",
-          "friendlyName": "Toetsenpaneel ingang Motion",
+          "friendlyName": "Motion",
           "cSharpName": "ToetsenpaneelIngangMotion"
         },
         {
           "id": "binary_sensor.toetsenpaneel_ingang_tamper",
-          "friendlyName": "Toetsenpaneel ingang Tamper",
+          "friendlyName": "Tamper",
           "cSharpName": "ToetsenpaneelIngangTamper"
         },
         {
           "id": "binary_sensor.tuin_camera_motion",
-          "friendlyName": "Tuin Camera Motion",
+          "friendlyName": "Motion",
           "cSharpName": "TuinCameraMotion"
         },
         {
@@ -1038,7 +1038,7 @@
         },
         {
           "id": "binary_sensor.voordeur",
-          "friendlyName": "Voordeur ",
+          "friendlyName": "",
           "cSharpName": "Voordeur"
         },
         {
@@ -1053,17 +1053,17 @@
         },
         {
           "id": "binary_sensor.voordeur_motion_sensor_2",
-          "friendlyName": "Voordeur Motion Sensor ",
+          "friendlyName": "",
           "cSharpName": "VoordeurMotionSensor2"
         },
         {
           "id": "binary_sensor.voordeur_motion_sensor_tamper_2",
-          "friendlyName": "Voordeur Motion Sensor Tamper",
+          "friendlyName": "Tamper",
           "cSharpName": "VoordeurMotionSensorTamper2"
         },
         {
           "id": "binary_sensor.voordeur_tamper",
-          "friendlyName": "Voordeur Tamper",
+          "friendlyName": "Tamper",
           "cSharpName": "VoordeurTamper"
         },
         {
@@ -1083,7 +1083,7 @@
         },
         {
           "id": "binary_sensor.woonkamer_camera_motion",
-          "friendlyName": "Woonkamer Camera Motion",
+          "friendlyName": "Motion",
           "cSharpName": "WoonkamerCameraMotion"
         }
       ],
@@ -1190,7 +1190,7 @@
         },
         {
           "id": "button.deurbel_take_snapshot",
-          "friendlyName": "Deurbel Take Snapshot",
+          "friendlyName": "Take Snapshot",
           "cSharpName": "DeurbelTakeSnapshot"
         },
         {
@@ -1210,12 +1210,12 @@
         },
         {
           "id": "button.tuin_camera_take_snapshot",
-          "friendlyName": "Tuin Camera Take Snapshot",
+          "friendlyName": "Take Snapshot",
           "cSharpName": "TuinCameraTakeSnapshot"
         },
         {
           "id": "button.woonkamer_camera_take_snapshot",
-          "friendlyName": "Woonkamer Camera Take Snapshot",
+          "friendlyName": "Take Snapshot",
           "cSharpName": "WoonkamerCameraTakeSnapshot"
         }
       ],
@@ -1329,7 +1329,7 @@
         },
         {
           "id": "camera.deurbel_snapshot",
-          "friendlyName": "Deurbel Snapshot",
+          "friendlyName": "Snapshot",
           "cSharpName": "DeurbelSnapshot"
         },
         {
@@ -1364,7 +1364,7 @@
         },
         {
           "id": "camera.woonkamer_camera_snapshot",
-          "friendlyName": "Woonkamer Camera Snapshot",
+          "friendlyName": "Snapshot",
           "cSharpName": "WoonkamerCameraSnapshot"
         },
         {
@@ -1428,6 +1428,11 @@
           "jsonName": "frontend_stream_type",
           "cSharpName": "FrontendStreamType",
           "clrType": "System.String"
+        },
+        {
+          "jsonName": "restored",
+          "cSharpName": "Restored",
+          "clrType": "System.Boolean"
         }
       ]
     },
@@ -1723,14 +1728,24 @@
           "cSharpName": "Bath"
         },
         {
-          "id": "input_boolean.netdaemon_net_daemon_apps_apps_adjust_power_schedule_adjust_energy_schedule",
-          "friendlyName": "netdaemon_net_daemon_apps_apps_adjust_power_schedule_adjust_energy_schedule",
-          "cSharpName": "NetdaemonNetDaemonAppsAppsAdjustPowerScheduleAdjustEnergySchedule"
+          "id": "input_boolean.netdaemon_net_daemon_apps_apps_energy_appliances",
+          "friendlyName": "netdaemon_net_daemon_apps_apps_energy_appliances",
+          "cSharpName": "NetdaemonNetDaemonAppsAppsEnergyAppliances"
         },
         {
-          "id": "input_boolean.netdaemon_net_daemon_apps_apps_vacation_alarm_vacation_alarm",
-          "friendlyName": "netdaemon_net_daemon_apps_apps_vacation_alarm_vacation_alarm",
-          "cSharpName": "NetdaemonNetDaemonAppsAppsVacationAlarmVacationAlarm"
+          "id": "input_boolean.netdaemon_net_daemon_apps_apps_energy_battery",
+          "friendlyName": "netdaemon_net_daemon_apps_apps_energy_battery",
+          "cSharpName": "NetdaemonNetDaemonAppsAppsEnergyBattery"
+        },
+        {
+          "id": "input_boolean.netdaemon_net_daemon_apps_apps_energy_water_heater",
+          "friendlyName": "netdaemon_net_daemon_apps_apps_energy_water_heater",
+          "cSharpName": "NetdaemonNetDaemonAppsAppsEnergyWaterHeater"
+        },
+        {
+          "id": "input_boolean.netdaemon_net_daemon_apps_apps_vacation_alarm",
+          "friendlyName": "netdaemon_net_daemon_apps_apps_vacation_alarm",
+          "cSharpName": "NetdaemonNetDaemonAppsAppsVacationAlarm"
         }
       ],
       "attributes": [
@@ -1824,17 +1839,17 @@
         },
         {
           "id": "number.deurbel_ding_duration",
-          "friendlyName": "Deurbel Ding Duration",
+          "friendlyName": "Ding Duration",
           "cSharpName": "DeurbelDingDuration"
         },
         {
           "id": "number.deurbel_motion_duration",
-          "friendlyName": "Deurbel Motion Duration",
+          "friendlyName": "Motion Duration",
           "cSharpName": "DeurbelMotionDuration"
         },
         {
           "id": "number.deurbel_snapshot_interval",
-          "friendlyName": "Deurbel Snapshot Interval",
+          "friendlyName": "Snapshot Interval",
           "cSharpName": "DeurbelSnapshotInterval"
         },
         {
@@ -1849,7 +1864,7 @@
         },
         {
           "id": "number.emmeloord_base_station_volume",
-          "friendlyName": "Emmeloord Base Station Volume",
+          "friendlyName": "Volume",
           "cSharpName": "EmmeloordBaseStationVolume"
         },
         {
@@ -1874,12 +1889,12 @@
         },
         {
           "id": "number.keuken_chime_snooze_minutes",
-          "friendlyName": "Keuken Chime Snooze Minutes",
+          "friendlyName": "Snooze Minutes",
           "cSharpName": "KeukenChimeSnoozeMinutes"
         },
         {
           "id": "number.keuken_chime_volume",
-          "friendlyName": "Keuken Chime Volume",
+          "friendlyName": "Volume",
           "cSharpName": "KeukenChimeVolume"
         },
         {
@@ -1934,17 +1949,17 @@
         },
         {
           "id": "number.toetsenpaneel_ingang_volume",
-          "friendlyName": "Toetsenpaneel ingang Volume",
+          "friendlyName": "Volume",
           "cSharpName": "ToetsenpaneelIngangVolume"
         },
         {
           "id": "number.tuin_camera_motion_duration",
-          "friendlyName": "Tuin Camera Motion Duration",
+          "friendlyName": "Motion Duration",
           "cSharpName": "TuinCameraMotionDuration"
         },
         {
           "id": "number.tuin_camera_snapshot_interval",
-          "friendlyName": "Tuin Camera Snapshot Interval",
+          "friendlyName": "Snapshot Interval",
           "cSharpName": "TuinCameraSnapshotInterval"
         },
         {
@@ -1999,12 +2014,12 @@
         },
         {
           "id": "number.woonkamer_camera_motion_duration",
-          "friendlyName": "Woonkamer Camera Motion Duration",
+          "friendlyName": "Motion Duration",
           "cSharpName": "WoonkamerCameraMotionDuration"
         },
         {
           "id": "number.woonkamer_camera_snapshot_interval",
-          "friendlyName": "Woonkamer Camera Snapshot Interval",
+          "friendlyName": "Snapshot Interval",
           "cSharpName": "WoonkamerCameraSnapshotInterval"
         },
         {
@@ -2073,6 +2088,16 @@
           "jsonName": "attribution",
           "cSharpName": "Attribution",
           "clrType": "System.String"
+        },
+        {
+          "jsonName": "restored",
+          "cSharpName": "Restored",
+          "clrType": "System.Boolean"
+        },
+        {
+          "jsonName": "supported_features",
+          "cSharpName": "SupportedFeatures",
+          "clrType": "System.Double"
         }
       ]
     },
@@ -2192,12 +2217,12 @@
       "entities": [
         {
           "id": "select.achterdeur_contact_sensor_bypass_mode",
-          "friendlyName": "Achterdeur Contact Sensor Bypass Mode",
+          "friendlyName": "Bypass Mode",
           "cSharpName": "AchterdeurContactSensorBypassMode"
         },
         {
           "id": "select.achterdeur_contact_sensor_chirp_tone",
-          "friendlyName": "Achterdeur Contact Sensor Chirp Tone",
+          "friendlyName": "Chirp Tone",
           "cSharpName": "AchterdeurContactSensorChirpTone"
         },
         {
@@ -2207,12 +2232,12 @@
         },
         {
           "id": "select.deurbel_event_select",
-          "friendlyName": "Deurbel Event Select",
+          "friendlyName": "Event Select",
           "cSharpName": "DeurbelEventSelect"
         },
         {
           "id": "select.deurbel_snapshot_mode",
-          "friendlyName": "Deurbel Snapshot Mode",
+          "friendlyName": "Snapshot Mode",
           "cSharpName": "DeurbelSnapshotMode"
         },
         {
@@ -2227,12 +2252,12 @@
         },
         {
           "id": "select.keuken_motion_sensor_bypass_mode",
-          "friendlyName": "Keuken Motion Sensor Bypass Mode",
+          "friendlyName": "Bypass Mode",
           "cSharpName": "KeukenMotionSensorBypassMode"
         },
         {
           "id": "select.keuken_motion_sensor_chirp_tone",
-          "friendlyName": "Keuken Motion Sensor Chirp Tone",
+          "friendlyName": "Chirp Tone",
           "cSharpName": "KeukenMotionSensorChirpTone"
         },
         {
@@ -2257,22 +2282,22 @@
         },
         {
           "id": "select.tuin_camera_event_select",
-          "friendlyName": "Tuin Camera Event Select",
+          "friendlyName": "Event Select",
           "cSharpName": "TuinCameraEventSelect"
         },
         {
           "id": "select.tuin_camera_snapshot_mode",
-          "friendlyName": "Tuin Camera Snapshot Mode",
+          "friendlyName": "Snapshot Mode",
           "cSharpName": "TuinCameraSnapshotMode"
         },
         {
           "id": "select.voordeur_bypass_mode",
-          "friendlyName": "Voordeur Bypass Mode",
+          "friendlyName": "Bypass Mode",
           "cSharpName": "VoordeurBypassMode"
         },
         {
           "id": "select.voordeur_chirp_tone",
-          "friendlyName": "Voordeur Chirp Tone",
+          "friendlyName": "Chirp Tone",
           "cSharpName": "VoordeurChirpTone"
         },
         {
@@ -2287,22 +2312,22 @@
         },
         {
           "id": "select.voordeur_motion_sensor_bypass_mode_2",
-          "friendlyName": "Voordeur Motion Sensor Bypass Mode",
+          "friendlyName": "Bypass Mode",
           "cSharpName": "VoordeurMotionSensorBypassMode2"
         },
         {
           "id": "select.voordeur_motion_sensor_chirp_tone_2",
-          "friendlyName": "Voordeur Motion Sensor Chirp Tone",
+          "friendlyName": "Chirp Tone",
           "cSharpName": "VoordeurMotionSensorChirpTone2"
         },
         {
           "id": "select.woonkamer_camera_event_select",
-          "friendlyName": "Woonkamer Camera Event Select",
+          "friendlyName": "Event Select",
           "cSharpName": "WoonkamerCameraEventSelect"
         },
         {
           "id": "select.woonkamer_camera_snapshot_mode",
-          "friendlyName": "Woonkamer Camera Snapshot Mode",
+          "friendlyName": "Snapshot Mode",
           "cSharpName": "WoonkamerCameraSnapshotMode"
         }
       ],
@@ -2344,7 +2369,7 @@
       "entities": [
         {
           "id": "sensor.achterdeur_contact_sensor_info",
-          "friendlyName": "Achterdeur Contact Sensor Info",
+          "friendlyName": "Info",
           "cSharpName": "AchterdeurContactSensorInfo"
         },
         {
@@ -2376,11 +2401,6 @@
           "id": "sensor.backup_next_scheduled_automatic_backup",
           "friendlyName": "Backup Next scheduled automatic backup",
           "cSharpName": "BackupNextScheduledAutomaticBackup"
-        },
-        {
-          "id": "sensor.backup_state",
-          "friendlyName": "Backup State",
-          "cSharpName": "BackupState"
         },
         {
           "id": "sensor.battery_b2n0200j2403e01735_bat_soh",
@@ -2424,7 +2444,7 @@
         },
         {
           "id": "sensor.deurbel_info_3",
-          "friendlyName": "Deurbel Info",
+          "friendlyName": "Info",
           "cSharpName": "DeurbelInfo3"
         },
         {
@@ -2469,17 +2489,17 @@
         },
         {
           "id": "sensor.emmeloord_alarm_info",
-          "friendlyName": "Emmeloord Alarm Info",
+          "friendlyName": "Info",
           "cSharpName": "EmmeloordAlarmInfo"
         },
         {
           "id": "sensor.emmeloord_base_station_info",
-          "friendlyName": "Emmeloord Base Station Info",
+          "friendlyName": "Info",
           "cSharpName": "EmmeloordBaseStationInfo"
         },
         {
           "id": "sensor.emmeloord_range_extender_info",
-          "friendlyName": "Emmeloord Range Extender Info",
+          "friendlyName": "Info",
           "cSharpName": "EmmeloordRangeExtenderInfo"
         },
         {
@@ -2568,13 +2588,18 @@
           "cSharpName": "IphoneMarkSsid2"
         },
         {
+          "id": "sensor.john_daltonhage_7_tijdstip_van_maximaal_uurverbruik",
+          "friendlyName": "John Daltonhage 7 Tijdstip van maximaal uurverbruik",
+          "cSharpName": "JohnDaltonhage7TijdstipVanMaximaalUurverbruik"
+        },
+        {
           "id": "sensor.keuken_chime_info_2",
-          "friendlyName": "Keuken Chime Info",
+          "friendlyName": "Info",
           "cSharpName": "KeukenChimeInfo2"
         },
         {
           "id": "sensor.keuken_motion_sensor_info",
-          "friendlyName": "Keuken Motion Sensor Info",
+          "friendlyName": "Info",
           "cSharpName": "KeukenMotionSensorInfo"
         },
         {
@@ -2844,12 +2869,12 @@
         },
         {
           "id": "sensor.toetsenpaneel_ingang_info",
-          "friendlyName": "Toetsenpaneel ingang Info",
+          "friendlyName": "Info",
           "cSharpName": "ToetsenpaneelIngangInfo"
         },
         {
           "id": "sensor.tuin_camera_info",
-          "friendlyName": "Tuin Camera Info",
+          "friendlyName": "Info",
           "cSharpName": "TuinCameraInfo"
         },
         {
@@ -2904,7 +2929,7 @@
         },
         {
           "id": "sensor.voordeur_info",
-          "friendlyName": "Voordeur Info",
+          "friendlyName": "Info",
           "cSharpName": "VoordeurInfo"
         },
         {
@@ -2914,7 +2939,7 @@
         },
         {
           "id": "sensor.voordeur_motion_sensor_info_2",
-          "friendlyName": "Voordeur Motion Sensor Info",
+          "friendlyName": "Info",
           "cSharpName": "VoordeurMotionSensorInfo2"
         },
         {
@@ -2934,7 +2959,7 @@
         },
         {
           "id": "sensor.woonkamer_camera_info",
-          "friendlyName": "Woonkamer Camera Info",
+          "friendlyName": "Info",
           "cSharpName": "WoonkamerCameraInfo"
         },
         {
@@ -3602,7 +3627,7 @@
       "entities": [
         {
           "id": "sensor.achterdeur_contact_sensor_battery",
-          "friendlyName": "Achterdeur Contact Sensor Battery",
+          "friendlyName": "Battery",
           "cSharpName": "AchterdeurContactSensorBattery"
         },
         {
@@ -3664,11 +3689,6 @@
           "id": "sensor.audio_today_s_consumption",
           "friendlyName": "Audio Today\u0027s consumption",
           "cSharpName": "AudioTodaySConsumption"
-        },
-        {
-          "id": "sensor.average_price",
-          "friendlyName": "Average Price",
-          "cSharpName": "AveragePrice"
         },
         {
           "id": "sensor.battery_b2n0200j2403e01735_bat_soc",
@@ -3761,13 +3781,8 @@
           "cSharpName": "ComputerTodaySConsumption"
         },
         {
-          "id": "sensor.current_price",
-          "friendlyName": "Current Price",
-          "cSharpName": "CurrentPrice"
-        },
-        {
           "id": "sensor.deurbel_wireless",
-          "friendlyName": "Deurbel Wireless",
+          "friendlyName": "Wireless",
           "cSharpName": "DeurbelWireless"
         },
         {
@@ -3847,7 +3862,7 @@
         },
         {
           "id": "sensor.emmeloord_range_extender_battery",
-          "friendlyName": "Emmeloord Range Extender Battery",
+          "friendlyName": "Battery",
           "cSharpName": "EmmeloordRangeExtenderBattery"
         },
         {
@@ -3899,6 +3914,16 @@
           "id": "sensor.energy_production_tomorrow",
           "friendlyName": "Solar production forecast Geschatte energieproductie - morgen",
           "cSharpName": "EnergyProductionTomorrow"
+        },
+        {
+          "id": "sensor.epex",
+          "friendlyName": "epex",
+          "cSharpName": "Epex"
+        },
+        {
+          "id": "sensor.epex_inc",
+          "friendlyName": "epex_inc",
+          "cSharpName": "EpexInc"
         },
         {
           "id": "sensor.garage_huidig_gebruik",
@@ -4041,13 +4066,33 @@
           "cSharpName": "IphoneMarkStorage2"
         },
         {
+          "id": "sensor.john_daltonhage_7_elektriciteitsprijs",
+          "friendlyName": "John Daltonhage 7 Elektriciteitsprijs",
+          "cSharpName": "JohnDaltonhage7Elektriciteitsprijs"
+        },
+        {
+          "id": "sensor.john_daltonhage_7_maandelijks_nettoverbruik",
+          "friendlyName": "John Daltonhage 7 Maandelijks nettoverbruik",
+          "cSharpName": "JohnDaltonhage7MaandelijksNettoverbruik"
+        },
+        {
+          "id": "sensor.john_daltonhage_7_maandelijks_piekuurverbruik",
+          "friendlyName": "John Daltonhage 7 Maandelijks piekuurverbruik",
+          "cSharpName": "JohnDaltonhage7MaandelijksPiekuurverbruik"
+        },
+        {
+          "id": "sensor.john_daltonhage_7_maandelijkse_kosten",
+          "friendlyName": "John Daltonhage 7 Maandelijkse kosten",
+          "cSharpName": "JohnDaltonhage7MaandelijkseKosten"
+        },
+        {
           "id": "sensor.keuken_chime_wireless",
-          "friendlyName": "Keuken Chime Wireless",
+          "friendlyName": "Wireless",
           "cSharpName": "KeukenChimeWireless"
         },
         {
           "id": "sensor.keuken_motion_sensor_battery",
-          "friendlyName": "Keuken Motion Sensor Battery",
+          "friendlyName": "Battery",
           "cSharpName": "KeukenMotionSensorBattery"
         },
         {
@@ -4059,11 +4104,6 @@
           "id": "sensor.neerslagverwachting_gemiddeld",
           "friendlyName": "Neerslagverwachting gemiddeld",
           "cSharpName": "NeerslagverwachtingGemiddeld"
-        },
-        {
-          "id": "sensor.nordpool_inc",
-          "friendlyName": "nordpool_inc",
-          "cSharpName": "NordpoolInc"
         },
         {
           "id": "sensor.our_home_circuit_0_current_flow_temperature",
@@ -4447,7 +4487,7 @@
         },
         {
           "id": "sensor.toetsenpaneel_ingang_battery",
-          "friendlyName": "Toetsenpaneel ingang Battery",
+          "friendlyName": "Battery",
           "cSharpName": "ToetsenpaneelIngangBattery"
         },
         {
@@ -4457,7 +4497,7 @@
         },
         {
           "id": "sensor.tuin_camera_wireless",
-          "friendlyName": "Tuin Camera Wireless",
+          "friendlyName": "Wireless",
           "cSharpName": "TuinCameraWireless"
         },
         {
@@ -4542,7 +4582,7 @@
         },
         {
           "id": "sensor.voordeur_battery",
-          "friendlyName": "Voordeur Battery",
+          "friendlyName": "Battery",
           "cSharpName": "VoordeurBattery"
         },
         {
@@ -4552,7 +4592,7 @@
         },
         {
           "id": "sensor.voordeur_motion_sensor_battery_2",
-          "friendlyName": "Voordeur Motion Sensor Battery",
+          "friendlyName": "Battery",
           "cSharpName": "VoordeurMotionSensorBattery2"
         },
         {
@@ -4587,7 +4627,7 @@
         },
         {
           "id": "sensor.woonkamer_camera_wireless",
-          "friendlyName": "Woonkamer Camera Wireless",
+          "friendlyName": "Wireless",
           "cSharpName": "WoonkamerCameraWireless"
         },
         {
@@ -5363,17 +5403,17 @@
         },
         {
           "id": "switch.deurbel_event_stream",
-          "friendlyName": "Deurbel Event Stream",
+          "friendlyName": "Event Stream",
           "cSharpName": "DeurbelEventStream"
         },
         {
           "id": "switch.deurbel_live_stream",
-          "friendlyName": "Deurbel Live Stream",
+          "friendlyName": "Live Stream",
           "cSharpName": "DeurbelLiveStream"
         },
         {
           "id": "switch.deurbel_motion_detection",
-          "friendlyName": "Deurbel Motion Detection",
+          "friendlyName": "Motion Detection",
           "cSharpName": "DeurbelMotionDetection"
         },
         {
@@ -5413,7 +5453,7 @@
         },
         {
           "id": "switch.emmeloord_alarm_siren",
-          "friendlyName": "Emmeloord Alarm Siren",
+          "friendlyName": "Siren",
           "cSharpName": "EmmeloordAlarmSiren"
         },
         {
@@ -5473,17 +5513,17 @@
         },
         {
           "id": "switch.keuken_chime_play_ding_sound",
-          "friendlyName": "Keuken Chime Play Ding Sound",
+          "friendlyName": "Play Ding Sound",
           "cSharpName": "KeukenChimePlayDingSound"
         },
         {
           "id": "switch.keuken_chime_play_motion_sound",
-          "friendlyName": "Keuken Chime Play Motion Sound",
+          "friendlyName": "Play Motion Sound",
           "cSharpName": "KeukenChimePlayMotionSound"
         },
         {
           "id": "switch.keuken_chime_snooze",
-          "friendlyName": "Keuken Chime Snooze",
+          "friendlyName": "Snooze",
           "cSharpName": "KeukenChimeSnooze"
         },
         {
@@ -5638,32 +5678,32 @@
         },
         {
           "id": "switch.toetsenpaneel_ingang_chirps",
-          "friendlyName": "Toetsenpaneel ingang Chirps",
+          "friendlyName": "Chirps",
           "cSharpName": "ToetsenpaneelIngangChirps"
         },
         {
           "id": "switch.tuin_camera_event_stream",
-          "friendlyName": "Tuin Camera Event Stream",
+          "friendlyName": "Event Stream",
           "cSharpName": "TuinCameraEventStream"
         },
         {
           "id": "switch.tuin_camera_live_stream",
-          "friendlyName": "Tuin Camera Live Stream",
+          "friendlyName": "Live Stream",
           "cSharpName": "TuinCameraLiveStream"
         },
         {
           "id": "switch.tuin_camera_motion_detection",
-          "friendlyName": "Tuin Camera Motion Detection",
+          "friendlyName": "Motion Detection",
           "cSharpName": "TuinCameraMotionDetection"
         },
         {
           "id": "switch.tuin_camera_motion_warning",
-          "friendlyName": "Tuin Camera Motion Warning",
+          "friendlyName": "Motion Warning",
           "cSharpName": "TuinCameraMotionWarning"
         },
         {
           "id": "switch.tuin_camera_siren",
-          "friendlyName": "Tuin Camera Siren",
+          "friendlyName": "Siren",
           "cSharpName": "TuinCameraSiren"
         },
         {
@@ -5758,27 +5798,27 @@
         },
         {
           "id": "switch.woonkamer_camera_event_stream",
-          "friendlyName": "Woonkamer Camera Event Stream",
+          "friendlyName": "Event Stream",
           "cSharpName": "WoonkamerCameraEventStream"
         },
         {
           "id": "switch.woonkamer_camera_live_stream",
-          "friendlyName": "Woonkamer Camera Live Stream",
+          "friendlyName": "Live Stream",
           "cSharpName": "WoonkamerCameraLiveStream"
         },
         {
           "id": "switch.woonkamer_camera_motion_detection",
-          "friendlyName": "Woonkamer Camera Motion Detection",
+          "friendlyName": "Motion Detection",
           "cSharpName": "WoonkamerCameraMotionDetection"
         },
         {
           "id": "switch.woonkamer_camera_motion_warning",
-          "friendlyName": "Woonkamer Camera Motion Warning",
+          "friendlyName": "Motion Warning",
           "cSharpName": "WoonkamerCameraMotionWarning"
         },
         {
           "id": "switch.woonkamer_camera_siren",
-          "friendlyName": "Woonkamer Camera Siren",
+          "friendlyName": "Siren",
           "cSharpName": "WoonkamerCameraSiren"
         },
         {

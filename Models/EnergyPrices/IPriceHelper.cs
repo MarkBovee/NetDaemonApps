@@ -3,7 +3,7 @@
     using System;
     using System.Collections.Generic;
 
-    using NetDaemonApps.Models.Enums;
+    using Enums;
 
     public interface IPriceHelper
     {

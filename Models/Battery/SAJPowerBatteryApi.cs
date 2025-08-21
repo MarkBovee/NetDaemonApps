@@ -226,6 +226,52 @@ namespace NetDaemonApps.Models.Battery
             };
         }
 
+        public async Task<bool> ClearBatteryScheduleAsync()
+        {
+            await EnsureAuthenticatedAsync();
+            try
+            {
+                var url = $"{_baseUrl}/dev-api/api/v1/remote/client/saveCommonParaRemoteSetting";
+                var clientDate = DateTime.UtcNow.ToString("yyyy-MM-dd");
+                var timeStamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString();
+                var random = Guid.NewGuid().ToString("N");
+
+                // Prepare parameters for signing
+                var signParamsDict = new Dictionary<string, string>
+                {
+                    { "appProjectName", DefaultAppProjectName },
+                    { "clientDate", clientDate },
+                    { "lang", DefaultLang },
+                    { "timeStamp", timeStamp },
+                    { "random", random },
+                    { "clientId", ClientId }
+                };
+                var signedParams = CalcSignatureElekeeper(signParamsDict);
+
+                // Add clear-schedule-specific parameters
+                signedParams["deviceSn"] = _deviceSerialNumber;
+                signedParams["isParallelBatchSetting"] = DefaultIsParallelBatchSetting.ToString();
+                signedParams["commAddress"] = "3647|3647";
+                signedParams["componentId"] = "|0";
+                signedParams["operType"] = DefaultOperType.ToString();
+                signedParams["transferId"] = "|";
+                signedParams["value"] = "0|0";
+
+                var content = new FormUrlEncodedContent(signedParams);
+                var response = await _httpClient.PostAsync(url, content);
+                var json = await response.Content.ReadAsStringAsync();
+                var doc = JsonDocument.Parse(json);
+                var errCode = doc.RootElement.GetProperty("errCode").GetInt32();
+
+                return errCode == 0;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                throw;
+            }
+        }
+
         /// <summary>
         /// Saves the battery charge/discharge schedule to the remote API, using dynamic parameters.
         /// </summary>

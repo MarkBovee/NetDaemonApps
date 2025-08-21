@@ -11,7 +11,7 @@ using HomeAssistantGenerated;
 
 using HtmlAgilityPack;
 
-using NetDaemonApps.Models.Enums;
+using Enums;
 
 /// <summary>
 /// The price helper class
@@ -89,9 +89,9 @@ public class PriceHelper : IPriceHelper
     /// <returns>The price threshold as double.</returns>
     private double GetPriceThreshold()
     {
-        if (_entities.Sensor.NordpoolInc.Attributes == null) return 0;
+        if (_entities.Sensor.EpexInc.Attributes == null) return 0;
 
-        var avgPrice = _entities.Sensor.NordpoolInc.Attributes.Average;
+        var avgPrice = _entities.Sensor.EpexInc.Attributes.Average;
         double priceThreshold;
         const double fallbackPrice = 0.26;
 
@@ -150,7 +150,7 @@ public class PriceHelper : IPriceHelper
         }
 
         // Read power prices for today
-        var powerPrices = _entities.Sensor.NordpoolInc;
+        var powerPrices = _entities.Sensor.EpexInc;
         var jsonAttributes = powerPrices.EntityState?.AttributesJson;
         if (jsonAttributes == null)
         {
@@ -236,7 +236,7 @@ public class PriceHelper : IPriceHelper
     /// </summary>
     /// <param name="html">The html</param>
     /// <returns>A dictionary of date time and double</returns>
-    private void ParseHtmlToPrices(string html)
+    private void ParseHtmlToPrices(string? html)
     {
         var pricesToday = new Dictionary<DateTime, double>();
         var pricesTomorrow = new Dictionary<DateTime, double>();
@@ -285,5 +285,100 @@ public class PriceHelper : IPriceHelper
 
         PricesToday = pricesToday;
         PricesTomorrow = pricesTomorrow;
+    }
+
+    /// <summary>
+    /// Gets the lowest price timeslot using the specified prices
+    /// </summary>
+    /// <param name="prices">The prices</param>
+    /// <param name="windowHours">The window hours</param>
+    /// <returns>The date time start date time end</returns>
+    public static (DateTime Start, DateTime End) GetLowestPriceTimeslot(IDictionary<DateTime, double> prices, int windowHours = 3)
+    {
+        var sortedPrices = prices.OrderBy(p => p.Key).ToList();
+        var minSum = double.MaxValue;
+        var start = sortedPrices[0].Key;
+        var end = sortedPrices[windowHours - 1].Key;
+
+        for (var i = 0; i <= sortedPrices.Count - windowHours; i++)
+        {
+            var sum = 0d;
+            for (var j = 0; j < windowHours; j++)
+            {
+                sum += sortedPrices[i + j].Value;
+            }
+
+            if (!(sum < minSum)) continue;
+
+            minSum = sum;
+            start = sortedPrices[i].Key;
+            end = sortedPrices[i + windowHours - 1].Key.AddMinutes(59);
+        }
+
+        return (start, end);
+    }
+
+    /// <summary>
+    /// Finds the timeslot with the highest total price over a specified window of hours.
+    /// </summary>
+    /// <param name="prices">Dictionary of prices by DateTime.</param>
+    /// <param name="windowHours">Number of consecutive hours in the window.</param>
+    /// <returns>Tuple with start and end DateTime of the highest price window.</returns>
+    public static (DateTime Start, DateTime End) GetHighestPriceTimeslot(IDictionary<DateTime, double> prices, int windowHours = 1)
+    {
+        var sortedPrices = prices.OrderBy(p => p.Key).ToList();
+        var maxSum = double.MinValue;
+        var start = sortedPrices[0].Key;
+        var end = sortedPrices[windowHours - 1].Key;
+
+        for (var i = 0; i <= sortedPrices.Count - windowHours; i++)
+        {
+            var sum = 0d;
+            for (var j = 0; j < windowHours; j++)
+            {
+                sum += sortedPrices[i + j].Value;
+            }
+
+            if (!(sum > maxSum)) continue;
+
+            maxSum = sum;
+            start = sortedPrices[i].Key;
+            end = sortedPrices[i + windowHours - 1].Key.AddMinutes(59);
+        }
+
+        return (start, end);
+    }
+
+    /// <summary>
+    /// Gets the lowest night price (before 6 AM) from the given prices.
+    /// </summary>
+    public static KeyValuePair<DateTime, double> GetLowestNightPrice(IDictionary<DateTime, double> prices)
+    {
+        return prices.Where(p => p.Key.TimeOfDay < TimeSpan.FromHours(6))
+                     .OrderBy(p => p.Value)
+                     .ThenBy(p => p.Key)
+                     .FirstOrDefault();
+    }
+
+    /// <summary>
+    /// Gets the lowest day price (after 8 AM) from the given prices.
+    /// </summary>
+    public static KeyValuePair<DateTime, double> GetLowestDayPrice(IDictionary<DateTime, double> prices)
+    {
+        return prices.Where(p => p.Key.TimeOfDay > TimeSpan.FromHours(8))
+                     .OrderBy(p => p.Value)
+                     .ThenBy(p => p.Key)
+                     .FirstOrDefault();
+    }
+
+    /// <summary>
+    /// Gets the next night price (before 6 AM) from tomorrow's prices.
+    /// </summary>
+    public static KeyValuePair<DateTime, double> GetNextNightPrice(IDictionary<DateTime, double> pricesTomorrow)
+    {
+        return pricesTomorrow.Where(p => p.Key.TimeOfDay < TimeSpan.FromHours(6))
+                             .OrderBy(p => p.Value)
+                             .ThenBy(p => p.Key)
+                             .FirstOrDefault();
     }
 }

@@ -1,16 +1,11 @@
 namespace NetDaemonApps.Apps.Energy
 {
     using System.Diagnostics;
-    using System.Linq;
-
     using HomeAssistantGenerated;
-
     using Models.EnergyPrices;
-
     using NetDaemon.Extensions.Scheduler;
-
-    using NetDaemonApps.Models;
-    using NetDaemonApps.Models.Enums;
+    using Models;
+    using Models.Enums;
 
     /// <summary>
     /// Adjust the energy appliances schedule based on the power prices
@@ -118,10 +113,10 @@ namespace NetDaemonApps.Apps.Energy
                 }
             }
 
-            // Set the start and end time for the heating period
-            var lowestNightPrice = _priceHelper.PricesToday.Where(p => p.Key.TimeOfDay < TimeSpan.FromHours(6)).OrderBy(p => p.Value).ThenBy(p => p.Key).FirstOrDefault();
-            var lowestDayPrice = _priceHelper.PricesToday.Where(p => p.Key.TimeOfDay > TimeSpan.FromHours(8)).OrderBy(p => p.Value).ThenBy(p => p.Key).FirstOrDefault();
-            var nextNightPrice = _priceHelper.PricesTomorrow.Where(p => p.Key.TimeOfDay < TimeSpan.FromHours(6)).OrderBy(p => p.Value).ThenBy(p => p.Key).FirstOrDefault();
+            // Use PriceHelper for price calculations
+            var lowestNightPrice = PriceHelper.GetLowestNightPrice(_priceHelper.PricesToday);
+            var lowestDayPrice = PriceHelper.GetLowestDayPrice(_priceHelper.PricesToday);
+            var nextNightPrice = PriceHelper.GetNextNightPrice(_priceHelper.PricesTomorrow);
 
             var startTime = useNightProgram ? lowestNightPrice.Key : lowestDayPrice.Key;
 
