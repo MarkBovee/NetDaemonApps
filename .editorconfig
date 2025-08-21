@@ -30,6 +30,11 @@ csharp_using_directive_placement = inside_namespace
 # File encoding
 end_of_line = crlf
 
+# Prefer 'var' usage for C#
+csharp_style_var_for_built_in_types = true:suggestion
+csharp_style_var_when_type_is_apparent = true:suggestion
+csharp_style_var_elsewhere = true:suggestion
+
 # Optional: Visual Studio specific
 [*.{cs,vb}]
 dotnet_separate_import_directive_groups = true

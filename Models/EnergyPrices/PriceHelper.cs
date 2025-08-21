@@ -1,4 +1,4 @@
-namespace NetDaemonApps.Helpers;
+namespace NetDaemonApps.Models.EnergyPrices;
 
 using System.Collections.Generic;
 using System.Globalization;
@@ -11,8 +11,7 @@ using HomeAssistantGenerated;
 
 using HtmlAgilityPack;
 
-using Models.EnergyPrices;
-using Models.Enums;
+using NetDaemonApps.Models.Enums;
 
 /// <summary>
 /// The price helper class

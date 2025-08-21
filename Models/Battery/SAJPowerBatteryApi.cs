@@ -2,9 +2,10 @@
 // Helper class for interacting with the SAJ Power Battery API
 // -----------------------------------------------------------------------------
 
-namespace NetDaemonApps.Helpers
+namespace NetDaemonApps.Models.Battery
 {
     using System.Collections.Generic;
+    using System.IO;
     using System.Linq;
     using System.Net.Http;
     using System.Net.Http.Headers;
@@ -13,12 +14,10 @@ namespace NetDaemonApps.Helpers
     using System.Text.Json;
     using System.Threading.Tasks;
 
-    using Models.Battery;
-
     /// <summary>
     /// Provides methods to interact with the SAJ Power Battery API, including authentication and schedule management.
     /// </summary>
-    public class SaiPowerBatteryApi
+    public class SAJPowerBatteryApi
     {
         /// <summary>
         /// The http client
@@ -33,15 +32,15 @@ namespace NetDaemonApps.Helpers
         /// <summary>
         /// The base url
         /// </summary>
-        private readonly string _baseUrl = "eop.saj-electric.com";
+        private readonly string _baseUrl;
 
         /// <summary>
-        /// The token
+        /// The SAJ-token
         /// </summary>
         private string? _token;
 
         /// <summary>
-        /// The token expiration
+        /// The SAJ-token expiration
         /// </summary>
         private DateTime? _tokenExpiration;
 
@@ -91,20 +90,16 @@ namespace NetDaemonApps.Helpers
         /// </summary>
         private const string ClientId = "esolar-monitor-admin";
 
-        /// <summary>
-        /// The sign params
-        /// </summary>
-        private const string SignParams = "appProjectName,clientDate,lang,timeStamp,random,clientId";
         #endregion
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Models.Battery.SaiPowerBatteryApi"/> class
+        /// Initializes a new instance of the <see cref="SAJPowerBatteryApi"/> class
         /// </summary>
         /// <param name="username">The username</param>
         /// <param name="password">The password</param>
         /// <param name="deviceSerialNumber">The device serial number</param>
         /// <param name="baseUrl">The base url</param>
-        public SaiPowerBatteryApi(string username, string password, string deviceSerialNumber, string baseUrl = "https://eop.saj-electric.com")
+        public SAJPowerBatteryApi(string username, string password, string deviceSerialNumber, string baseUrl = "https://eop.saj-electric.com")
         {
             _username = username;
             _password = password;
@@ -114,18 +109,67 @@ namespace NetDaemonApps.Helpers
         }
 
         /// <summary>
-        /// Ensures authentication: checks for a valid token, authenticates if needed.
+        /// Ensures authentication: checks for a valid SAJ-token, authenticates if needed.
         /// </summary>
-        /// <returns>The authentication token.</returns>
+        /// <returns>The authentication SAJ-token.</returns>
         public async Task<string> EnsureAuthenticatedAsync()
         {
-            if (IsTokenValid())
+            // Try to read token from file
+            if (ReadTokenFromFile())
             {
-                SetToken(_token);
-
-                return _token!;
+                if (IsTokenValid())
+                {
+                    SetToken(_token);
+                    return _token!;
+                }
             }
-            return await Authenticate();
+            var token = await Authenticate();
+            return token;
+        }
+
+        /// <summary>
+        /// Reads the token and expiration from the SAJ-token file.
+        /// </summary>
+        private bool ReadTokenFromFile()
+        {
+            var filePath = Path.Combine(Directory.GetCurrentDirectory(), "SAJ-token");
+            if (!File.Exists(filePath))
+            {
+                return false;
+            }
+            try
+            {
+                var json = File.ReadAllText(filePath);
+                using var doc = JsonDocument.Parse(json);
+                var root = doc.RootElement;
+                if (root.TryGetProperty("token", out var tokenElem) &&
+                    root.TryGetProperty("expiresIn", out var expiresElem))
+                {
+                    _token = tokenElem.GetString();
+                    var expiresIn = expiresElem.GetInt32();
+                    // Calculate expiration from file's last write time
+                    var fileTime = File.GetLastWriteTimeUtc(filePath);
+                    _tokenExpiration = fileTime.AddSeconds(expiresIn);
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log the error for diagnostics, but do not throw
+                Console.Error.WriteLine($"Error reading SAJ-token file: {ex.Message}");
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Writes the token and expiration to the SAJ-token file.
+        /// </summary>
+        private void WriteTokenToFile(string token, int expiresIn)
+        {
+            var filePath = Path.Combine(Directory.GetCurrentDirectory(), "SAJ-token");
+            var obj = new { token, expiresIn };
+            var json = JsonSerializer.Serialize(obj);
+            File.WriteAllText(filePath, json);
         }
 
         /// <summary>
@@ -274,7 +318,7 @@ namespace NetDaemonApps.Helpers
                 var doc = JsonDocument.Parse(json);
                 var root = doc.RootElement;
 
-                if (root.TryGetProperty("data", out var data) && data.TryGetProperty("token", out var tokenElem))
+                if (root.TryGetProperty("data", out var data) && data.TryGetProperty("SAJ-token", out var tokenElem))
                 {
                     var tokenHead = data.TryGetProperty("tokenHead", out var headElem) ? headElem.GetString() : "";
                     var tokenValue = tokenElem.GetString();
@@ -286,9 +330,11 @@ namespace NetDaemonApps.Helpers
                     }
 
                     _token = (tokenHead ?? "") + (tokenValue ?? "");
-                    _tokenExpiration = DateTime.UtcNow.AddSeconds(data.GetProperty("expiresIn").GetInt32());
+                    var expiresIn = data.GetProperty("expiresIn").GetInt32();
+                    _tokenExpiration = DateTime.UtcNow.AddSeconds(expiresIn);
 
                     SetToken(_token);
+                    WriteTokenToFile(_token!, expiresIn);
                 }
                 else
                 {
@@ -305,20 +351,20 @@ namespace NetDaemonApps.Helpers
         }
 
         /// <summary>
-        /// Sets the authorization token for subsequent requests.
+        /// Sets the authorization SAJ-token for subsequent requests.
         /// </summary>
-        /// <param name="token">The JWT token.</param>
+        /// <param name="token">The JWT SAJ-token.</param>
         private void SetToken(string? token)
         {
             if (string.IsNullOrEmpty(token)) return;
 
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
             _httpClient.DefaultRequestHeaders.Remove("Cookie");
-            _httpClient.DefaultRequestHeaders.Add("Cookie", $"token={token}");
+            _httpClient.DefaultRequestHeaders.Add("Cookie", $"SAJ-token={token}");
         }
 
         /// <summary>
-        /// Checks if the current token is valid (not expired).
+        /// Checks if the current SAJ-token is valid (not expired).
         /// </summary>
         /// <returns>True if valid, false otherwise.</returns>
         private bool IsTokenValid()

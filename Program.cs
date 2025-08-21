@@ -11,12 +11,12 @@ using NetDaemon.Extensions.Tts;
 using NetDaemon.Runtime;
 using System.Reflection;
 
-using NetDaemonApps.Helpers;
+using NetDaemonApps.Models.EnergyPrices;
 
 try
 {
     // Run self-tests for password hashing and signature generation
-    //SaiPowerBatteryApi.RunElekeeperSelfTests();
+    //SAJPowerBatteryApi.RunElekeeperSelfTests();
 
     // Create and configure the host builder
     await Host.CreateDefaultBuilder(args)

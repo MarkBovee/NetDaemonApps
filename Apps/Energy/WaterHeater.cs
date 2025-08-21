@@ -5,9 +5,10 @@ namespace NetDaemonApps.Apps.Energy
 
     using HomeAssistantGenerated;
 
+    using Models.EnergyPrices;
+
     using NetDaemon.Extensions.Scheduler;
 
-    using NetDaemonApps.Helpers;
     using NetDaemonApps.Models.Enums;
 
     /// <summary>

@@ -1,9 +1,9 @@
-﻿namespace NetDaemonApps.Helpers
+﻿namespace NetDaemonApps.Models.EnergyPrices
 {
     using System;
     using System.Collections.Generic;
 
-    using Models.Enums;
+    using NetDaemonApps.Models.Enums;
 
     public interface IPriceHelper
     {

@@ -2,8 +2,11 @@ namespace NetDaemonApps.Apps.Energy
 {
     using System.Diagnostics;
     using HomeAssistantGenerated;
+
+    using Models.EnergyPrices;
+
     using NetDaemon.Extensions.Scheduler;
-    using Helpers;
+
     using Models.Enums;
 
     /// <summary>

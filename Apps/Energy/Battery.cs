@@ -1,9 +1,15 @@
 namespace NetDaemonApps.Apps.Energy
 {
+    using System.Collections.Generic;
     using System.Diagnostics;
+    using System.Linq;
+
     using HomeAssistantGenerated;
+
+    using Models.Battery;
+    using Models.EnergyPrices;
+
     using NetDaemon.Extensions.Scheduler;
-    using Helpers;
 
     /// <summary>
     /// Adjust the energy appliances schedule based on the power prices
@@ -30,6 +36,11 @@ namespace NetDaemonApps.Apps.Energy
         /// The price helper
         /// </summary>
         private readonly IPriceHelper _priceHelper;
+
+        /// <summary>
+        /// The last applied schedule
+        /// </summary>
+        private DateTime? _lastAppliedSchedule;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Battery"/> class.
@@ -66,24 +77,111 @@ namespace NetDaemonApps.Apps.Energy
         /// </summary>
         private void SetBatterySchedule()
         {
-            // Create battery API client and authenticate
-            var battery = new SaiPowerBatteryApi("MBovee", "fnq@tce8CTQ5kcm4cuw", "HST2083J2446E06861");
+            // Check if we applied the schedule today
+            if (_lastAppliedSchedule != null && _lastAppliedSchedule.Value.Date == DateTime.Now.Date)
+            {
+                return;
+            }
 
-            // Set a single charge and discharge period as per requirements
-            var scheduleParameters = battery.BuildBatteryScheduleParameters(
-                chargeStart: "12:00",
-                chargeEnd: "15:00",
+            var pricesToday = _priceHelper.PricesToday;
+            if (pricesToday == null || pricesToday.Count < 3)
+            {
+                _logger.LogWarning("Not enough price data to set battery schedule.");
+                return;
+            }
+
+            // Get charge and discharge timeslots
+            var (chargeStart, chargeEnd) = GetLowestPriceTimeslot(pricesToday, 3);
+            var (dischargeStart, dischargeEnd) = GetHighestPriceTimeslot(pricesToday, 1);
+
+            // Create battery API client and authenticate
+            var saiPowerBatteryApi = new SAJPowerBatteryApi("MBovee", "fnq@tce8CTQ5kcm4cuw", "HST2083J2446E06861");
+
+            // Set charge/discharge periods using calculated times
+            var scheduleParameters = saiPowerBatteryApi.BuildBatteryScheduleParameters(
+                chargeStart: chargeStart.ToString("HH:mm"),
+                chargeEnd: chargeEnd.ToString("HH:mm"),
                 chargePower: 8000,
-                dischargeStart: "20:00",
-                dischargeEnd: "21:00",
+                dischargeStart: dischargeStart.ToString("HH:mm"),
+                dischargeEnd: dischargeEnd.ToString("HH:mm"),
                 dischargePower: 8000
             );
 
-            // This works, but is commented out to avoid actual API calls during debugging
-            // var scheduled = battery.SaveBatteryScheduleAsync(scheduleParameters).Result;
+            // Apply the schedule to the battery
+            var saved = saiPowerBatteryApi.SaveBatteryScheduleAsync(scheduleParameters).Result;
+            if (saved)
+            {
+                // Set the last applied schedule time to now
+                _lastAppliedSchedule = DateTime.Now;
 
-            // Output the schedule value for verification
-            Console.WriteLine($"Generated schedule: {scheduleParameters.Value}");
+                _logger.LogInformation("Battery schedule applied and saved.");
+            }
+            else
+            {
+                _logger.LogWarning("Failed to apply battery schedule.");
+            }
+        }
+
+        /// <summary>
+        /// Gets the lowest price timeslot using the specified prices
+        /// </summary>
+        /// <param name="prices">The prices</param>
+        /// <param name="windowHours">The window hours</param>
+        /// <returns>The date time start date time end</returns>
+        private static (DateTime Start, DateTime End) GetLowestPriceTimeslot(IDictionary<DateTime, double> prices, int windowHours = 3)
+        {
+            var sortedPrices = prices.OrderBy(p => p.Key).ToList();
+            var minSum = double.MaxValue;
+            var start = sortedPrices[0].Key;
+            var end = sortedPrices[windowHours - 1].Key;
+
+            for (var i = 0; i <= sortedPrices.Count - windowHours; i++)
+            {
+                var sum = 0d;
+                for (var j = 0; j < windowHours; j++)
+                {
+                    sum += sortedPrices[i + j].Value;
+                }
+
+                if (!(sum < minSum)) continue;
+
+                minSum = sum;
+                start = sortedPrices[i].Key;
+                end = sortedPrices[i + windowHours - 1].Key.AddMinutes(59);
+            }
+
+            return (start, end);
+        }
+
+        /// <summary>
+        /// Finds the timeslot with the highest total price over a specified window of hours.
+        /// </summary>
+        /// <param name="prices">Dictionary of prices by DateTime.</param>
+        /// <param name="windowHours">Number of consecutive hours in the window.</param>
+        /// <returns>Tuple with start and end DateTime of the highest price window.</returns>
+        private static (DateTime Start, DateTime End) GetHighestPriceTimeslot(IDictionary<DateTime, double> prices, int windowHours = 1)
+        {
+            var sortedPrices = prices.OrderBy(p => p.Key).ToList();
+            var maxSum = double.MinValue;
+            var start = sortedPrices[0].Key;
+            var end = sortedPrices[windowHours - 1].Key;
+
+            for (var i = 0; i <= sortedPrices.Count - windowHours; i++)
+            {
+                var sum = 0d;
+                for (var j = 0; j < windowHours; j++)
+                {
+                    sum += sortedPrices[i + j].Value;
+                }
+
+                if (!(sum > maxSum)) continue;
+
+                maxSum = sum;
+                start = sortedPrices[i].Key;
+                end = sortedPrices[i + windowHours - 1].Key.AddMinutes(59);
+            }
+
+            return (start, end);
         }
     }
 }

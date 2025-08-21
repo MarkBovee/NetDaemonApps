@@ -2,7 +2,7 @@
 // Utility methods for HomeAssistantGenerated
 // -----------------------------------------------------------------------------
 
-namespace NetDaemonApps.Helpers;
+namespace NetDaemonApps.Models;
 
 /// <summary>
 /// The utils class provides helper methods for value comparison.
