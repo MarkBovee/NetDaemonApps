@@ -9,6 +9,7 @@ namespace NetDaemonApps.Apps.Energy
 
     using NetDaemon.Extensions.Scheduler;
 
+    using NetDaemonApps.Models;
     using NetDaemonApps.Models.Enums;
 
     /// <summary>
@@ -69,6 +70,11 @@ namespace NetDaemonApps.Apps.Energy
 
             // Set the away mode based on entity state
             _awayMode = _entities.Switch.OurHomeAwayMode.State == "on";
+
+            // Load state from State file
+            _heaterOn = AppStateManager.GetState<bool>(nameof(WaterHeater), "HeaterOn");
+            _targetTemperature = AppStateManager.GetState<int>(nameof(WaterHeater), "TargetTemperature");
+            _waitCyclesWater = AppStateManager.GetState<int>(nameof(WaterHeater), "WaitCyclesWater");
 
             if (Debugger.IsAttached)
             {
@@ -207,6 +213,8 @@ namespace NetDaemonApps.Apps.Energy
 
                     _targetTemperature = programTemperature;
                     _heaterOn = true;
+                    AppStateManager.SetState(nameof(WaterHeater), "TargetTemperature", _targetTemperature);
+                    AppStateManager.SetState(nameof(WaterHeater), "HeaterOn", _heaterOn);
 
                     heatingWater.SetOperationMode("Manual");
                     heatingWater.SetTemperature(Convert.ToDouble(_targetTemperature));
@@ -219,6 +227,7 @@ namespace NetDaemonApps.Apps.Energy
                     if (_waitCyclesWater > 0)
                     {
                         _waitCyclesWater--;
+                        AppStateManager.SetState(nameof(WaterHeater), "WaitCyclesWater", _waitCyclesWater);
 
                         DisplayMessage(currentTemperature < _targetTemperature ? $"Heating to {_targetTemperature} [{_waitCyclesWater}]" : idleText);
                     }
@@ -228,6 +237,9 @@ namespace NetDaemonApps.Apps.Energy
                         _targetTemperature = heatingTemperature;
                         _waitCyclesWater = 10;
                         _heaterOn = false;
+                        AppStateManager.SetState(nameof(WaterHeater), "TargetTemperature", _targetTemperature);
+                        AppStateManager.SetState(nameof(WaterHeater), "WaitCyclesWater", _waitCyclesWater);
+                        AppStateManager.SetState(nameof(WaterHeater), "HeaterOn", _heaterOn);
 
                         if (currentTargetTemperature != _targetTemperature)
                         {
@@ -254,6 +266,9 @@ namespace NetDaemonApps.Apps.Energy
                 _targetTemperature = 0;
                 _waitCyclesWater = 0;
                 _heaterOn = false;
+                AppStateManager.SetState(nameof(WaterHeater), "TargetTemperature", _targetTemperature);
+                AppStateManager.SetState(nameof(WaterHeater), "WaitCyclesWater", _waitCyclesWater);
+                AppStateManager.SetState(nameof(WaterHeater), "HeaterOn", _heaterOn);
             }
         }
 

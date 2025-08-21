@@ -6,6 +6,7 @@ namespace NetDaemonApps.Apps.Energy
 
     using HomeAssistantGenerated;
 
+    using Models;
     using Models.Battery;
     using Models.EnergyPrices;
 
@@ -43,6 +44,11 @@ namespace NetDaemonApps.Apps.Energy
         private DateTime? _lastAppliedSchedule;
 
         /// <summary>
+        /// The sai power battery api
+        /// </summary>
+        private readonly SAJPowerBatteryApi _saiPowerBatteryApi;
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="Battery"/> class.
         /// </summary>
         /// <param name="ha">The ha</param>
@@ -60,6 +66,15 @@ namespace NetDaemonApps.Apps.Energy
             // Set the away mode based on entity state
             _awayMode = _entities.Switch.OurHomeAwayMode.State == "on";
 
+            // Set the SAJ Power Battery API with your credentials
+            _saiPowerBatteryApi = new SAJPowerBatteryApi("MBovee", "fnq@tce8CTQ5kcm4cuw", "HST2083J2446E06861");
+
+            // Check if the token is valid
+            _saiPowerBatteryApi.IsTokenValid(true);
+
+            // Load last applied schedule from the state file
+            _lastAppliedSchedule = AppStateManager.GetState<DateTime?>(nameof(Battery), "LastAppliedSchedule");
+
             if (Debugger.IsAttached)
             {
                 // Run once
@@ -67,8 +82,8 @@ namespace NetDaemonApps.Apps.Energy
             }
             else
             {
-                // Run every 5 minutes, disabled for now
-                // scheduler.RunEvery(TimeSpan.FromMinutes(5), SetBatterySchedule);
+                // Run every 5 minutes
+                scheduler.RunEvery(TimeSpan.FromMinutes(5), SetBatterySchedule);
             }
         }
 
@@ -94,11 +109,8 @@ namespace NetDaemonApps.Apps.Energy
             var (chargeStart, chargeEnd) = GetLowestPriceTimeslot(pricesToday, 3);
             var (dischargeStart, dischargeEnd) = GetHighestPriceTimeslot(pricesToday, 1);
 
-            // Create battery API client and authenticate
-            var saiPowerBatteryApi = new SAJPowerBatteryApi("MBovee", "fnq@tce8CTQ5kcm4cuw", "HST2083J2446E06861");
-
             // Set charge/discharge periods using calculated times
-            var scheduleParameters = saiPowerBatteryApi.BuildBatteryScheduleParameters(
+            var scheduleParameters = _saiPowerBatteryApi.BuildBatteryScheduleParameters(
                 chargeStart: chargeStart.ToString("HH:mm"),
                 chargeEnd: chargeEnd.ToString("HH:mm"),
                 chargePower: 8000,
@@ -108,11 +120,12 @@ namespace NetDaemonApps.Apps.Energy
             );
 
             // Apply the schedule to the battery
-            var saved = saiPowerBatteryApi.SaveBatteryScheduleAsync(scheduleParameters).Result;
+            var saved = _saiPowerBatteryApi.SaveBatteryScheduleAsync(scheduleParameters).Result;
             if (saved)
             {
                 // Set the last applied schedule time to now
                 _lastAppliedSchedule = DateTime.Now;
+                AppStateManager.SetState(nameof(Battery), "LastAppliedSchedule", _lastAppliedSchedule);
 
                 _logger.LogInformation("Battery schedule applied and saved.");
             }

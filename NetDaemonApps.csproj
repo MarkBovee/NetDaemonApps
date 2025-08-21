@@ -45,8 +45,12 @@
         
     <ItemGroup>
       <None Remove="SAJ-token" />
-      <Resource Include="SAJ-token">
+      <Content Include="SAJ-token">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </Resource>
+      </Content>
+      <None Remove="State" />
+      <Content Include="State">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
     </ItemGroup>
 </Project>

@@ -109,21 +109,41 @@ namespace NetDaemonApps.Models.Battery
         }
 
         /// <summary>
+        /// Checks if the current SAJ-token is valid (not expired).
+        /// </summary>
+        /// <returns>True if valid, false otherwise.</returns>
+        public bool IsTokenValid(bool printStatus = false)
+        {
+            var isValid = false;
+
+            if (ReadTokenFromFile())
+            {
+                isValid = !string.IsNullOrEmpty(_token) && _tokenExpiration.HasValue && _tokenExpiration > DateTime.UtcNow;
+            }
+
+            if (printStatus)
+            {
+                Console.WriteLine(isValid ? $"SAJ token is valid until {_tokenExpiration.Value.ToLocalTime()}" : "SAJ token is invalid or expired.");
+            }
+
+            return isValid;
+        }
+
+        /// <summary>
         /// Ensures authentication: checks for a valid SAJ-token, authenticates if needed.
         /// </summary>
         /// <returns>The authentication SAJ-token.</returns>
-        public async Task<string> EnsureAuthenticatedAsync()
+        private async Task<string> EnsureAuthenticatedAsync()
         {
             // Try to read token from file
-            if (ReadTokenFromFile())
+            if (IsTokenValid())
             {
-                if (IsTokenValid())
-                {
-                    SetToken(_token);
-                    return _token!;
-                }
+                SetToken(_token);
+                return _token!;
             }
+
             var token = await Authenticate();
+
             return token;
         }
 
@@ -133,6 +153,7 @@ namespace NetDaemonApps.Models.Battery
         private bool ReadTokenFromFile()
         {
             var filePath = Path.Combine(Directory.GetCurrentDirectory(), "SAJ-token");
+
             if (!File.Exists(filePath))
             {
                 return false;
@@ -158,6 +179,7 @@ namespace NetDaemonApps.Models.Battery
                 // Log the error for diagnostics, but do not throw
                 Console.Error.WriteLine($"Error reading SAJ-token file: {ex.Message}");
             }
+
             return false;
         }
 
@@ -351,7 +373,7 @@ namespace NetDaemonApps.Models.Battery
         }
 
         /// <summary>
-        /// Sets the authorization SAJ-token for subsequent requests.
+        /// Sets the authorization SAJ-token for further requests.
         /// </summary>
         /// <param name="token">The JWT SAJ-token.</param>
         private void SetToken(string? token)
@@ -361,15 +383,6 @@ namespace NetDaemonApps.Models.Battery
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
             _httpClient.DefaultRequestHeaders.Remove("Cookie");
             _httpClient.DefaultRequestHeaders.Add("Cookie", $"SAJ-token={token}");
-        }
-
-        /// <summary>
-        /// Checks if the current SAJ-token is valid (not expired).
-        /// </summary>
-        /// <returns>True if valid, false otherwise.</returns>
-        private bool IsTokenValid()
-        {
-            return !string.IsNullOrEmpty(_token) && _tokenExpiration.HasValue && _tokenExpiration > DateTime.UtcNow;
         }
 
         #region Helpers
