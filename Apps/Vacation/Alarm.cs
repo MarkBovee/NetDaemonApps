@@ -1,8 +1,8 @@
-namespace NetDaemonApps.Apps.VacationAlarm
+namespace NetDaemonApps.Apps.Vacation
 {
     using System.Diagnostics;
 
-    using AdjustEnergySchedule;
+    using Energy;
 
     using HomeAssistantGenerated;
 
@@ -12,7 +12,7 @@ namespace NetDaemonApps.Apps.VacationAlarm
     /// The vacation alarm class
     /// </summary>
     [NetDaemonApp]
-    public class VacationAlarm
+    public class Alarm
     {
         /// <summary>
         /// The ha
@@ -22,7 +22,7 @@ namespace NetDaemonApps.Apps.VacationAlarm
         /// <summary>
         /// The logger
         /// </summary>
-        private readonly ILogger<AdjustEnergySchedule> _logger;
+        private readonly ILogger<Appliances> _logger;
 
         /// <summary>
         /// The services
@@ -35,12 +35,12 @@ namespace NetDaemonApps.Apps.VacationAlarm
         private readonly Entities _entities;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="VacationAlarm"/> class
+        /// Initializes a new instance of the <see cref="Alarm"/> class
         /// </summary>
         /// <param name="ha">The ha</param>
         /// <param name="scheduler">The scheduler</param>
         /// <param name="logger">The logger</param>
-        public VacationAlarm(IHaContext ha, INetDaemonScheduler scheduler, ILogger<AdjustEnergySchedule> logger)
+        public Alarm(IHaContext ha, INetDaemonScheduler scheduler, ILogger<Appliances> logger)
         {
             _ha = ha;
             _logger = logger;
@@ -49,12 +49,12 @@ namespace NetDaemonApps.Apps.VacationAlarm
             _services = new Services(ha);
             _entities = new Entities(ha);
 
-            _logger.LogInformation("Started Vacation Alarm program");
+            _logger.LogInformation("Started alarm program");
 
             if (Debugger.IsAttached)
             {
                 // Run once
-                SetAlarm();
+                //SetAlarm();
             }
             else
             {

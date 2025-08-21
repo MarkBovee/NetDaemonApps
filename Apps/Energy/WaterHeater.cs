@@ -1,28 +1,25 @@
-namespace NetDaemonApps.Apps.AdjustEnergySchedule
+namespace NetDaemonApps.Apps.Energy
 {
-    using System.Collections.Generic;
     using System.Diagnostics;
     using System.Linq;
 
-    using Helpers;
-
     using HomeAssistantGenerated;
-
-    using Models.Enums;
 
     using NetDaemon.Extensions.Scheduler;
 
+    using NetDaemonApps.Helpers;
+    using NetDaemonApps.Models.Enums;
+
     /// <summary>
     /// Adjust the energy appliances schedule based on the power prices
-
     /// </summary>
     [NetDaemonApp]
-    public class AdjustEnergySchedule
+    public class WaterHeater
     {
         /// <summary>
         /// The logger
         /// </summary>
-        private readonly ILogger<AdjustEnergySchedule> _logger;
+        private readonly ILogger<WaterHeater> _logger;
 
         /// <summary>
         /// The entities
@@ -55,19 +52,19 @@ namespace NetDaemonApps.Apps.AdjustEnergySchedule
         private readonly IPriceHelper _priceHelper;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="AdjustEnergySchedule"/> class
+        /// Initializes a new instance of the <see cref="WaterHeater"/> class
         /// </summary>
         /// <param name="ha">The ha</param>
         /// <param name="scheduler">The scheduler</param>
         /// <param name="logger">The logger</param>
         /// <param name="priceHelper">The price helper</param>
-        public AdjustEnergySchedule(IHaContext ha, INetDaemonScheduler scheduler, ILogger<AdjustEnergySchedule> logger, IPriceHelper priceHelper)
+        public WaterHeater(IHaContext ha, INetDaemonScheduler scheduler, ILogger<WaterHeater> logger, IPriceHelper priceHelper)
         {
             _logger = logger;
             _entities = new Entities(ha);
             _priceHelper = priceHelper;
 
-            _logger.LogInformation("Started Energy Schedule Assistant program");
+            _logger.LogInformation("Started water heater energy program");
 
             // Set the away mode based on entity state
             _awayMode = _entities.Switch.OurHomeAwayMode.State == "on";
@@ -75,133 +72,12 @@ namespace NetDaemonApps.Apps.AdjustEnergySchedule
             if (Debugger.IsAttached)
             {
                 // Run once
-                RunEnergyPrograms();
+                //SetWaterTemperature();
             }
             else
             {
-                // Application started
                 // Run every 5 minutes
-                scheduler.RunEvery(TimeSpan.FromMinutes(5), RunEnergyPrograms);
-            }
-        }
-
-        /// <summary>
-        /// Runs the checks for prices, schedules, and appliance states.
-        /// </summary>
-        private void RunEnergyPrograms()
-        {
-            // Set the schedule for the battery charging and discharging
-            // SetBatterySchedule();
-
-            // Disable the dishwasher, the washing machine and the dryer if the price is too high
-            SetAppliancesSchedule();
-
-            // Set the heating schedule for the heat pump
-            SetWaterTemperature();
-
-            // Set the car charging schedule
-        }
-
-        /// <summary>
-        /// Sets the battery schedule using the external API.
-        /// </summary>
-        private void SetBatterySchedule()
-        {
-            // Create battery API client and authenticate
-            var battery = new SaiPowerBatteryApi("MBovee", "fnq@tce8CTQ5kcm4cuw", "HST2083J2446E06861");
-
-            //var token = battery.EnsureAuthenticatedAsync().Result;
-
-            // TODO: Add logic for scheduling battery operations
-
-            // Example schedule entries based on schedule.jpg
-            var scheduleEntries = new List<SaiPowerBatteryApi.ScheduleEntry>
-            {
-                new(1, "12:00", "14:30", 8000, [true, true, true, true, true, true, true]),
-                new(1, "09:00", "10:00", 5, [false, false, false, true, false, false, false]),
-                new(1, "20:00", "21:30", 8000, [true, true, true, true, true, true, true]),
-                new(1, "08:30", "09:00", 8000, [true, true, true, true, true, true, true])
-            };
-
-            // Build the schedule value string
-            var scheduleValue = battery.BuildBatteryScheduleParameters(scheduleEntries);
-
-            // Output the schedule value for verification
-            Console.WriteLine(scheduleValue);
-        }
-
-        /// <summary>
-        /// Sets the appliance schedule
-        /// </summary>
-        private void SetAppliancesSchedule()
-        {
-            // Get the entities for the appliances
-            var washingMachine = _entities.Switch.Wasmachine;
-            var washingMachineCurrentPower = _entities.Sensor.WasmachineHuidigGebruik;
-            var dryer = _entities.Switch.DrogerEnVriezer;
-            var dryerCurrentPower = _entities.Sensor.DrogerEnVriezerHuidigGebruik;
-            var dishwasher = _entities.Switch.Vaatwasser;
-            var dishwasherCurrentPower = _entities.Sensor.VaatwasserHuidigGebruik;
-            var garage = _entities.Switch.Garage;
-            var garageCurrentPower = _entities.Sensor.GarageHuidigGebruik;
-
-            // Check if the price is above the threshold or if the away mode is active
-            if (_awayMode || _priceHelper.EnergyPriceLevel > Level.Medium)
-            {
-                // Check if the washing machine is on and if no program is running
-                if (washingMachine?.State == "on" && washingMachineCurrentPower.State < 3)
-                {
-                    _logger.LogInformation("Washing machine disabled due to high power prices");
-                    washingMachine.TurnOff();
-                }
-
-                // Check if the dryer is on
-                if (dryer?.State == "on" && dryerCurrentPower.State < 3)
-                {
-                    _logger.LogInformation("Dryer disabled due to high power prices");
-                    dryer.TurnOff();
-                }
-
-                // Check if the dishwasher is on
-                if (dishwasher?.State == "on" && dishwasherCurrentPower.State < 3)
-                {
-                    _logger.LogInformation("Dishwasher disabled due to high power prices");
-                    dishwasher.TurnOff();
-                }
-
-                // Check if the garage power is on
-                if (garage?.State == "on" && garageCurrentPower.State < 3)
-                {
-                    _logger.LogInformation("Garage disabled due to high power prices");
-                    garage.TurnOff();
-                }
-            }
-            else
-            {
-                // Turn on the appliances if they are off
-                if (washingMachine?.State == "off")
-                {
-                    _logger.LogInformation("Washing machine enabled again");
-                    washingMachine.TurnOn();
-                }
-
-                if (dryer?.State == "off")
-                {
-                    _logger.LogInformation("Dryer enabled again");
-                    dryer.TurnOn();
-                }
-
-                if (dishwasher?.State == "off")
-                {
-                    _logger.LogInformation("Dishwasher enabled again");
-                    dishwasher.TurnOn();
-                }
-
-                if (garage?.State == "off")
-                {
-                    _logger.LogInformation("Garage enabled again");
-                    garage.TurnOn();
-                }
+                scheduler.RunEvery(TimeSpan.FromMinutes(5), SetWaterTemperature);
             }
         }
 

@@ -5,7 +5,6 @@
 namespace NetDaemonApps.Helpers
 {
     using System.Collections.Generic;
-    using System.IO;
     using System.Linq;
     using System.Net.Http;
     using System.Net.Http.Headers;
@@ -13,6 +12,8 @@ namespace NetDaemonApps.Helpers
     using System.Text;
     using System.Text.Json;
     using System.Threading.Tasks;
+
+    using Models.Battery;
 
     /// <summary>
     /// Provides methods to interact with the SAJ Power Battery API, including authentication and schedule management.
@@ -97,7 +98,7 @@ namespace NetDaemonApps.Helpers
         #endregion
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="SaiPowerBatteryApi"/> class
+        /// Initializes a new instance of the <see cref="Models.Battery.SaiPowerBatteryApi"/> class
         /// </summary>
         /// <param name="username">The username</param>
         /// <param name="password">The password</param>
@@ -120,108 +121,96 @@ namespace NetDaemonApps.Helpers
         {
             if (IsTokenValid())
             {
+                SetToken(_token);
+
                 return _token!;
             }
             return await Authenticate();
         }
 
         /// <summary>
-        /// Represents a battery charge/discharge schedule entry.
-        /// </summary>
-        public record ScheduleEntry(int Mode, string StartTime, string EndTime, int Power, bool[] Days);
-
-        /// <summary>
         /// Builds the complete BatteryScheduleParameters object for the battery charge/discharge schedule.
         /// </summary>
-        /// <param name="entries">A list of ScheduleEntry objects.</param>
+        /// <param name="chargeStart">Charge start time (HH:mm)</param>
+        /// <param name="chargeEnd">Charge end time (HH:mm)</param>
+        /// <param name="chargePower">Charge power (W)</param>
+        /// <param name="dischargeStart">Discharge start time (HH:mm)</param>
+        /// <param name="dischargeEnd">Discharge end time (HH:mm)</param>
+        /// <param name="dischargePower">Discharge power (W)</param>
         /// <returns>The complete BatteryScheduleParameters object.</returns>
-        public BatteryScheduleParameters BuildBatteryScheduleParameters(List<ScheduleEntry> entries)
+        public BatteryScheduleParameters BuildBatteryScheduleParameters(string chargeStart, string chargeEnd, int chargePower, string dischargeStart, string dischargeEnd, int dischargePower)
         {
-            // Calculate commAddress based on entries
-            var commAddress = string.Join("|", entries.Select((entry, index) => $"{3647 + index}"));
+            // All weekdays enabled
+            var weekdays = "1,1,1,1,1,1,1";
 
-            // Calculate componentId based on entries
-            var componentId = string.Join("|", entries.Select(_ => "30"));
+            // Value string: mode|chargeStart|chargeEnd|chargePower_weekdays|dischargeStart|dischargeEnd|dischargePower_weekdays
+            var value = $"1|{chargeStart}|{chargeEnd}|{chargePower}_{weekdays}|{dischargeStart}|{dischargeEnd}|{dischargePower}_{weekdays}";
 
-            // Calculate transferId based on entries
-            var transferId = string.Join("|", entries.Select(_ => "5"));
+            // HAR pattern for 2 entries
+            var commAddress = "3647|3606|3607|3608_3608|361B|361C|361D_361D";
+            var componentId = "|30|30|30_30|30|30|30_30";
+            var transferId = "|5|5|2_1|5|5|2_1";
 
-            // Format the schedule value string
-            var parts = new List<string>();
-            foreach (var entry in entries)
-            {
-                if (entry.Days.Length != 7)
-                    throw new ArgumentException("Days array must have 7 elements (Mon-Sun)");
-                var daysStr = string.Join(",", entry.Days.Select(d => d ? "1" : "0"));
-                parts.Add($"{entry.Mode}|{entry.StartTime}|{entry.EndTime}|{entry.Power}_{daysStr}");
-            }
-            var scheduleValue = string.Join("|", parts);
-
-            // Create and return the BatteryScheduleParameters object
             return new BatteryScheduleParameters
             {
                 CommAddress = commAddress,
                 ComponentId = componentId,
                 TransferId = transferId,
-                Value = scheduleValue
+                Value = value
             };
-        }
-
-        /// <summary>
-        /// Represents the dynamic parameters for saving the battery schedule.
-        /// </summary>
-        public class BatteryScheduleParameters
-        {
-            public string CommAddress { get; set; }
-            public string ComponentId { get; set; }
-            public string TransferId { get; set; }
-            public string Value { get; set; }
         }
 
         /// <summary>
         /// Saves the battery charge/discharge schedule to the remote API, using dynamic parameters.
         /// </summary>
-        /// <param name="scheduleValue">Schedule value string (formatted as required by API).</param>
-        /// <param name="parameters">Dynamic parameters for the schedule.</param>
+        /// <param name="batterySchedule">Dynamic parameters for the schedule.</param>
         /// <returns>True if successful, false otherwise.</returns>
-        public async Task<bool> SaveBatteryScheduleAsync(string scheduleValue, BatteryScheduleParameters parameters)
+        public async Task<bool> SaveBatteryScheduleAsync(BatteryScheduleParameters batterySchedule)
         {
             await EnsureAuthenticatedAsync();
 
-            // Prepare schedule save request
-            var url = $"{_baseUrl}/dev-api/api/v1/remote/client/saveCommonParaRemoteSetting";
-            var clientDate = DateTime.UtcNow.ToString("yyyy-MM-dd");
-            var timeStamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString();
-            var random = Guid.NewGuid().ToString("N");
-
-            // Prepare parameters for signing
-            var signParamsDict = new Dictionary<string, string>
+            try
             {
-                { "appProjectName", DefaultAppProjectName },
-                { "clientDate", clientDate },
-                { "lang", DefaultLang },
-                { "timeStamp", timeStamp },
-                { "random", random },
-                { "clientId", ClientId }
-            };
-            var signedParams = CalcSignatureElekeeper(signParamsDict);
+                // Prepare schedule save request
+                var url = $"{_baseUrl}/dev-api/api/v1/remote/client/saveCommonParaRemoteSetting";
+                var clientDate = DateTime.UtcNow.ToString("yyyy-MM-dd");
+                var timeStamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString();
+                var random = Guid.NewGuid().ToString("N");
 
-            // Add schedule-specific parameters
-            signedParams["deviceSn"] = _deviceSerialNumber;
-            signedParams["isParallelBatchSetting"] = DefaultIsParallelBatchSetting.ToString();
-            signedParams["commAddress"] = parameters.CommAddress;
-            signedParams["componentId"] = parameters.ComponentId;
-            signedParams["operType"] = DefaultOperType.ToString();
-            signedParams["transferId"] = parameters.TransferId;
-            signedParams["value"] = scheduleValue;
+                // Prepare parameters for signing
+                var signParamsDict = new Dictionary<string, string>
+                {
+                    { "appProjectName", DefaultAppProjectName },
+                    { "clientDate", clientDate },
+                    { "lang", DefaultLang },
+                    { "timeStamp", timeStamp },
+                    { "random", random },
+                    { "clientId", ClientId }
+                };
+                var signedParams = CalcSignatureElekeeper(signParamsDict);
 
-            var content = new FormUrlEncodedContent(signedParams);
-            var response = await _httpClient.PostAsync(url, content);
-            var json = await response.Content.ReadAsStringAsync();
-            var doc = JsonDocument.Parse(json);
-            var errCode = doc.RootElement.GetProperty("errCode").GetInt32();
+                // Add schedule-specific parameters
+                signedParams["deviceSn"] = _deviceSerialNumber;
+                signedParams["isParallelBatchSetting"] = DefaultIsParallelBatchSetting.ToString();
+                signedParams["commAddress"] = batterySchedule.CommAddress;
+                signedParams["componentId"] = batterySchedule.ComponentId;
+                signedParams["operType"] = DefaultOperType.ToString();
+                signedParams["transferId"] = batterySchedule.TransferId;
+                signedParams["value"] = batterySchedule.Value;
 
-            return errCode == 0;
+                var content = new FormUrlEncodedContent(signedParams);
+                var response = await _httpClient.PostAsync(url, content);
+                var json = await response.Content.ReadAsStringAsync();
+                var doc = JsonDocument.Parse(json);
+                var errCode = doc.RootElement.GetProperty("errCode").GetInt32();
+
+                return errCode == 0;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                throw;
+            }
         }
 
         /// <summary>
@@ -287,7 +276,16 @@ namespace NetDaemonApps.Helpers
 
                 if (root.TryGetProperty("data", out var data) && data.TryGetProperty("token", out var tokenElem))
                 {
-                    _token = (data.TryGetProperty("tokenHead", out var headElem) ? headElem.GetString() : "") + tokenElem.GetString();
+                    var tokenHead = data.TryGetProperty("tokenHead", out var headElem) ? headElem.GetString() : "";
+                    var tokenValue = tokenElem.GetString();
+
+                    // Remove Bearer prefix if present
+                    if (!string.IsNullOrEmpty(tokenHead) && tokenHead.Trim().StartsWith("bearer", StringComparison.CurrentCultureIgnoreCase))
+                    {
+                        tokenHead = "";
+                    }
+
+                    _token = (tokenHead ?? "") + (tokenValue ?? "");
                     _tokenExpiration = DateTime.UtcNow.AddSeconds(data.GetProperty("expiresIn").GetInt32());
 
                     SetToken(_token);
