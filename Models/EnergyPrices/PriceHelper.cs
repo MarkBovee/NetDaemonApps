@@ -40,8 +40,14 @@ public class PriceHelper : IPriceHelper
         _entities = new Entities(ha);
         _logger = logger;
 
-        // Get the prices for today and tomorrow
-        GetPrices();
+        // Try to load prices from state file first
+        LoadPricesFromStateFile();
+
+        // If not loaded or outdated, fetch new prices
+        if (PricesToday == null || PricesTomorrow == null || PricesToday.Count == 0 || PricesTomorrow.Count == 0 || PricesToday.First().Key.DayOfWeek != DateTime.Today.DayOfWeek)
+        {
+            GetPrices();
+        }
 
         // Set the price threshold and current price
         PriceThreshold = GetPriceThreshold();
@@ -139,6 +145,30 @@ public class PriceHelper : IPriceHelper
     }
 
     /// <summary>
+    /// Loads prices from the state file if available and up-to-date.
+    /// </summary>
+    private void LoadPricesFromStateFile()
+    {
+        var todayKey = $"PricesToday_{DateTime.Today:yyyyMMdd}";
+        var tomorrowKey = $"PricesTomorrow_{DateTime.Today:yyyyMMdd}";
+        PricesToday = AppStateManager.GetState<IDictionary<DateTime, double>>(nameof(PriceHelper), todayKey);
+        PricesTomorrow = AppStateManager.GetState<IDictionary<DateTime, double>>(nameof(PriceHelper), tomorrowKey);
+    }
+
+    /// <summary>
+    /// Saves prices to the state file.
+    /// </summary>
+    private void SavePricesToStateFile()
+    {
+        var todayKey = $"PricesToday_{DateTime.Today:yyyyMMdd}";
+        var tomorrowKey = $"PricesTomorrow_{DateTime.Today:yyyyMMdd}";
+        if (PricesToday != null)
+            AppStateManager.SetState(nameof(PriceHelper), todayKey, PricesToday);
+        if (PricesTomorrow != null)
+            AppStateManager.SetState(nameof(PriceHelper), tomorrowKey, PricesTomorrow);
+    }
+
+    /// <summary>
     /// Gets the prices
     /// </summary>
     private void GetPrices()
@@ -206,6 +236,8 @@ public class PriceHelper : IPriceHelper
                 }
             }
         }
+
+        SavePricesToStateFile();
     }
 
     /// <summary>
@@ -301,6 +333,7 @@ public class PriceHelper : IPriceHelper
 
         PricesToday = pricesToday;
         PricesTomorrow = pricesTomorrow;
+        SavePricesToStateFile();
     }
 
     /// <summary>
