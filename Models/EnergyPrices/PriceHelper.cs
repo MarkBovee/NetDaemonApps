@@ -89,9 +89,9 @@ public class PriceHelper : IPriceHelper
     /// <returns>The price threshold as double.</returns>
     private double GetPriceThreshold()
     {
-        if (_entities.Sensor.EpexInc.Attributes == null) return 0;
+        if (_entities.Sensor.Epex.Attributes == null) return 0;
 
-        var avgPrice = _entities.Sensor.EpexInc.Attributes.Average;
+        var avgPrice = _entities.Sensor.AveragePrice.State;
         double priceThreshold;
         const double fallbackPrice = 0.26;
 
@@ -150,7 +150,7 @@ public class PriceHelper : IPriceHelper
         }
 
         // Read power prices for today
-        var powerPrices = _entities.Sensor.EpexInc;
+        var powerPrices = _entities.Sensor.Epex;
         var jsonAttributes = powerPrices.EntityState?.AttributesJson;
         if (jsonAttributes == null)
         {
@@ -195,17 +195,33 @@ public class PriceHelper : IPriceHelper
 
                 foreach (var price in averageElectricityPrice.PricesToday)
                 {
-                    PricesToday[price.GetTimeValue()] = price.Price;
+                    PricesToday[price.GetTimeValue()] = GetAllInclusivePrice(price.Price);
                 }
 
                 PricesTomorrow = new Dictionary<DateTime, double>();
 
                 foreach (var price in averageElectricityPrice.PricesTomorrow)
                 {
-                    PricesTomorrow[price.GetTimeValue()] = price.Price;
+                    PricesTomorrow[price.GetTimeValue()] = GetAllInclusivePrice(price.Price);
                 }
             }
         }
+    }
+
+    /// <summary>
+    /// Gets the all-inclusive price using the specified raw price
+    /// </summary>
+    /// <param name="rawPrice">The raw price</param>
+    /// <returns>The double</returns>
+    private static double GetAllInclusivePrice(double rawPrice)
+    {
+        const double surcharge = 0.0248;
+        const double tax = 0.1228;
+        const double vat = 1.21;
+
+        var result = (rawPrice + surcharge + tax) * vat;
+
+        return Math.Round(result, 4);
     }
 
     /// <summary>
