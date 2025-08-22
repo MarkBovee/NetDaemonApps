@@ -51,20 +51,6 @@ public class PriceHelper : IPriceHelper
 
         // And update the prices every hour
         scheduler.RunEvery(TimeSpan.FromHours(1), GetPrices);
-
-        // Set the price threshold and current price
-        PriceThreshold = GetPriceThreshold();
-        CurrentPrice = GetCurrentPrice();
-
-        // Set the energy price level based on the current price
-        EnergyPriceLevel = CurrentPrice switch
-        {
-            < 0 => Level.None,
-            < 0.1 => Level.Low,
-            < 0.35 => CurrentPrice < PriceThreshold ? Level.Medium : Level.High,
-            < 0.45 => Level.High,
-            _ => Level.Maximum
-        };
     }
 
     /// <summary>
@@ -80,17 +66,24 @@ public class PriceHelper : IPriceHelper
     /// <summary>
     /// Set the threshold for the price, above this value the appliances will be disabled
     /// </summary>
-    public double PriceThreshold { get; private set; }
+    public double PriceThreshold { get => GetPriceThreshold(); }
 
     /// <summary>
     /// The current price
     /// </summary>
-    public double? CurrentPrice { get; private set; }
+    public double? CurrentPrice { get => GetCurrentPrice(); }
 
     /// <summary>
     /// The energy price level, none is price of 0, highest is sky high
     /// </summary>
-    public Level EnergyPriceLevel { get; private set; }
+    public Level EnergyPriceLevel { get => CurrentPrice switch
+    {
+        < 0 => Level.None,
+        < 0.1 => Level.Low,
+        < 0.35 => CurrentPrice < PriceThreshold ? Level.Medium : Level.High,
+        < 0.45 => Level.High,
+        _ => Level.Maximum
+    }; }
 
     /// <summary>
     /// The last time prices were updated
@@ -128,6 +121,7 @@ public class PriceHelper : IPriceHelper
             // Use fallback price if average is not available
             priceThreshold = fallbackPrice;
         }
+
         return priceThreshold;
     }
 
