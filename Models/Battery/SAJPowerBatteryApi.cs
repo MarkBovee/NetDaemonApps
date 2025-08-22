@@ -269,7 +269,11 @@ namespace NetDaemonApps.Models.Battery
                 var doc = JsonDocument.Parse(json);
                 var errCode = doc.RootElement.GetProperty("errCode").GetInt32();
 
-                return errCode == 0;
+                var success = errCode == 0;
+
+                Console.WriteLine(success ? "Battery schedule cleared successfully." : $"Failed to clear battery schedule. Error code: {errCode}, Message: {doc.RootElement.GetProperty("errMsg").GetString()}");
+
+                return success;
             }
             catch (Exception e)
             {
@@ -322,7 +326,11 @@ namespace NetDaemonApps.Models.Battery
                 var doc = JsonDocument.Parse(json);
                 var errCode = doc.RootElement.GetProperty("errCode").GetInt32();
 
-                return errCode == 0;
+                var success = errCode == 0;
+
+                Console.WriteLine(success ? "Battery schedule saved successfully." : $"Failed to save battery schedule. Error code: {errCode}, Message: {doc.RootElement.GetProperty("errMsg").GetString()}");
+
+                return success;
             }
             catch (Exception e)
             {
