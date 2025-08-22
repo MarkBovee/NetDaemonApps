@@ -13,6 +13,8 @@ using HtmlAgilityPack;
 
 using Enums;
 
+using NetDaemon.Extensions.Scheduler;
+
 /// <summary>
 /// The price helper class
 /// </summary>
@@ -35,19 +37,20 @@ public class PriceHelper : IPriceHelper
     /// </summary>
     /// <param name="ha">The ha</param>
     /// <param name="logger">The logger</param>
-    public PriceHelper(IHaContext ha, ILogger<PriceHelper> logger)
+    /// <param name="scheduler">The scheduler</param>
+    public PriceHelper(IHaContext ha, ILogger<PriceHelper> logger, INetDaemonScheduler scheduler)
     {
         _entities = new Entities(ha);
         _logger = logger;
 
-        // Try to load prices from state file first
+        // Try to load prices and timestamp from state file first
         LoadPricesFromStateFile();
 
-        // If not loaded or outdated, fetch new prices
-        if (PricesToday == null || PricesTomorrow == null || PricesToday.Count == 0 || PricesTomorrow.Count == 0 || PricesToday.First().Key.DayOfWeek != DateTime.Today.DayOfWeek)
-        {
-            GetPrices();
-        }
+        // If prices are not loaded or are outdated, fetch new prices
+        GetPrices();
+
+        // And update the prices every hour
+        scheduler.RunEvery(TimeSpan.FromHours(1), GetPrices);
 
         // Set the price threshold and current price
         PriceThreshold = GetPriceThreshold();
@@ -90,6 +93,11 @@ public class PriceHelper : IPriceHelper
     public Level EnergyPriceLevel { get; private set; }
 
     /// <summary>
+    /// The last time prices were updated
+    /// </summary>
+    public DateTime? LastPricesUpdate { get; private set; }
+
+    /// <summary>
     /// Gets the price threshold from the Nordpool sensor.
     /// </summary>
     /// <returns>The price threshold as double.</returns>
@@ -124,24 +132,20 @@ public class PriceHelper : IPriceHelper
     }
 
     /// <summary>
-    /// Gets the current price
+    /// Gets the current price.
     /// </summary>
-    /// <returns>The current price</returns>
+    /// <returns>The current price for the current hour, or null if unavailable.</returns>
     private double? GetCurrentPrice()
     {
-        // Check if the prices are available
         if (PricesToday == null)
         {
             return null;
         }
 
-        // Get the current timestamp
         var timeStamp = DateTime.Now;
+        var currentPrice = PricesToday.FirstOrDefault(p => p.Key.Hour == timeStamp.Hour).Value;
 
-        // Get the current price
-        var currentPrice = Math.Round(PricesToday.FirstOrDefault(p => p.Key.Hour == timeStamp.Hour).Value, 2);
-
-        return currentPrice;
+        return Math.Round(currentPrice, 2);
     }
 
     /// <summary>
@@ -151,10 +155,13 @@ public class PriceHelper : IPriceHelper
     {
         var todayKey = $"PricesToday_{DateTime.Today:yyyyMMdd}";
         var tomorrowKey = $"PricesTomorrow_{DateTime.Today:yyyyMMdd}";
+        var timestampKey = $"LastPricesUpdate";
         var pricesTodayRaw = AppStateManager.GetState<IDictionary<string, double>>(nameof(PriceHelper), todayKey);
         var pricesTomorrowRaw = AppStateManager.GetState<IDictionary<string, double>>(nameof(PriceHelper), tomorrowKey);
+        var lastUpdateRaw = AppStateManager.GetState<DateTime?>(nameof(PriceHelper), timestampKey);
         PricesToday = pricesTodayRaw?.ToDictionary(kvp => DateTime.Parse(kvp.Key), kvp => kvp.Value) ?? new Dictionary<DateTime, double>();
         PricesTomorrow = pricesTomorrowRaw?.ToDictionary(kvp => DateTime.Parse(kvp.Key), kvp => kvp.Value) ?? new Dictionary<DateTime, double>();
+        LastPricesUpdate = lastUpdateRaw;
     }
 
     /// <summary>
@@ -164,10 +171,13 @@ public class PriceHelper : IPriceHelper
     {
         var todayKey = $"PricesToday_{DateTime.Today:yyyyMMdd}";
         var tomorrowKey = $"PricesTomorrow_{DateTime.Today:yyyyMMdd}";
+        var timestampKey = $"LastPricesUpdate";
         if (PricesToday != null)
             AppStateManager.SetState(nameof(PriceHelper), todayKey, PricesToday);
         if (PricesTomorrow != null)
             AppStateManager.SetState(nameof(PriceHelper), tomorrowKey, PricesTomorrow);
+        if (LastPricesUpdate != null)
+            AppStateManager.SetState(nameof(PriceHelper), timestampKey, LastPricesUpdate);
     }
 
     /// <summary>
@@ -175,11 +185,8 @@ public class PriceHelper : IPriceHelper
     /// </summary>
     private void GetPrices()
     {
-        // Check if the prices are already loaded
-        if (PricesToday != null && PricesToday.First().Key.DayOfWeek == DateTime.Today.DayOfWeek)
-        {
-            return;
-        }
+        // Check if we already have prices for today and if they are up-to-date
+        if (LastPricesUpdate != null && LastPricesUpdate.Value.Hour == DateTime.Now.Hour) return;
 
         // Read power prices for today
         var powerPrices = _entities.Sensor.Epex;
@@ -201,11 +208,11 @@ public class PriceHelper : IPriceHelper
         }
         else
         {
-            AverageElectricityPrice? averageElectricityPrice = null;
+            ElectricityPriceInfo? electricityPriceInfo = null;
 
             try
             {
-                averageElectricityPrice = JsonSerializer.Deserialize<AverageElectricityPrice>(json);
+                electricityPriceInfo = JsonSerializer.Deserialize<ElectricityPriceInfo>(json);
             }
             catch (Exception ex)
             {
@@ -213,7 +220,7 @@ public class PriceHelper : IPriceHelper
             }
 
             // Check if the price data is correct
-            if (averageElectricityPrice == null || averageElectricityPrice.PricesToday.First().GetTimeValue().Date < DateTime.Today.Date)
+            if (electricityPriceInfo == null || electricityPriceInfo.PricesToday.First().GetTimeValue().Date < DateTime.Today.Date)
             {
                 // Use the fallback data source
                 _logger.LogWarning("Power prices sensor has no new data, using the fallback data source");
@@ -225,20 +232,22 @@ public class PriceHelper : IPriceHelper
                 // Set the prices for today and tomorrow
                 PricesToday = new Dictionary<DateTime, double>();
 
-                foreach (var price in averageElectricityPrice.PricesToday)
+                foreach (var price in electricityPriceInfo.PricesToday)
                 {
                     PricesToday[price.GetTimeValue()] = GetAllInclusivePrice(price.Price);
                 }
 
                 PricesTomorrow = new Dictionary<DateTime, double>();
 
-                foreach (var price in averageElectricityPrice.PricesTomorrow)
+                foreach (var price in electricityPriceInfo.PricesTomorrow)
                 {
                     PricesTomorrow[price.GetTimeValue()] = GetAllInclusivePrice(price.Price);
                 }
             }
         }
 
+        // At the end of successful price fetch (after setting PricesToday/PricesTomorrow):
+        LastPricesUpdate = DateTime.Now;
         SavePricesToStateFile();
     }
 
@@ -253,7 +262,7 @@ public class PriceHelper : IPriceHelper
         const double tax = 0.1228;
         const double vat = 1.21;
 
-        var result = (rawPrice + surcharge + tax) * vat;
+        var result = rawPrice * vat + surcharge + tax;
 
         return Math.Round(result, 4);
     }

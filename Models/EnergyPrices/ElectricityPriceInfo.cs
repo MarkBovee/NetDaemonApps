@@ -10,7 +10,7 @@ namespace NetDaemonApps.Models.EnergyPrices
     /// <summary>
     /// The average electricity price class holds price lists for today and tomorrow.
     /// </summary>
-    public class AverageElectricityPrice
+    public class ElectricityPriceInfo
     {
         /// <summary>
         /// Gets or sets the value of the prices today.

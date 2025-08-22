@@ -108,7 +108,24 @@ namespace NetDaemonApps.Models
                     {
                         return elem.Deserialize<T>();
                     }
-                    return (T?)Convert.ChangeType(value, typeof(T));
+                    if (value is T tValue)
+                    {
+                        return tValue;
+                    }
+                    if (value is IConvertible)
+                    {
+                        return (T?)Convert.ChangeType(value, typeof(T));
+                    }
+                    try
+                    {
+                        // For complex types, serialize and deserialize
+                        var json = JsonSerializer.Serialize(value);
+                        return JsonSerializer.Deserialize<T>(json);
+                    }
+                    catch
+                    {
+                        return default;
+                    }
                 }
                 return default;
             }

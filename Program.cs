@@ -35,8 +35,9 @@ try
 
         .AddScoped<IPriceHelper, PriceHelper>(sp =>
                 new PriceHelper(
-                    sp.GetRequiredService<IHaContext>(),
-                    sp.GetRequiredService<ILogger<PriceHelper>>()
+                    ha: sp.GetRequiredService<IHaContext>(),
+                    logger: sp.GetRequiredService<ILogger<PriceHelper>>(),
+                    scheduler: sp.GetRequiredService<INetDaemonScheduler>()
                 )
             )
         )
