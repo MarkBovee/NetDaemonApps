@@ -163,14 +163,17 @@ namespace NetDaemonApps.Models.Battery
                 var json = File.ReadAllText(filePath);
                 using var doc = JsonDocument.Parse(json);
                 var root = doc.RootElement;
-                if (root.TryGetProperty("token", out var tokenElem) &&
-                    root.TryGetProperty("expiresIn", out var expiresElem))
+
+                if (root.TryGetProperty("token", out var tokenElem) && root.TryGetProperty("expiresIn", out var expiresElem))
                 {
                     _token = tokenElem.GetString();
                     var expiresIn = expiresElem.GetInt32();
+
                     // Calculate expiration from file's last write time
                     var fileTime = File.GetLastWriteTimeUtc(filePath);
+
                     _tokenExpiration = fileTime.AddSeconds(expiresIn);
+
                     return true;
                 }
             }
@@ -186,12 +189,15 @@ namespace NetDaemonApps.Models.Battery
         /// <summary>
         /// Writes the token and expiration to the SAJ-token file.
         /// </summary>
-        private void WriteTokenToFile(string token, int expiresIn)
+        private static void WriteTokenToFile(string token, int expiresIn)
         {
             var filePath = Path.Combine(Directory.GetCurrentDirectory(), "SAJ-token");
             var obj = new { token, expiresIn };
             var json = JsonSerializer.Serialize(obj);
+
             File.WriteAllText(filePath, json);
+
+            Console.WriteLine("New SAJ-token saved successfully.");
         }
 
         /// <summary>
@@ -204,7 +210,7 @@ namespace NetDaemonApps.Models.Battery
         /// <param name="dischargeEnd">Discharge end time (HH:mm)</param>
         /// <param name="dischargePower">Discharge power (W)</param>
         /// <returns>The complete BatteryScheduleParameters object.</returns>
-        public BatteryScheduleParameters BuildBatteryScheduleParameters(string chargeStart, string chargeEnd, int chargePower, string dischargeStart, string dischargeEnd, int dischargePower)
+        public static BatteryScheduleParameters BuildBatteryScheduleParameters(string chargeStart, string chargeEnd, int chargePower, string dischargeStart, string dischargeEnd, int dischargePower)
         {
             // All weekdays enabled
             var weekdays = "1,1,1,1,1,1,1";
@@ -386,7 +392,7 @@ namespace NetDaemonApps.Models.Battery
                 var doc = JsonDocument.Parse(json);
                 var root = doc.RootElement;
 
-                if (root.TryGetProperty("data", out var data) && data.TryGetProperty("SAJ-token", out var tokenElem))
+                if (root.TryGetProperty("data", out var data) && data.TryGetProperty("token", out var tokenElem))
                 {
                     var tokenHead = data.TryGetProperty("tokenHead", out var headElem) ? headElem.GetString() : "";
                     var tokenValue = tokenElem.GetString();

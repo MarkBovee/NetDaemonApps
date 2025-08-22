@@ -78,7 +78,7 @@ namespace NetDaemonApps.Apps.Energy
             else
             {
                 // Run every 5 minutes
-                scheduler.RunEvery(TimeSpan.FromMinutes(5), SetBatterySchedule);
+                scheduler.RunEvery(TimeSpan.FromMinutes(15), SetBatterySchedule);
             }
         }
 
@@ -105,7 +105,7 @@ namespace NetDaemonApps.Apps.Energy
             var (dischargeStart, dischargeEnd) = PriceHelper.GetHighestPriceTimeslot(pricesToday, 1);
 
             // Set charge/discharge periods using calculated times
-            var scheduleParameters = _saiPowerBatteryApi.BuildBatteryScheduleParameters(
+            var scheduleParameters = SAJPowerBatteryApi.BuildBatteryScheduleParameters(
                 chargeStart: chargeStart.ToString("HH:mm"),
                 chargeEnd: chargeEnd.ToString("HH:mm"),
                 chargePower: 8000,

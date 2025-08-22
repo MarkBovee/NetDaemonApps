@@ -12,7 +12,7 @@ namespace NetDaemonApps.Models
         /// <summary>
         /// The base directory
         /// </summary>
-        private static readonly string StateFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "State");
+        private static readonly string StateFilePath = Path.Combine(Directory.GetCurrentDirectory(), "State");
 
         /// <summary>
         /// The state cache

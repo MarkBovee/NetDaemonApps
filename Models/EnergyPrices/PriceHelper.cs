@@ -58,8 +58,8 @@ public class PriceHelper : IPriceHelper
         {
             < 0 => Level.None,
             < 0.1 => Level.Low,
-            < 0.3 => CurrentPrice < PriceThreshold ? Level.Medium : Level.High,
-            < 0.4 => Level.High,
+            < 0.35 => CurrentPrice < PriceThreshold ? Level.Medium : Level.High,
+            < 0.45 => Level.High,
             _ => Level.Maximum
         };
     }
@@ -99,7 +99,7 @@ public class PriceHelper : IPriceHelper
 
         var avgPrice = _entities.Sensor.AveragePrice.State;
         double priceThreshold;
-        const double fallbackPrice = 0.26;
+        const double fallbackPrice = 0.27;
 
         if (avgPrice != null)
         {
@@ -151,8 +151,10 @@ public class PriceHelper : IPriceHelper
     {
         var todayKey = $"PricesToday_{DateTime.Today:yyyyMMdd}";
         var tomorrowKey = $"PricesTomorrow_{DateTime.Today:yyyyMMdd}";
-        PricesToday = AppStateManager.GetState<IDictionary<DateTime, double>>(nameof(PriceHelper), todayKey);
-        PricesTomorrow = AppStateManager.GetState<IDictionary<DateTime, double>>(nameof(PriceHelper), tomorrowKey);
+        var pricesTodayRaw = AppStateManager.GetState<IDictionary<string, double>>(nameof(PriceHelper), todayKey);
+        var pricesTomorrowRaw = AppStateManager.GetState<IDictionary<string, double>>(nameof(PriceHelper), tomorrowKey);
+        PricesToday = pricesTodayRaw?.ToDictionary(kvp => DateTime.Parse(kvp.Key), kvp => kvp.Value) ?? new Dictionary<DateTime, double>();
+        PricesTomorrow = pricesTomorrowRaw?.ToDictionary(kvp => DateTime.Parse(kvp.Key), kvp => kvp.Value) ?? new Dictionary<DateTime, double>();
     }
 
     /// <summary>

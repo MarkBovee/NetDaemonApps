@@ -56,12 +56,12 @@ namespace NetDaemonApps.Apps.Energy
             if (Debugger.IsAttached)
             {
                 // Run once
-                //SetAppliancesSchedule();
+                SetAppliancesSchedule();
             }
             else
             {
                 // Run every 5 minutes
-                scheduler.RunEvery(TimeSpan.FromMinutes(5), SetAppliancesSchedule);
+                scheduler.RunEvery(TimeSpan.FromMinutes(1), SetAppliancesSchedule);
             }
         }
 
