@@ -948,22 +948,22 @@
         },
         {
           "id": "binary_sensor.q7_max_dweil_bevestigd",
-          "friendlyName": "Dweil bevestigd",
+          "friendlyName": "Q7 Max Dweil bevestigd",
           "cSharpName": "Q7MaxDweilBevestigd"
         },
         {
           "id": "binary_sensor.q7_max_opladen",
-          "friendlyName": "Opladen",
+          "friendlyName": "Q7 Max Opladen",
           "cSharpName": "Q7MaxOpladen"
         },
         {
           "id": "binary_sensor.q7_max_schoonmaken",
-          "friendlyName": "Schoonmaken",
+          "friendlyName": "Q7 Max Schoonmaken",
           "cSharpName": "Q7MaxSchoonmaken"
         },
         {
           "id": "binary_sensor.q7_max_waterbak_geplaatst",
-          "friendlyName": "Waterbak geplaatst",
+          "friendlyName": "Q7 Max Waterbak geplaatst",
           "cSharpName": "Q7MaxWaterbakGeplaatst"
         },
         {
@@ -1939,7 +1939,7 @@
         },
         {
           "id": "number.q7_max_volume",
-          "friendlyName": "Volume",
+          "friendlyName": "Q7 Max Volume",
           "cSharpName": "Q7MaxVolume"
         },
         {
@@ -2272,17 +2272,17 @@
         },
         {
           "id": "select.q7_max_dock_lege_modus",
-          "friendlyName": "Lege modus",
+          "friendlyName": "Q7 Max Dock Lege modus",
           "cSharpName": "Q7MaxDockLegeModus"
         },
         {
           "id": "select.q7_max_geselecteerde_kaart",
-          "friendlyName": "Geselecteerde kaart",
+          "friendlyName": "Q7 Max Geselecteerde kaart",
           "cSharpName": "Q7MaxGeselecteerdeKaart"
         },
         {
           "id": "select.q7_max_intensiteit_van_dweilen",
-          "friendlyName": "Intensiteit van dweilen",
+          "friendlyName": "Q7 Max Intensiteit van dweilen",
           "cSharpName": "Q7MaxIntensiteitVanDweilen"
         },
         {
@@ -2441,6 +2441,16 @@
           "id": "sensor.battery_b2u4250j2511e06247_bat_soh",
           "friendlyName": "Battery B2U4250J2511E06247 Bat Soh",
           "cSharpName": "BatteryB2u4250j2511e06247BatSoh"
+        },
+        {
+          "id": "sensor.battery_charge_direction",
+          "friendlyName": "Battery Charge Direction",
+          "cSharpName": "BatteryChargeDirection"
+        },
+        {
+          "id": "sensor.battery_status_label",
+          "friendlyName": "Battery Status Label",
+          "cSharpName": "BatteryStatusLabel"
         },
         {
           "id": "sensor.computer_auto_off_at",
@@ -2789,37 +2799,37 @@
         },
         {
           "id": "sensor.q7_max_dock_dock_fout",
-          "friendlyName": "Dock fout",
+          "friendlyName": "Q7 Max Dock Dock fout",
           "cSharpName": "Q7MaxDockDockFout"
         },
         {
           "id": "sensor.q7_max_einde_laatste_schoonmaak",
-          "friendlyName": "Einde laatste schoonmaak",
+          "friendlyName": "Q7 Max Einde laatste schoonmaak",
           "cSharpName": "Q7MaxEindeLaatsteSchoonmaak"
         },
         {
           "id": "sensor.q7_max_huidige_kamer",
-          "friendlyName": "Huidige kamer",
+          "friendlyName": "Q7 Max Huidige kamer",
           "cSharpName": "Q7MaxHuidigeKamer"
         },
         {
           "id": "sensor.q7_max_start_laatste_schoonmaak",
-          "friendlyName": "Start laatste schoonmaak",
+          "friendlyName": "Q7 Max Start laatste schoonmaak",
           "cSharpName": "Q7MaxStartLaatsteSchoonmaak"
         },
         {
           "id": "sensor.q7_max_status",
-          "friendlyName": "Status",
+          "friendlyName": "Q7 Max Status",
           "cSharpName": "Q7MaxStatus"
         },
         {
           "id": "sensor.q7_max_stofzuigerfout",
-          "friendlyName": "Stofzuigerfout",
+          "friendlyName": "Q7 Max Stofzuigerfout",
           "cSharpName": "Q7MaxStofzuigerfout"
         },
         {
           "id": "sensor.q7_max_totaal_aantal_schoonmaakbeurten",
-          "friendlyName": "Totaal aantal schoonmaakbeurten",
+          "friendlyName": "Q7 Max Totaal aantal schoonmaakbeurten",
           "cSharpName": "Q7MaxTotaalAantalSchoonmaakbeurten"
         },
         {
@@ -3628,6 +3638,11 @@
           "jsonName": "Alarm list",
           "cSharpName": "Alarmlist",
           "clrType": "System.Collections.Generic.IReadOnlyList\u00601[System.Object]"
+        },
+        {
+          "jsonName": "entity_id",
+          "cSharpName": "EntityId",
+          "clrType": "System.String"
         }
       ]
     },
@@ -4121,6 +4136,16 @@
           "cSharpName": "MaximaleRegen1d"
         },
         {
+          "id": "sensor.maximum_price",
+          "friendlyName": "Maximum Price",
+          "cSharpName": "MaximumPrice"
+        },
+        {
+          "id": "sensor.minimum_price",
+          "friendlyName": "Minimum Price",
+          "cSharpName": "MinimumPrice"
+        },
+        {
           "id": "sensor.neerslagverwachting_gemiddeld",
           "friendlyName": "Neerslagverwachting gemiddeld",
           "cSharpName": "NeerslagverwachtingGemiddeld"
@@ -4422,47 +4447,47 @@
         },
         {
           "id": "sensor.q7_max_batterij",
-          "friendlyName": "Batterij",
+          "friendlyName": "Q7 Max Batterij",
           "cSharpName": "Q7MaxBatterij"
         },
         {
           "id": "sensor.q7_max_resterende_tijd_filter",
-          "friendlyName": "Resterende tijd filter",
+          "friendlyName": "Q7 Max Resterende tijd filter",
           "cSharpName": "Q7MaxResterendeTijdFilter"
         },
         {
           "id": "sensor.q7_max_resterende_tijd_hoofdborstel",
-          "friendlyName": "Resterende tijd hoofdborstel",
+          "friendlyName": "Q7 Max Resterende tijd hoofdborstel",
           "cSharpName": "Q7MaxResterendeTijdHoofdborstel"
         },
         {
           "id": "sensor.q7_max_resterende_tijd_sensor",
-          "friendlyName": "Resterende tijd sensor",
+          "friendlyName": "Q7 Max Resterende tijd sensor",
           "cSharpName": "Q7MaxResterendeTijdSensor"
         },
         {
           "id": "sensor.q7_max_resterende_tijd_zijborstel",
-          "friendlyName": "Resterende tijd zijborstel",
+          "friendlyName": "Q7 Max Resterende tijd zijborstel",
           "cSharpName": "Q7MaxResterendeTijdZijborstel"
         },
         {
           "id": "sensor.q7_max_schoonmaakgebied",
-          "friendlyName": "Schoonmaakgebied",
+          "friendlyName": "Q7 Max Schoonmaakgebied",
           "cSharpName": "Q7MaxSchoonmaakgebied"
         },
         {
           "id": "sensor.q7_max_schoonmaaktijd",
-          "friendlyName": "Schoonmaaktijd",
+          "friendlyName": "Q7 Max Schoonmaaktijd",
           "cSharpName": "Q7MaxSchoonmaaktijd"
         },
         {
           "id": "sensor.q7_max_totaal_schoonmaakgebied",
-          "friendlyName": "Totaal schoonmaakgebied",
+          "friendlyName": "Q7 Max Totaal schoonmaakgebied",
           "cSharpName": "Q7MaxTotaalSchoonmaakgebied"
         },
         {
           "id": "sensor.q7_max_totale_schoonmaaktijd",
-          "friendlyName": "Totale schoonmaaktijd",
+          "friendlyName": "Q7 Max Totale schoonmaaktijd",
           "cSharpName": "Q7MaxTotaleSchoonmaaktijd"
         },
         {
@@ -5663,12 +5688,12 @@
         },
         {
           "id": "switch.q7_max_dock_kinderslot",
-          "friendlyName": "Kinderslot",
+          "friendlyName": "Q7 Max Dock Kinderslot",
           "cSharpName": "Q7MaxDockKinderslot"
         },
         {
           "id": "switch.q7_max_niet_storen",
-          "friendlyName": "Niet storen",
+          "friendlyName": "Q7 Max Niet storen",
           "cSharpName": "Q7MaxNietStoren"
         },
         {
@@ -5972,6 +5997,11 @@
           "id": "update.button_card_update",
           "friendlyName": "button-card update",
           "cSharpName": "ButtonCardUpdate"
+        },
+        {
+          "id": "update.card_mod_update",
+          "friendlyName": "card-mod update",
+          "cSharpName": "CardModUpdate"
         },
         {
           "id": "update.cec_scanner_update",
@@ -6552,7 +6582,7 @@
       "entities": [
         {
           "id": "image.q7_max_beneden",
-          "friendlyName": "Beneden",
+          "friendlyName": "Q7 Max Beneden",
           "cSharpName": "Q7MaxBeneden"
         }
       ],
@@ -6589,12 +6619,12 @@
       "entities": [
         {
           "id": "time.q7_max_niet_storen_begin",
-          "friendlyName": "Niet storen begin",
+          "friendlyName": "Q7 Max Niet storen begin",
           "cSharpName": "Q7MaxNietStorenBegin"
         },
         {
           "id": "time.q7_max_niet_storen_einde",
-          "friendlyName": "Niet storen einde",
+          "friendlyName": "Q7 Max Niet storen einde",
           "cSharpName": "Q7MaxNietStorenEinde"
         }
       ],
@@ -6621,7 +6651,7 @@
       "entities": [
         {
           "id": "vacuum.q7_max",
-          "friendlyName": null,
+          "friendlyName": "Q7 Max",
           "cSharpName": "Q7Max"
         }
       ],
@@ -6671,6 +6701,16 @@
     {
       "domain": "input_text",
       "entities": [
+        {
+          "id": "input_text.battery_charge_schedule",
+          "friendlyName": "Battery Charge Schedule",
+          "cSharpName": "BatteryChargeSchedule"
+        },
+        {
+          "id": "input_text.battery_discharge_schedule",
+          "friendlyName": "Battery Discharge Schedule",
+          "cSharpName": "BatteryDischargeSchedule"
+        },
         {
           "id": "input_text.heating_schedule_status",
           "friendlyName": "heating_schedule_status",

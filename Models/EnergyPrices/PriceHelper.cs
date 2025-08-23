@@ -76,14 +76,25 @@ public class PriceHelper : IPriceHelper
     /// <summary>
     /// The energy price level, none is price of 0, highest is sky high
     /// </summary>
-    public Level EnergyPriceLevel { get => CurrentPrice switch
+    public Level EnergyPriceLevel { get => GetEnergyPriceLevel(); }
+
+    /// <summary>
+    /// Gets the energy price level
+    /// </summary>
+    /// <returns>The energy price level</returns>
+    private Level GetEnergyPriceLevel()
     {
-        < 0 => Level.None,
-        < 0.1 => Level.Low,
-        < 0.35 => CurrentPrice < PriceThreshold ? Level.Medium : Level.High,
-        < 0.45 => Level.High,
-        _ => Level.Maximum
-    }; }
+        var energyPriceLevel = CurrentPrice switch
+        {
+            < 0 => Level.None,
+            < 0.1 => Level.Low,
+            < 0.35 => CurrentPrice < PriceThreshold ? Level.Medium : Level.High,
+            < 0.45 => Level.High,
+            _ => Level.Maximum
+        };
+
+        return energyPriceLevel;
+    }
 
     /// <summary>
     /// The last time prices were updated
@@ -100,7 +111,7 @@ public class PriceHelper : IPriceHelper
 
         var avgPrice = _entities.Sensor.AveragePrice.State;
         double priceThreshold;
-        const double fallbackPrice = 0.27;
+        const double fallbackPrice = 0.28;
 
         if (avgPrice != null)
         {
@@ -139,7 +150,7 @@ public class PriceHelper : IPriceHelper
         var timeStamp = DateTime.Now;
         var currentPrice = PricesToday.FirstOrDefault(p => p.Key.Hour == timeStamp.Hour).Value;
 
-        return Math.Round(currentPrice, 2);
+        return currentPrice;
     }
 
     /// <summary>
@@ -153,6 +164,7 @@ public class PriceHelper : IPriceHelper
         var pricesTodayRaw = AppStateManager.GetState<IDictionary<string, double>>(nameof(PriceHelper), todayKey);
         var pricesTomorrowRaw = AppStateManager.GetState<IDictionary<string, double>>(nameof(PriceHelper), tomorrowKey);
         var lastUpdateRaw = AppStateManager.GetState<DateTime?>(nameof(PriceHelper), timestampKey);
+
         PricesToday = pricesTodayRaw?.ToDictionary(kvp => DateTime.Parse(kvp.Key), kvp => kvp.Value) ?? new Dictionary<DateTime, double>();
         PricesTomorrow = pricesTomorrowRaw?.ToDictionary(kvp => DateTime.Parse(kvp.Key), kvp => kvp.Value) ?? new Dictionary<DateTime, double>();
         LastPricesUpdate = lastUpdateRaw;

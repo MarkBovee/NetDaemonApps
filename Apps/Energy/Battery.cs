@@ -104,14 +104,29 @@ namespace NetDaemonApps.Apps.Energy
             var (chargeStart, chargeEnd) = PriceHelper.GetLowestPriceTimeslot(pricesToday, 3);
             var (dischargeStart, dischargeEnd) = PriceHelper.GetHighestPriceTimeslot(pricesToday, 1);
 
+            // Calculate charge and discharge power based on battery capacity and max power and weather prediction
+            var maxPower = 8000;
+            var batteryCapacity = 25000; // in Wh
+
+            // Charge in 3 hours
+            // TODO: Adjust charge power based on solar forecast and battery charge level
+            var chargePower = 8000;
+            var chargePercentage = Math.Round((double)chargePower / maxPower * 100);
+
+            // Discharge for 1 hour
+            // TODO: Adjust discharge power based on solar forecast and weather prediction
+            var dischargePower = 8000;
+            var dischargePercentage = Math.Round((double)dischargePower / maxPower * 100);
+
+
             // Set charge/discharge periods using calculated times
             var scheduleParameters = SAJPowerBatteryApi.BuildBatteryScheduleParameters(
                 chargeStart: chargeStart.ToString("HH:mm"),
                 chargeEnd: chargeEnd.ToString("HH:mm"),
-                chargePower: 8000,
+                chargePower: chargePower,
                 dischargeStart: dischargeStart.ToString("HH:mm"),
                 dischargeEnd: dischargeEnd.ToString("HH:mm"),
-                dischargePower: 8000
+                dischargePower: dischargePower
             );
 
             // Apply the schedule to the battery
@@ -121,6 +136,10 @@ namespace NetDaemonApps.Apps.Energy
                 // Set the last applied schedule time to now
                 _lastAppliedSchedule = DateTime.Now;
                 AppStateManager.SetState(nameof(Battery), "LastAppliedSchedule", _lastAppliedSchedule);
+
+                // Update the input_text entities in Home Assistant
+                _entities.InputText.BatteryChargeSchedule.SetValue($"{chargeStart:HH:mm}-{chargeEnd:HH:mm}");
+                _entities.InputText.BatteryDischargeSchedule.SetValue($"{dischargeStart:HH:mm}-{dischargeEnd:HH:mm}");
 
                 _logger.LogInformation("Battery schedule applied and saved.");
             }
