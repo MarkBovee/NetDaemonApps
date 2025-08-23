@@ -114,7 +114,7 @@ namespace NetDaemonApps.Apps.Energy
             var chargePercentage = Math.Round((double)chargePower / maxPower * 100);
 
             // Discharge for 1 hour
-            // TODO: Adjust discharge power based on solar forecast and weather prediction
+            // TODO: Adjust discharge power based on solar forecast and weather prediction and prices for tomorrow
             var dischargePower = 8000;
             var dischargePercentage = Math.Round((double)dischargePower / maxPower * 100);
 
