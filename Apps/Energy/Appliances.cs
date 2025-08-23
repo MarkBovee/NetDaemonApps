@@ -56,7 +56,7 @@ namespace NetDaemonApps.Apps.Energy
             if (Debugger.IsAttached)
             {
                 // Run once
-                SetAppliancesSchedule();
+                //SetAppliancesSchedule();
             }
             else
             {
