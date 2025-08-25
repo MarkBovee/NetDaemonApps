@@ -4,6 +4,7 @@
 
 namespace NetDaemonApps.Models.Battery
 {
+    using System;
     using System.Collections.Generic;
     using System.IO;
     using System.Linq;
@@ -123,7 +124,7 @@ namespace NetDaemonApps.Models.Battery
 
             if (printStatus)
             {
-                Console.WriteLine(isValid ? $"SAJ token is valid until {_tokenExpiration.Value.ToLocalTime()}" : "SAJ token is invalid or expired.");
+                Console.WriteLine(isValid ? $"SAJ token is valid until {_tokenExpiration!.Value.ToLocalTime()}" : "SAJ token is invalid or expired.");
             }
 
             return isValid;
@@ -202,6 +203,39 @@ namespace NetDaemonApps.Models.Battery
 
         /// <summary>
         /// Builds the complete BatteryScheduleParameters object for the battery charge/discharge schedule.
+        /// Support for flexible number of charging periods.
+        /// </summary>
+        /// <param name="chargingPeriods">List of charging/discharging periods</param>
+        /// <returns>The complete BatteryScheduleParameters object.</returns>
+        public static BatteryScheduleParameters BuildBatteryScheduleParameters(List<ChargingPeriod> chargingPeriods)
+        {
+            if (chargingPeriods == null || !chargingPeriods.Any())
+                throw new ArgumentException("At least one charging period is required", nameof(chargingPeriods));
+
+            // Build the value string: mode|period1|period2|...
+            var valueBuilder = new StringBuilder("1"); // Mode 1 = enabled
+            
+            foreach (var period in chargingPeriods)
+            {
+                valueBuilder.Append("|").Append(period.ToApiFormat());
+            }
+
+            var value = valueBuilder.ToString();
+
+            // Generate address patterns based on number of periods
+            var (commAddress, componentId, transferId) = GenerateAddressPatterns(chargingPeriods.Count);
+
+            return new BatteryScheduleParameters
+            {
+                CommAddress = commAddress,
+                ComponentId = componentId,
+                TransferId = transferId,
+                Value = value
+            };
+        }
+
+        /// <summary>
+        /// Builds battery schedule parameters using the legacy format (1 charge + 1 discharge period).
         /// </summary>
         /// <param name="chargeStart">Charge start time (HH:mm)</param>
         /// <param name="chargeEnd">Charge end time (HH:mm)</param>
@@ -212,24 +246,118 @@ namespace NetDaemonApps.Models.Battery
         /// <returns>The complete BatteryScheduleParameters object.</returns>
         public static BatteryScheduleParameters BuildBatteryScheduleParameters(string chargeStart, string chargeEnd, int chargePower, string dischargeStart, string dischargeEnd, int dischargePower)
         {
-            // All weekdays enabled
-            var weekdays = "1,1,1,1,1,1,1";
-
-            // Value string: mode|chargeStart|chargeEnd|chargePower_weekdays|dischargeStart|dischargeEnd|dischargePower_weekdays
-            var value = $"1|{chargeStart}|{chargeEnd}|{chargePower}_{weekdays}|{dischargeStart}|{dischargeEnd}|{dischargePower}_{weekdays}";
-
-            // HAR pattern for 2 entries
-            var commAddress = "3647|3606|3607|3608_3608|361B|361C|361D_361D";
-            var componentId = "|30|30|30_30|30|30|30_30";
-            var transferId = "|5|5|2_1|5|5|2_1";
-
-            return new BatteryScheduleParameters
+            var periods = new List<ChargingPeriod>
             {
-                CommAddress = commAddress,
-                ComponentId = componentId,
-                TransferId = transferId,
-                Value = value
+                new()
+                {
+                    ChargeType = BatteryChargeType.Charge,
+                    StartTime = TimeSpan.Parse(chargeStart),
+                    EndTime = TimeSpan.Parse(chargeEnd),
+                    PowerInWatts = chargePower
+                },
+                new()
+                {
+                    ChargeType = BatteryChargeType.Discharge,
+                    StartTime = TimeSpan.Parse(dischargeStart),
+                    EndTime = TimeSpan.Parse(dischargeEnd),
+                    PowerInWatts = dischargePower
+                }
             };
+
+            return BuildBatteryScheduleParameters(periods);
+        }
+
+        /// <summary>
+        /// Builds battery schedule parameters for multiple charging periods (3 charge + 1 discharge).
+        /// This format supports the extended API capability seen in newer HAR captures.
+        /// </summary>
+        /// <param name="chargePeriods">List of charging periods (typically 3)</param>
+        /// <param name="dischargePeriod">Single discharge period</param>
+        /// <returns>The complete BatteryScheduleParameters object.</returns>
+        public static BatteryScheduleParameters BuildBatteryScheduleParametersExtended(List<ChargingPeriod> chargePeriods, ChargingPeriod dischargePeriod)
+        {
+            if (chargePeriods == null || !chargePeriods.Any())
+                throw new ArgumentException("At least one charge period is required", nameof(chargePeriods));
+            
+            if (dischargePeriod == null)
+                throw new ArgumentException("Discharge period is required", nameof(dischargePeriod));
+
+            var allPeriods = new List<ChargingPeriod>(chargePeriods) { dischargePeriod };
+            return BuildBatteryScheduleParameters(allPeriods);
+        }
+
+        /// <summary>
+        /// Generates the communication address patterns based on the number of periods.
+        /// These patterns are required by the SAJ API for proper device communication.
+        /// </summary>
+        /// <param name="periodCount">Number of charging/discharging periods</param>
+        /// <returns>Tuple of (commAddress, componentId, transferId)</returns>
+        private static (string commAddress, string componentId, string transferId) GenerateAddressPatterns(int periodCount)
+        {
+            return periodCount switch
+            {
+                // Legacy format: 1 charge + 1 discharge
+                2 => (
+                    commAddress: "3647|3606|3607|3608_3608|361B|361C|361D_361D",
+                    componentId: "|30|30|30_30|30|30|30_30",
+                    transferId: "|5|5|2_1|5|5|2_1"
+                ),
+                
+                // Extended format: 3 charge + 1 discharge (from HAR file)
+                4 => (
+                    commAddress: "3647|3606|3607|3608_3608|3609|360A|360B_360B|360C|360D|360E_360E|361B|361C|361D_361D",
+                    componentId: "|30|30|30_30|30|30|30_30|30|30|30_30|30|30|30_30",
+                    transferId: "|5|5|2_1|5|5|2_1|5|5|2_1|5|5|2_1"
+                ),
+                
+                // For other counts, extrapolate the pattern
+                _ => GenerateExtendedAddressPattern(periodCount)
+            };
+        }
+
+        /// <summary>
+        /// Generates address patterns for custom period counts by extrapolating the known patterns.
+        /// </summary>
+        /// <param name="periodCount">Number of periods</param>
+        /// <returns>Tuple of (commAddress, componentId, transferId)</returns>
+        private static (string commAddress, string componentId, string transferId) GenerateExtendedAddressPattern(int periodCount)
+        {
+            // Base patterns for single period
+            var baseCommPattern = new[] { "3647", "3606", "3607", "3608" };
+            var baseComponentPattern = new[] { "", "30", "30", "30" };
+            var baseTransferPattern = new[] { "", "5", "5", "2" };
+
+            var commParts = new List<string>();
+            var componentParts = new List<string>();
+            var transferParts = new List<string>();
+
+            for (int i = 0; i < periodCount; i++)
+            {
+                var basePart = string.Join("|", baseCommPattern);
+                var componentPart = string.Join("|", baseComponentPattern);
+                var transferPart = string.Join("|", baseTransferPattern);
+
+                // For periods beyond the first, modify the pattern (add offset)
+                if (i > 0)
+                {
+                    // Add hex offset to addresses for additional periods
+                    var offset = i * 4;
+                    var modifiedComm = baseCommPattern.Skip(1).Select(addr => 
+                        (Convert.ToInt32(addr, 16) + offset).ToString("X")).ToArray();
+                    basePart = baseCommPattern[0] + "|" + string.Join("|", modifiedComm);
+                    transferPart += "_1"; // Add weekday suffix
+                }
+
+                commParts.Add(basePart);
+                componentParts.Add(componentPart);
+                transferParts.Add(transferPart);
+            }
+
+            return (
+                commAddress: string.Join("_", commParts),
+                componentId: string.Join("_", componentParts),
+                transferId: string.Join("_", transferParts)
+            );
         }
 
         public async Task<bool> ClearBatteryScheduleAsync()

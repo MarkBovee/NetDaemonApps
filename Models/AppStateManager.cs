@@ -138,7 +138,6 @@ namespace NetDaemonApps.Models
         /// <param name="appName">The app name</param>
         /// <param name="key">The key</param>
         /// <param name="value">The value</param>
-        /// <exception cref="ArgumentNullException"></exception>
         public static void SetState<T>(string appName, string key, T value)
         {
             lock (_lock)
@@ -147,7 +146,23 @@ namespace NetDaemonApps.Models
                 {
                     _stateCache[appName] = new Dictionary<string, object>();
                 }
-                _stateCache[appName][key] = value ?? throw new ArgumentNullException(nameof(value));
+
+                if (value == null)
+                {
+                    // Remove the key when setting null value
+                    _stateCache[appName].Remove(key);
+
+                    // Remove the app entry if it's now empty
+                    if (_stateCache[appName].Count == 0)
+                    {
+                        _stateCache.Remove(appName);
+                    }
+                }
+                else
+                {
+                    _stateCache[appName][key] = value;
+                }
+
                 SaveState();
             }
         }

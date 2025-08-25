@@ -204,7 +204,7 @@ namespace NetDaemonApps.Apps.Vacation
         /// </summary>
         private static readonly string[] ExcludeKeywords =
         {
-            "vaatwasser", "tv", "computer", "audio", "droger", "vriezer", "ems", "wasmachine", "auto_off", "auto_update", "shuffle", "repeat", "do_not_disturb"
+            "badkamer", "vaatwasser", "tv", "computer", "audio", "droger", "vriezer", "ems", "wasmachine", "auto_off", "auto_update", "shuffle", "repeat", "do_not_disturb"
         };
 
         /// <summary>

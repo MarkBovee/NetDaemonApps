@@ -84,21 +84,21 @@ namespace NetDaemonApps.Apps.Energy
             if (_awayMode || _priceHelper.EnergyPriceLevel > Level.Medium)
             {
                 // Check if the washing machine is on and if no program is running
-                if (washingMachine?.State == "on" && washingMachineCurrentPower.State < 3)
+                if (washingMachine?.State == "on" && washingMachineCurrentPower.State < 1)
                 {
                     _logger.LogInformation("Washing machine disabled due to high power prices");
                     washingMachine.TurnOff();
                 }
 
                 // Check if the dryer is on
-                if (dryer?.State == "on" && dryerCurrentPower.State < 3)
+                if (dryer?.State == "on" && dryerCurrentPower.State < 1)
                 {
                     _logger.LogInformation("Dryer disabled due to high power prices");
                     dryer.TurnOff();
                 }
 
                 // Check if the dishwasher is on
-                if (dishwasher?.State == "on" && dishwasherCurrentPower.State < 3)
+                if (dishwasher?.State == "on" && dishwasherCurrentPower.State < 1)
                 {
                     _logger.LogInformation("Dishwasher disabled due to high power prices");
                     dishwasher.TurnOff();

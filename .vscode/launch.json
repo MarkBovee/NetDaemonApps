@@ -1,12 +1,14 @@
 {
+    // Use code-generation or user-frendly features
     "version": "0.2.0",
     "configurations": [
         {
+            // Standard debug configuration for all NetDaemon apps
             "name": "Debug Apps",
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
-            "program": "${workspaceFolder}/bin/Debug/net8.0/NetDaemonApps.dll",
+            "program": "${workspaceFolder}/bin/Debug/net9.0/NetDaemonApps.dll",
             "args": [],
             "cwd": "${workspaceFolder}",
             "env": {
@@ -17,6 +19,30 @@
             "logging": {
                 "moduleLoad": false
             }
+        },
+        {
+            // Specialized configuration for testing Battery app simulation
+            // When debugger is attached, Battery app runs comprehensive simulation
+            // - Tests initial schema calculation
+            // - Tests schema comparison and state persistence  
+            // - Tests change detection logic
+            // - All API calls are simulated (no real battery commands sent)
+            "name": "Battery Simulation Test",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build",
+            "program": "${workspaceFolder}/bin/Debug/net9.0/NetDaemonApps.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "DOTNET_ENVIRONMENT": "Development",
+                "ASPNETCORE_ENVIRONMENT": "Development"
+            },
+            "stopAtEntry": false,
+            "logging": {
+                "moduleLoad": false
+            },
+            "console": "integratedTerminal"
         },
         {
             "name": ".NET Core Attach",
