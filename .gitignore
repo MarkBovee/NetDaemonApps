@@ -3,3 +3,10 @@ bin
 .vs
 *.gen
 .idea
+
+# Sensitive configuration files
+SAJ-token
+
+# State files - contains runtime state that shouldn't be versioned
+State/
+State/*
