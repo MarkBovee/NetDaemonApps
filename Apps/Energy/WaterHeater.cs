@@ -228,27 +228,45 @@ namespace NetDaemonApps.Apps.Energy
                     }
                     else
                     {
-                        // Set the heater to heating temperature
-                        _targetTemperature = heatingTemperature;
-                        _waitCyclesWater = 10;
-                        _heaterOn = false;
-                        AppStateManager.SetState(nameof(WaterHeater), "TargetTemperature", _targetTemperature);
-                        AppStateManager.SetState(nameof(WaterHeater), "WaitCyclesWater", _waitCyclesWater);
-                        AppStateManager.SetState(nameof(WaterHeater), "HeaterOn", _heaterOn);
-
-                        if (currentTargetTemperature != _targetTemperature)
+                        // Check if current temperature is already adequate before starting heating cycle
+                        if (currentTemperature >= heatingTemperature - 2) // Allow 2-degree tolerance below target
                         {
-                            heatingWater.SetOperationMode("Manual");
-                            heatingWater.SetTemperature(Convert.ToDouble(_targetTemperature));
-                        }
+                            // Water is already at adequate temperature, don't start heating cycle
+                            _targetTemperature = heatingTemperature;
+                            _waitCyclesWater = 0;
+                            _heaterOn = false;
+                            
+                            AppStateManager.SetState(nameof(WaterHeater), "TargetTemperature", _targetTemperature);
+                            AppStateManager.SetState(nameof(WaterHeater), "WaitCyclesWater", _waitCyclesWater);
+                            AppStateManager.SetState(nameof(WaterHeater), "HeaterOn", _heaterOn);
 
-                        if (_targetTemperature > idleTemperature)
-                        {
-                            DisplayMessage(currentTemperature < _targetTemperature ? $"Heating to {_targetTemperature} [{_waitCyclesWater}]" : idleText);
+                            DisplayMessage(idleText);
                         }
                         else
                         {
-                            DisplayMessage(idleText);
+                            // Set the heater to heating temperature
+                            _targetTemperature = heatingTemperature;
+                            _waitCyclesWater = 10;
+                            _heaterOn = false;
+
+                            AppStateManager.SetState(nameof(WaterHeater), "TargetTemperature", _targetTemperature);
+                            AppStateManager.SetState(nameof(WaterHeater), "WaitCyclesWater", _waitCyclesWater);
+                            AppStateManager.SetState(nameof(WaterHeater), "HeaterOn", _heaterOn);
+
+                            if (currentTargetTemperature != _targetTemperature)
+                            {
+                                heatingWater.SetOperationMode("Manual");
+                                heatingWater.SetTemperature(Convert.ToDouble(_targetTemperature));
+                            }
+
+                            if (_targetTemperature > idleTemperature)
+                            {
+                                DisplayMessage(currentTemperature < _targetTemperature ? $"Heating to {_targetTemperature} [{_waitCyclesWater}]" : idleText);
+                            }
+                            else
+                            {
+                                DisplayMessage(idleText);
+                            }
                         }
                     }
                 }
