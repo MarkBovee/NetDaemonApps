@@ -1,6 +1,5 @@
 namespace NetDaemonApps.Apps.Energy
 {
-    using System.Collections.Generic;
     using System.Diagnostics;
     using System.Linq;
     using HomeAssistantGenerated;
@@ -46,9 +45,9 @@ namespace NetDaemonApps.Apps.Energy
         private readonly SAJPowerBatteryApi _saiPowerBatteryApi;
 
         // Max values
-        private const double MaxInverterPower = 8000; // W
-        private const double MaxSolarProduction = 4500; // W
-        private const double MaxBatteryCapacity = 25000; // Wh
+        private const double MaxInverterPower = 8000;       // W
+        private const double MaxSolarProduction = 4500;     // W
+        private const double MaxBatteryCapacity = 25000;    // Wh
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Battery"/> class.
@@ -74,13 +73,10 @@ namespace NetDaemonApps.Apps.Energy
             // Check if the token is valid
             _saiPowerBatteryApi.IsTokenValid(true);
 
-            // Load last applied schedule from the state file
-            _lastAppliedSchedule = AppStateManager.GetState<DateTime?>(nameof(Battery), "LastAppliedSchedule");
-
             if (Debugger.IsAttached)
             {
                 // Run simulation for debugging
-                RunDebugSimulation();
+                SetBatterySchedule();
             }
             else
             {
@@ -94,179 +90,84 @@ namespace NetDaemonApps.Apps.Energy
         /// </summary>
         private void SetBatterySchedule()
         {
-            if (Debugger.IsAttached)
-            {
-                _logger.LogInformation($"SetBatterySchedule called. Last applied: {_lastAppliedSchedule?.ToString("yyyy-MM-dd HH:mm") ?? "never"}");
-            }
+            // Get the currently applied schedule
+            var currentAppliedSchedule = GetCurrentAppliedSchedule();
 
-            // Check if we need to set a new schedule (once per day) or adjust existing (every 15 minutes)
+            // Check if we need to set a new schedule (once per day) or evaluate the existing schedule
             if (_lastAppliedSchedule != null && _lastAppliedSchedule.Value.Date == DateTime.Now.Date)
             {
-                if (Debugger.IsAttached)
-                {
-                    _logger.LogInformation("Schedule already applied today, running evaluation cycle");
-                }
+                var evaluatedSchedule = EvaluateAndAdjustChargingSchedule();
 
-                var evaluatedSchema = EvaluateAndAdjustChargingSchema();
-                if (evaluatedSchema != null)
-                {
-                    var currentAppliedSchema = GetCurrentAppliedSchema();
+                if (evaluatedSchedule == null) return;
+                if (currentAppliedSchedule != null && currentAppliedSchedule.IsEquivalentTo(evaluatedSchedule)) return;
 
-                    if (currentAppliedSchema == null || !currentAppliedSchema.IsEquivalentTo(evaluatedSchema))
-                    {
-                        _logger.LogInformation("Evaluation resulted in schema changes, applying new schema");
-                        ApplyChargingSchema(evaluatedSchema);
-                        SaveCurrentAppliedSchema(evaluatedSchema);
-                    }
-                    else
-                    {
-                        _logger.LogInformation("Evaluation complete - no schema changes needed");
-                    }
-                }
+                _logger.LogInformation("Apply new charging schedule");
+
+                ApplyChargingSchedule(evaluatedSchedule);
             }
             else
             {
-                if (Debugger.IsAttached)
-                {
-                    _logger.LogInformation("No schedule applied today or first run, calculating initial schema");
-                }
+                _logger.LogInformation("Calculating initial schedule");
 
-                var initialSchema = CalculateInitialChargingSchema();
-                var currentAppliedSchema = GetCurrentAppliedSchema();
+                var initialSchedule = CalculateInitialChargingSchedule();
+                if (initialSchedule == null) return;
 
-                if (currentAppliedSchema == null || !currentAppliedSchema.IsEquivalentTo(initialSchema))
-                {
-                    _logger.LogInformation("Initial schema setup or changed schema detected");
-
-                    ApplyChargingSchema(initialSchema);
-                    SaveCurrentAppliedSchema(initialSchema);
-                }
-                else
-                {
-                    _logger.LogInformation("Schema unchanged from last run");
-                }
+                ApplyChargingSchedule(initialSchedule);
             }
         }
 
         /// <summary>
-        /// Evaluates current conditions and adjusts the charging schema every 15 minutes
+        /// Evaluates current conditions and adjusts the charging schedule every 15 minutes
+        /// Currently simplified - returns null to avoid complex logic during development
         /// </summary>
-        /// <returns>New charging schema if recalculation was needed, null if only minor adjustments were performed</returns>
-        private ChargingSchema? EvaluateAndAdjustChargingSchema()
+        /// <returns>New charging schedule if recalculation was needed, null if only minor adjustments were performed</returns>
+        private ChargingSchema? EvaluateAndAdjustChargingSchedule()
         {
-            try
-            {
-                var currentTime = DateTime.Now;
-                var currentBatterySoc = GetCurrentBatterySOC();
-                var currentSolarProduction = _entities.Sensor.PowerProductionNow.State ?? 0;
-                var currentGridPower = _entities.Sensor.BatteryGridPower.State ?? 0;
+            // FUTURE ENHANCEMENTS: This method can implement real-time schedule adjustments:
 
-                if (Debugger.IsAttached)
-                {
-                    _logger.LogInformation($"15-min evaluation: SOC={currentBatterySoc:F1}%, Solar={currentSolarProduction}W, Grid={currentGridPower}W");
-                }
+            // 1. SOLAR PRODUCTION MONITORING
+            //    - Monitor current solar production vs forecast
+            //    - If excess solar available, temporarily increase charging power
+            //    - If solar lower than expected, reduce charging to save battery capacity
 
-                // Check if we need to recalculate the entire schema (major changes)
-                var shouldRecalculate = false;
+            // 2. CONSUMPTION PATTERN DETECTION
+            //    - Use EstimateDailyEnergyConsumption() to detect unusual consumption
+            //    - Adjust discharge timing if higher consumption detected
+            //    - Emergency mode: immediate charging if battery critically low and expensive hours ahead
 
-                // Recalculate if battery SOC is critically low or very high
-                if (currentBatterySoc < 15 || currentBatterySoc > 95)
-                {
-                    shouldRecalculate = true;
-                    _logger.LogInformation($"Recalculating schema due to extreme battery SOC: {currentBatterySoc:F1}%");
-                }
+            // 3. GRID CONDITIONS
+            //    - Monitor grid frequency and voltage for grid services participation
+            //    - Implement demand response: reduce discharge during grid stress events
+            //    - Peak shaving: discharge during local consumption peaks regardless of price
 
-                // Recalculate if actual solar production is very different from expected
-                var energyCurrentHour = _entities.Sensor.EnergyCurrentHour.State ?? 0;
-                var energyNextHour = _entities.Sensor.EnergyNextHour.State ?? 0;
+            // 4. WEATHER-BASED ADJUSTMENTS
+            //    - Check updated weather forecast and adjust solar expectations
+            //    - Prepare for storms: ensure battery is charged before bad weather
+            //    - Heat wave response: reserve capacity for increased AC usage
 
-                // If current hour production is 50% higher or lower than expected, recalculate
-                if (energyCurrentHour > 0 && (currentSolarProduction > energyCurrentHour * 1.5 || currentSolarProduction < energyCurrentHour * 0.5))
-                {
-                    shouldRecalculate = true;
-                    _logger.LogInformation($"Recalculating schema due to solar production variance: actual={currentSolarProduction}W vs expected={energyCurrentHour}W");
-                }
+            // 5. TIME-BASED LOGIC
+            //    - During solar hours (10-16): optimize for solar excess capture
+            //    - During evening peak (17-22): ensure adequate discharge if profitable
+            //    - Night hours: minimal adjustments, prepare for next day
+            //    - Use IsChargingAllowedAfterSunset() to prevent wasteful charging
 
-                // Recalculate once daily (if not done today)
-                if (_lastAppliedSchedule == null || _lastAppliedSchedule.Value.Date != currentTime.Date)
-                {
-                    shouldRecalculate = true;
-                    _logger.LogInformation("Recalculating daily schema");
-                }
+            // 6. PRICE CHANGE RESPONSE
+            //    - React to intraday price updates from energy markets
+            //    - Implement imbalance price monitoring for additional revenue
+            //    - Dynamic pricing: adjust schedule if day-ahead prices change significantly
 
-                if (shouldRecalculate)
-                {
-                    var newSchema = CalculateInitialChargingSchema();
-                    newSchema.Source = "Evaluation-triggered recalculation";
-
-                    if (Debugger.IsAttached)
-                    {
-                        _logger.LogInformation($"Recalculation triggered. New schema has {newSchema.Periods.Count} periods");
-                        _logger.LogInformation($"New schema: {newSchema.ToLogString()}");
-                    }
-
-                    return newSchema;
-                }
-                else
-                {
-                    // Minor adjustments based on current conditions (no schema changes)
-                    PerformMinorAdjustments(currentBatterySoc, currentSolarProduction, currentGridPower);
-                    return null; // No schema changes
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error during charging schema evaluation");
-                return null;
-            }
+            // CURRENT IMPLEMENTATION: Always return null to keep existing schedule
+            // This prevents unwanted schedule changes during development and testing
+            return null;
         }
 
         /// <summary>
-        /// Performs minor power adjustments without changing the overall charging schema
+        /// Applies a charging schedule by converting it to SAJ API format and uploading
         /// </summary>
-        /// <param name="currentBatterySoc">Current battery state of charge</param>
-        /// <param name="currentSolarProduction">Current solar production in watts</param>
-        /// <param name="currentGridPower">Current grid power flow in watts</param>
-        private void PerformMinorAdjustments(double currentBatterySoc, double currentSolarProduction, double currentGridPower)
+        /// <param name="chargingSchedule">The charging schedule to apply</param>
+        private void ApplyChargingSchedule(ChargingSchema chargingSchedule)
         {
-            var currentTime = DateTime.Now;
-
-            // During solar hours (10-16), adjust charging based on excess solar
-            if (currentTime.Hour >= 10 && currentTime.Hour <= 16 && currentSolarProduction > 1000)
-            {
-                // If we have excess solar and battery isn't full, increase charging
-                if (currentGridPower < -500 && currentBatterySoc < 90) // Feeding back to grid
-                {
-                    // TODO: Implement dynamic power adjustment via API
-                    _logger.LogInformation($"Could increase charging power due to excess solar: {-currentGridPower}W excess");
-                }
-            }
-
-            // During evening peak (17-22), ensure we're discharging if battery is sufficiently charged
-            if (currentTime.Hour >= 17 && currentTime.Hour <= 22 && currentBatterySoc > 60)
-            {
-                if (currentGridPower > 500) // Consuming from grid
-                {
-                    // TODO: Implement dynamic discharge adjustment via API
-                    _logger.LogInformation($"Could increase discharge power during peak hours: consuming {currentGridPower}W from grid");
-                }
-            }
-
-            // Emergency charging if battery critically low during expensive hours
-            if (currentBatterySoc < 10 && currentTime.Hour >= 17 && currentTime.Hour <= 22)
-            {
-                _logger.LogWarning($"Emergency: Battery critically low ({currentBatterySoc:F1}%) during peak hours");
-                // TODO: Implement emergency charging protocol
-            }
-        }
-
-        /// <summary>
-        /// Applies a charging schema by converting it to SAJ API format and uploading
-        /// </summary>
-        /// <param name="chargingSchema">The charging schema to apply</param>
-        private void ApplyChargingSchema(ChargingSchema chargingSchema)
-        {
-            ApplyChargingSchema(chargingSchema, simulateOnly: Debugger.IsAttached);
+            ApplyChargingSchedule(chargingSchedule, simulateOnly: Debugger.IsAttached);
         }
 
         /// <summary>
@@ -274,244 +175,147 @@ namespace NetDaemonApps.Apps.Energy
         /// </summary>
         /// <param name="chargingSchema">The charging schema to apply</param>
         /// <param name="simulateOnly">If true, simulates the API call without actually executing it</param>
-        private void ApplyChargingSchema(ChargingSchema chargingSchema, bool simulateOnly)
+        private void ApplyChargingSchedule(ChargingSchema chargingSchedule, bool simulateOnly)
         {
-            if (chargingSchema?.Periods == null || !chargingSchema.Periods.Any())
+            if (chargingSchedule?.Periods == null || chargingSchedule.Periods.Count == 0)
             {
-                _logger.LogWarning("No charging schema to apply");
+                _logger.LogWarning("No charging schedule to apply");
                 return;
             }
 
             try
             {
-                // Convert our charging schema to SAJ API format
-                // Determine if we should use legacy format (1 charge + 1 discharge) or extended format (multiple charges + 1 discharge)
-                var chargePeriods = chargingSchema.Periods.Where(cm => cm.ChargeType == BatteryChargeType.Charge).ToList();
-                var dischargePeriods = chargingSchema.Periods.Where(cm => cm.ChargeType == BatteryChargeType.Discharge).ToList();
+                // Convert our charging schedule to SAJ API format
+                var chargePeriods = chargingSchedule.Periods.Where(cm => cm.ChargeType == BatteryChargeType.Charge).ToList();
+                var dischargePeriods = chargingSchedule.Periods.Where(cm => cm.ChargeType == BatteryChargeType.Discharge).ToList();
 
-                if (!chargePeriods.Any() && !dischargePeriods.Any())
+                // Validate the charging periods
+                if (chargePeriods.Count == 0 && dischargePeriods.Count == 0)
                 {
-                    _logger.LogWarning("No valid charge or discharge periods in schema");
+                    _logger.LogWarning("No valid charge or discharge periods in schedule");
                     return;
                 }
 
-                BatteryScheduleParameters scheduleParameters;
-
-                // Use extended format if we have multiple charge periods, otherwise use legacy format
-                if (chargePeriods.Count > 1 && dischargePeriods.Any())
-                {
-                    // Extended format: Multiple charge periods + 1 discharge period
-                    scheduleParameters = SAJPowerBatteryApi.BuildBatteryScheduleParametersExtended(chargePeriods, dischargePeriods.First());
-                    _logger.LogInformation($"Using extended format: {chargePeriods.Count} charge periods + 1 discharge period");
-                }
-                else
-                {
-                    // Legacy format: Use first charge and discharge periods
-                    var chargePeriod = chargePeriods.FirstOrDefault();
-                    var dischargePeriod = dischargePeriods.FirstOrDefault();
-
-                    if (chargePeriod == null || dischargePeriod == null)
-                    {
-                        _logger.LogWarning("Legacy format requires exactly 1 charge and 1 discharge period");
-                        return;
-                    }
-
-                    scheduleParameters = SAJPowerBatteryApi.BuildBatteryScheduleParameters(
-                        chargeStart: chargePeriod.StartTime.ToString(@"hh\:mm"),
-                        chargeEnd: chargePeriod.EndTime.ToString(@"hh\:mm"),
-                        chargePower: chargePeriod.PowerInWatts,
-                        dischargeStart: dischargePeriod.StartTime.ToString(@"hh\:mm"),
-                        dischargeEnd: dischargePeriod.EndTime.ToString(@"hh\:mm"),
-                        dischargePower: dischargePeriod.PowerInWatts
-                    );
-                    _logger.LogInformation("Using legacy format: 1 charge + 1 discharge period");
-                }
+                // Build the schedule parameters
+                var scheduleParameters = SAJPowerBatteryApi.BuildBatteryScheduleParameters(chargePeriods, dischargePeriods);
 
                 // Apply the schedule to the battery
-                bool saved;
-                if (simulateOnly)
-                {
-                    _logger.LogInformation("SIMULATION MODE: Skipping actual API call to SAJ Power Battery API");
-                    _logger.LogInformation($"Would have applied schedule with Value: {scheduleParameters.Value}");
-                    saved = true; // Simulate successful save
-                }
-                else
-                {
-                    saved = _saiPowerBatteryApi.SaveBatteryScheduleAsync(scheduleParameters).Result;
-                }
+                var saved = simulateOnly || _saiPowerBatteryApi.SaveBatteryScheduleAsync(scheduleParameters).Result;
 
                 if (saved)
                 {
                     // Update state tracking
-                    _lastAppliedSchedule = DateTime.Now;
-                    AppStateManager.SetState(nameof(Battery), "LastAppliedSchedule", _lastAppliedSchedule);
+                    SaveCurrentAppliedSchedule(chargingSchedule);
 
-                    // Update Home Assistant input entities if they exist
-                    if (!simulateOnly)
+                    // Log the applied schedule
+                    if (simulateOnly)
                     {
-                        try
-                        {
-                            var firstCharge = chargePeriods.FirstOrDefault();
-                            var firstDischarge = dischargePeriods.FirstOrDefault();
-
-                            if (firstCharge != null)
-                                _entities.InputText.BatteryChargeSchedule?.SetValue($"{firstCharge.StartTime:hh\\:mm}-{firstCharge.EndTime:hh\\:mm}");
-
-                            if (firstDischarge != null)
-                                _entities.InputText.BatteryDischargeSchedule?.SetValue($"{firstDischarge.StartTime:hh\\:mm}-{firstDischarge.EndTime:hh\\:mm}");
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger.LogWarning(ex, "Could not update HA input entities - they may not exist");
-                        }
+                        // Log the applied schedule details
+                        var scheduleDescription = string.Join(", ", chargingSchedule.Periods.Select(p =>  $@"{p.ChargeType} {p.StartTime:hh\:mm}-{p.EndTime:hh\:mm} @ {p.PowerInWatts}W"));
+                        _logger.LogInformation("Applied charging schedule: {ScheduleDescription}", scheduleDescription);
                     }
                     else
                     {
-                        _logger.LogInformation("SIMULATION MODE: Skipping Home Assistant input entity updates");
-                    }
+                        var chargeSchedule = $@"{chargePeriods.First().StartTime:hh\:mm}-{chargePeriods.Last().EndTime:hh\:mm}";
+                        var dischargeSchedule = $@"{dischargePeriods.First().StartTime:hh\:mm}-{dischargePeriods.Last().EndTime:hh\:mm}";
 
-                    // Log the applied schedule details
-                    var scheduleDescription = string.Join(", ", chargingSchema.Periods.Select(p =>
-                        $"{p.ChargeType} {p.StartTime:hh\\:mm}-{p.EndTime:hh\\:mm} @ {p.PowerInWatts}W"));
-                    _logger.LogInformation($"Applied charging schema: {scheduleDescription}");
+                        _entities.InputText.BatteryChargeSchedule?.SetValue(chargeSchedule);
+                        _entities.InputText.BatteryDischargeSchedule?.SetValue(dischargeSchedule);
+                    }
                 }
                 else
                 {
-                    _logger.LogWarning("Failed to apply charging schema via SAJ API");
+                    _logger.LogWarning("Failed to apply charging schedule via SAJ API");
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error applying charging schema");
+                _logger.LogError(ex, "Error applying charging schedule");
             }
         }
 
         /// <summary>
-        /// Calculates the initial charging schema based on energy prices, solar production, and battery state
+        /// Calculates the initial charging schedule based on energy prices, solar production, and battery state
+        /// Currently implements the simplest strategy: charge during lowest prices, discharge during highest prices
         /// </summary>
-        /// <returns>Complete charging schema for the day</returns>
-        private ChargingSchema CalculateInitialChargingSchema()
+        /// <returns>Complete charging schedule for the day</returns>
+        private ChargingSchema? CalculateInitialChargingSchedule()
         {
-            var chargingSchema = new List<ChargingPeriod>();
-            var currentTime = DateTime.Now;
-
-            // Get current energy data
-            var currentBatterySoc = GetCurrentBatterySOC();
-            var currentSolarProduction = _entities.Sensor.PowerProductionNow.State ?? 0;
-            var energyProductionToday = _entities.Sensor.EnergyProductionToday.State ?? 0;
-            var energyProductionTomorrow = _entities.Sensor.EnergyProductionTomorrow.State ?? 0;
-            var energyProductionTodayRemaining = _entities.Sensor.EnergyProductionTodayRemaining.State ?? 0;
-            var currentGridPower = _entities.Sensor.BatteryGridPower.State ?? 0;
-
-            // Get price data
             var pricesToday = _priceHelper.PricesToday;
             if (pricesToday == null || pricesToday.Count < 3)
             {
-                _logger.LogWarning("Insufficient price data for charging schema calculation");
-                return new ChargingSchema { Periods = chargingSchema };
+                _logger.LogWarning("Not enough price data to set battery schedule.");
+                return null;
             }
 
-            // Calculate energy needs and capacity
-            var currentBatteryCapacityWh = (currentBatterySoc / 100.0) * MaxBatteryCapacity;
-            var availableBatteryCapacity = MaxBatteryCapacity - currentBatteryCapacityWh;
-            var estimatedDailyConsumption = EstimateDailyEnergyConsumption();
+            // CURRENT STRATEGY: Simple lowest/highest price periods
+            // Get charge and discharge timeslots using basic price analysis
+            var (chargeStart, chargeEnd) = PriceHelper.GetLowestPriceTimeslot(pricesToday, 3);
+            var (dischargeStart, dischargeEnd) = PriceHelper.GetHighestPriceTimeslot(pricesToday, 1);
 
-            if (Debugger.IsAttached)
-            {
-                _logger.LogInformation($"Battery SOC: {currentBatterySoc:F1}%, Capacity: {currentBatteryCapacityWh:F0}Wh");
-                _logger.LogInformation($"Solar Production: Now={currentSolarProduction}W, Today={energyProductionToday}kWh, Tomorrow={energyProductionTomorrow}kWh, Remaining={energyProductionTodayRemaining}kWh");
-                _logger.LogInformation($"Grid Power: {currentGridPower}W, Daily Consumption Est: {estimatedDailyConsumption:F1}kWh");
-            }
+            // FUTURE ENHANCEMENTS: The following strategies can be implemented in the future:
 
-            // Strategy 1: Morning charge if battery is low and insufficient solar expected
-            if (currentTime.Hour < 10 && currentBatterySoc < 30 && energyProductionTodayRemaining < estimatedDailyConsumption * 0.5)
+            // 1. DYNAMIC POWER CALCULATION
+            //    - Use GetCurrentBatterySOC() to adjust charge power based on current battery level
+            //    - Calculate optimal power based on battery capacity (16.4 kWh total) and max inverter power
+            //    - Consider charging time constraints (e.g., must be 80% charged by evening peak)
+
+            // 2. SOLAR FORECAST INTEGRATION
+            //    - Use weather API to get solar production forecast for tomorrow
+            //    - Reduce charging if high solar production is expected
+            //    - Adjust discharge timing based on expected solar self-consumption
+            //    - Use EstimateDailyEnergyConsumption() vs solar forecast to determine net energy need
+
+            // 3. MULTI-STRATEGY OPTIMIZATION
+            //    - Implement the 4 strategies from previous complex version:
+            //      a) Lowest Price Strategy (current implementation)
+            //      b) Solar Excess Strategy: charge only during solar overproduction
+            //      c) Peak Shaving Strategy: discharge during consumption peaks regardless of price
+            //      d) Hybrid Strategy: combine price and solar optimization
+
+            // 4. ADVANCED SCHEDULING
+            //    - Multiple charge/discharge periods per day
+            //    - Partial charging cycles (e.g., charge to 60% during cheap hours, top off during solar peak)
+            //    - Emergency reserve logic: always keep 20% for outages
+            //    - Grid services: participate in demand response programs
+
+            // 5. MACHINE LEARNING OPTIMIZATION
+            //    - Track actual vs predicted consumption and solar production
+            //    - Learn household usage patterns for better prediction
+            //    - Optimize based on actual battery efficiency and degradation
+
+            // 6. REAL-TIME ADJUSTMENTS
+            //    - Use EvaluateAndAdjustChargingSchedule() for dynamic updates
+            //    - Implement IsChargingAllowedAfterSunset() logic for sunset detection
+            //    - React to unexpected consumption spikes or grid outages
+
+            // CURRENT IMPLEMENTATION: Fixed 8kW charge/discharge at optimal price times
+            var schedule = new ChargingSchema
             {
-                var morningPrices = pricesToday.Where(p => p.Key.Hour >= currentTime.Hour && p.Key.Hour < 10).ToDictionary(p => p.Key, p => p.Value);
-                var (morningChargeStart, morningChargeEnd) = PriceHelper.GetLowestPriceTimeslot(morningPrices, 2);
-                if (morningChargeStart != DateTime.MinValue)
-                {
-                    var morningChargePower = Math.Min(MaxInverterPower, (int)(availableBatteryCapacity * 0.6 / 2)); // Charge 60% of available capacity in 2 hours
-                    chargingSchema.Add(new ChargingPeriod
+                Periods =
+                [
+                    new ChargingPeriod
                     {
+                        StartTime = chargeStart.TimeOfDay,
+                        EndTime = chargeEnd.TimeOfDay,
                         ChargeType = BatteryChargeType.Charge,
-                        StartTime = morningChargeStart.TimeOfDay,
-                        EndTime = morningChargeEnd.TimeOfDay,
-                        PowerInWatts = (int)morningChargePower
-                    });
-                }
-            }
+                        PowerInWatts = 8000  // Future: make this dynamic based on SOC and time available
+                    },
 
-            // Strategy 2: Solar optimization charge (mid-day when solar production peaks)
-            if (energyProductionTodayRemaining > 0 && currentSolarProduction > 0)
-            {
-                var solarChargeStartHour = Math.Max(currentTime.Hour, 11);
-                var solarChargeEndHour = Math.Min(solarChargeStartHour + 4, 15);
-
-                // Calculate optimal solar charging power based on expected production
-                var expectedSolarPeak = Math.Max(currentSolarProduction, MaxSolarProduction * 0.8);
-                var solarChargePower = Math.Min((int)expectedSolarPeak, MaxInverterPower);
-
-                chargingSchema.Add(new ChargingPeriod
-                {
-                    ChargeType = BatteryChargeType.Charge,
-                    StartTime = new TimeSpan(solarChargeStartHour, 0, 0),
-                    EndTime = new TimeSpan(solarChargeEndHour, 0, 0),
-                    PowerInWatts = (int)solarChargePower
-                });
-            }
-
-            // Strategy 3: Evening discharge during peak price hours
-            var eveningPrices = pricesToday.Where(p => p.Key.Hour >= 17 && p.Key.Hour <= 22).ToDictionary(p => p.Key, p => p.Value);
-            var (dischargeStart, dischargeEnd) = PriceHelper.GetHighestPriceTimeslot(eveningPrices, 3);
-            if (dischargeStart != DateTime.MinValue && currentBatterySoc > 40)
-            {
-                // Discharge power based on typical evening consumption
-                var eveningDischargePower = Math.Min(MaxInverterPower, (int)(estimatedDailyConsumption * 1000 / 6)); // Spread consumption over 6 hours
-                chargingSchema.Add(new ChargingPeriod
-                {
-                    ChargeType = BatteryChargeType.Discharge,
-                    StartTime = dischargeStart.TimeOfDay,
-                    EndTime = dischargeEnd.TimeOfDay,
-                    PowerInWatts = (int)eveningDischargePower
-                });
-            }
-
-            // Strategy 4: Overnight charging if tomorrow's solar forecast is poor and prices are very low
-            if (energyProductionTomorrow < estimatedDailyConsumption * 0.7)
-            {
-                var nightPricesList = pricesToday.Where(p => p.Key.Hour >= 23 || p.Key.Hour <= 5).OrderBy(p => p.Value).Take(2).ToList();
-                var averagePrice = pricesToday.Values.Average();
-
-                if (nightPricesList.Any() && nightPricesList.First().Value < averagePrice * 0.6)
-                {
-                    var nightChargeStart = nightPricesList.First().Key;
-                    var nightChargeEnd = nightChargeStart.AddHours(2);
-                    var nightChargePower = Math.Min(MaxInverterPower, (int)(availableBatteryCapacity * 0.4 / 2)); // Conservative overnight charging
-
-                    chargingSchema.Add(new ChargingPeriod
+                    new ChargingPeriod
                     {
-                        ChargeType = BatteryChargeType.Charge,
-                        StartTime = nightChargeStart.TimeOfDay,
-                        EndTime = nightChargeEnd.TimeOfDay,
-                        PowerInWatts = (int)nightChargePower
-                    });
-                }
-            }
+                        StartTime = dischargeStart.TimeOfDay,
+                        EndTime = dischargeEnd.TimeOfDay,
+                        ChargeType = BatteryChargeType.Discharge,
+                        PowerInWatts = 8000  // Future: adjust based on consumption patterns and grid export limits
+                    }
+                ]
+            };
 
-            // Sort charging moments by start time
-            chargingSchema = chargingSchema.OrderBy(cm => cm.StartTime).ToList();
-
-            if (Debugger.IsAttached)
-            {
-                _logger.LogInformation($"Generated {chargingSchema.Count} charging moments:");
-                foreach (var moment in chargingSchema)
-                {
-                    _logger.LogInformation($"  {moment.ChargeType}: {moment.StartTime:hh\\:mm}-{moment.EndTime:hh\\:mm} @ {moment.PowerInWatts}W");
-                }
-            }
-
-            return new ChargingSchema { Periods = chargingSchema };
+            return schedule;
         }
+
+        #region Helper Methods
 
         /// <summary>
         /// Gets the current battery state of charge from the main battery sensor
@@ -522,7 +326,9 @@ namespace NetDaemonApps.Apps.Energy
             // Try to get SOC from the main inverter sensor first
             var mainBatterySoc = _entities.Sensor.InverterHst2083j2446e06861BatteryStateOfCharge.State;
             if (mainBatterySoc.HasValue)
+            {
                 return mainBatterySoc.Value;
+            }
 
             // Fallback: Calculate average SOC from individual battery modules
             var batteryModules = new[]
@@ -536,7 +342,9 @@ namespace NetDaemonApps.Apps.Energy
             };
 
             var validModules = batteryModules.Where(soc => soc.HasValue).ToList();
-            return validModules.Any() ? validModules.Average(soc => soc!.Value) : 50.0; // Default to 50% if no data
+
+            // Default to 50% if no data
+            return validModules.Count != 0 ? validModules.Average(soc => soc!.Value) : 50.0;
         }
 
         /// <summary>
@@ -557,122 +365,89 @@ namespace NetDaemonApps.Apps.Energy
             var month = currentTime.Month;
             var seasonalMultiplier = month switch
             {
-                12 or 1 or 2 => 1.4,    // Winter - higher heating
-                3 or 11 => 1.2,         // Shoulder months
-                4 or 5 or 9 or 10 => 1.0, // Moderate months
-                6 or 7 or 8 => 0.9,     // Summer - lower heating, some cooling
+                12 or 1 or 2 => 1.4,            // Winter - higher heating
+                3 or 11 => 1.2,                 // Shoulder months
+                4 or 5 or 9 or 10 => 1.0,       // Moderate months
+                6 or 7 or 8 => 0.9,             // Summer - lower heating, some cooling
                 _ => 1.0
             };
 
             // If we have real-time data, factor in current consumption patterns
-            if (currentGridPower > 0 && currentSolarPower >= 0)
+            if (!(currentGridPower > 0) || !(currentSolarPower >= 0)) return baseConsumptionKwh * seasonalMultiplier;
+
+            var currentTotalConsumption = currentGridPower + currentSolarPower;
+            var hourlyConsumption = currentTotalConsumption / 1000.0; // Convert W to kWh
+
+            // Extrapolate based on time of day patterns
+            var timeMultiplier = currentTime.Hour switch
             {
-                var currentTotalConsumption = currentGridPower + currentSolarPower;
-                var hourlyConsumption = currentTotalConsumption / 1000.0; // Convert W to kWh
+                >= 7 and <= 9 => 1.2,    // Morning peak
+                >= 10 and <= 16 => 0.8,  // Daytime low
+                >= 17 and <= 22 => 1.4,  // Evening peak
+                _ => 0.6                 // Night
+            };
 
-                // Extrapolate based on time of day patterns
-                var timeMultiplier = currentTime.Hour switch
-                {
-                    >= 7 and <= 9 => 1.2,   // Morning peak
-                    >= 10 and <= 16 => 0.8, // Daytime low
-                    >= 17 and <= 22 => 1.4, // Evening peak
-                    _ => 0.6                 // Night
-                };
+            var estimatedDailyFromCurrent = (hourlyConsumption / timeMultiplier) * 24;
 
-                var estimatedDailyFromCurrent = (hourlyConsumption / timeMultiplier) * 24;
+            // Average the base estimate with real-time extrapolation
+            return (baseConsumptionKwh * seasonalMultiplier + estimatedDailyFromCurrent) / 2;
 
-                // Average the base estimate with real-time extrapolation
-                return (baseConsumptionKwh * seasonalMultiplier + estimatedDailyFromCurrent) / 2;
-            }
-
-            return baseConsumptionKwh * seasonalMultiplier;
         }
 
         /// <summary>
-        /// Runs a debugging simulation to test initial schema calculation and adjustment logic
+        /// Determines if charging should be allowed based on remaining solar production
+        /// If there's no more solar production expected today, the sun has set and we shouldn't charge
         /// </summary>
-        private void RunDebugSimulation()
+        /// <param name="energyProductionTodayRemaining">Remaining solar production expected today in kWh</param>
+        /// <returns>True if charging is allowed, false if sun has set</returns>
+        private bool IsChargingAllowedAfterSunset(double energyProductionTodayRemaining)
         {
-            _logger.LogInformation("=== Starting Debug Simulation ===");
-
-            // Clear any existing state to start fresh
-            AppStateManager.SetState(nameof(Battery), "CurrentAppliedSchema", (ChargingSchema?)null);
-            AppStateManager.SetState(nameof(Battery), "LastAppliedSchedule", (DateTime?)null);
-            _lastAppliedSchedule = null;
-
-            _logger.LogInformation("Step 1: Calculating initial charging schema (simulating first run)");
-
-            // Simulate initial schema calculation
-            var initialSchema = CalculateInitialChargingSchema();
-            _logger.LogInformation($"Initial schema calculated with {initialSchema.Periods.Count} periods:");
-            foreach (var period in initialSchema.Periods)
-            {
-                _logger.LogInformation($"  - {period.ChargeType}: {period.StartTime:hh\\:mm}-{period.EndTime:hh\\:mm} @ {period.PowerInWatts}W");
-            }
-
-            // Apply the initial schema
-            _logger.LogInformation("Applying initial schema (simulation mode)...");
-            ApplyChargingSchema(initialSchema, simulateOnly: true);
-            SaveCurrentAppliedSchema(initialSchema);
-            _lastAppliedSchedule = DateTime.Now;
-            AppStateManager.SetState(nameof(Battery), "LastAppliedSchedule", _lastAppliedSchedule);
-
-            _logger.LogInformation("Step 2: Simulating 15-minute evaluation cycle (should detect no changes)");
-
-            // Simulate running the evaluation again - should detect no changes
-            EvaluateAndAdjustChargingSchema();
-
-            _logger.LogInformation("Step 3: Simulating conditions that would trigger recalculation");
-
-            // Simulate a condition that would trigger recalculation by temporarily modifying the stored schema
-            var modifiedSchema = initialSchema.Clone();
-            if (modifiedSchema.Periods.Any())
-            {
-                // Modify the first period's power to simulate a change
-                modifiedSchema.Periods.First().PowerInWatts += 1000;
-                SaveCurrentAppliedSchema(modifiedSchema);
-                _logger.LogInformation("Modified stored schema to simulate changed conditions");
-
-                // Now run evaluation again - should detect the change and recalculate
-                _logger.LogInformation("Running evaluation with modified conditions...");
-                EvaluateAndAdjustChargingSchema();
-            }
-
-            _logger.LogInformation("=== Debug Simulation Complete ===");
+            // If there's less than 0.1 kWh remaining production, consider the sun to be down
+            const double sunsetThreshold = 0.1;
+            return energyProductionTodayRemaining > sunsetThreshold;
         }
 
+        #endregion
+
+        #region State Management
+
         /// <summary>
-        /// Retrieves the currently applied charging schema from persistent state
+        /// Retrieves the currently applied charging schedule from persistent state
         /// </summary>
-        /// <returns>The currently applied charging schema, or null if none exists</returns>
-        private ChargingSchema? GetCurrentAppliedSchema()
+        /// <returns>The currently applied charging schedule, or null if none exists</returns>
+        private ChargingSchema? GetCurrentAppliedSchedule()
         {
             try
             {
+                _lastAppliedSchedule = AppStateManager.GetState<DateTime?>(nameof(Battery), "LastAppliedSchedule");
                 return AppStateManager.GetState<ChargingSchema?>(nameof(Battery), "CurrentAppliedSchema");
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Could not retrieve current applied schema from state");
+                _logger.LogWarning(ex, "Could not retrieve current applied schedule from state");
                 return null;
             }
         }
 
         /// <summary>
-        /// Saves the currently applied charging schema to persistent state
+        /// Saves the currently applied charging schedule to persistent state
         /// </summary>
-        /// <param name="schema">The charging schema that was applied</param>
-        private void SaveCurrentAppliedSchema(ChargingSchema schema)
+        /// <param name="schedule">The charging schedule that was applied</param>
+        private void SaveCurrentAppliedSchedule(ChargingSchema schedule)
         {
             try
             {
-                AppStateManager.SetState(nameof(Battery), "CurrentAppliedSchema", schema);
-                _logger.LogDebug("Saved current applied schema to state");
+                AppStateManager.SetState(nameof(Battery), "LastAppliedSchedule", DateTime.Now);
+                AppStateManager.SetState(nameof(Battery), "CurrentAppliedSchema", schedule);
+
+                _logger.LogDebug("Saved current applied schedule to state");
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Could not save current applied schema to state");
+                _logger.LogWarning(ex, "Could not save current applied schedule to state");
             }
         }
+
+        #endregion
     }
 }

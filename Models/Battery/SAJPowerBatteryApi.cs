@@ -207,14 +207,16 @@ namespace NetDaemonApps.Models.Battery
         /// </summary>
         /// <param name="chargingPeriods">List of charging/discharging periods</param>
         /// <returns>The complete BatteryScheduleParameters object.</returns>
-        public static BatteryScheduleParameters BuildBatteryScheduleParameters(List<ChargingPeriod> chargingPeriods)
+        private static BatteryScheduleParameters BuildBatteryScheduleParameters(List<ChargingPeriod> chargingPeriods)
         {
             if (chargingPeriods == null || !chargingPeriods.Any())
+            {
                 throw new ArgumentException("At least one charging period is required", nameof(chargingPeriods));
+            }
 
             // Build the value string: mode|period1|period2|...
             var valueBuilder = new StringBuilder("1"); // Mode 1 = enabled
-            
+
             foreach (var period in chargingPeriods)
             {
                 valueBuilder.Append("|").Append(period.ToApiFormat());
@@ -235,54 +237,27 @@ namespace NetDaemonApps.Models.Battery
         }
 
         /// <summary>
-        /// Builds battery schedule parameters using the legacy format (1 charge + 1 discharge period).
-        /// </summary>
-        /// <param name="chargeStart">Charge start time (HH:mm)</param>
-        /// <param name="chargeEnd">Charge end time (HH:mm)</param>
-        /// <param name="chargePower">Charge power (W)</param>
-        /// <param name="dischargeStart">Discharge start time (HH:mm)</param>
-        /// <param name="dischargeEnd">Discharge end time (HH:mm)</param>
-        /// <param name="dischargePower">Discharge power (W)</param>
-        /// <returns>The complete BatteryScheduleParameters object.</returns>
-        public static BatteryScheduleParameters BuildBatteryScheduleParameters(string chargeStart, string chargeEnd, int chargePower, string dischargeStart, string dischargeEnd, int dischargePower)
-        {
-            var periods = new List<ChargingPeriod>
-            {
-                new()
-                {
-                    ChargeType = BatteryChargeType.Charge,
-                    StartTime = TimeSpan.Parse(chargeStart),
-                    EndTime = TimeSpan.Parse(chargeEnd),
-                    PowerInWatts = chargePower
-                },
-                new()
-                {
-                    ChargeType = BatteryChargeType.Discharge,
-                    StartTime = TimeSpan.Parse(dischargeStart),
-                    EndTime = TimeSpan.Parse(dischargeEnd),
-                    PowerInWatts = dischargePower
-                }
-            };
-
-            return BuildBatteryScheduleParameters(periods);
-        }
-
-        /// <summary>
         /// Builds battery schedule parameters for multiple charging periods (3 charge + 1 discharge).
         /// This format supports the extended API capability seen in newer HAR captures.
         /// </summary>
-        /// <param name="chargePeriods">List of charging periods (typically 3)</param>
-        /// <param name="dischargePeriod">Single discharge period</param>
+        /// <param name="chargePeriods">List of charging periods (typically 3 or 1)</param>
+        /// <param name="dischargePeriods">>List of discharge periods</param>
         /// <returns>The complete BatteryScheduleParameters object.</returns>
-        public static BatteryScheduleParameters BuildBatteryScheduleParametersExtended(List<ChargingPeriod> chargePeriods, ChargingPeriod dischargePeriod)
+        public static BatteryScheduleParameters BuildBatteryScheduleParameters(List<ChargingPeriod> chargePeriods, List<ChargingPeriod> dischargePeriods)
         {
-            if (chargePeriods == null || !chargePeriods.Any())
+            if (chargePeriods == null || chargePeriods.Count == 0)
+            {
                 throw new ArgumentException("At least one charge period is required", nameof(chargePeriods));
-            
-            if (dischargePeriod == null)
-                throw new ArgumentException("Discharge period is required", nameof(dischargePeriod));
+            }
 
-            var allPeriods = new List<ChargingPeriod>(chargePeriods) { dischargePeriod };
+            if (dischargePeriods == null || dischargePeriods.Count == 0)
+            {
+                throw new ArgumentException("At least one discharge period is required", nameof(dischargePeriods));
+            }
+
+            // Combine charge periods and 1 discharge period, ensuring discharge is last
+            var allPeriods = new List<ChargingPeriod>(chargePeriods) { dischargePeriods.First() };
+
             return BuildBatteryScheduleParameters(allPeriods);
         }
 
@@ -302,14 +277,14 @@ namespace NetDaemonApps.Models.Battery
                     componentId: "|30|30|30_30|30|30|30_30",
                     transferId: "|5|5|2_1|5|5|2_1"
                 ),
-                
+
                 // Extended format: 3 charge + 1 discharge (from HAR file)
                 4 => (
                     commAddress: "3647|3606|3607|3608_3608|3609|360A|360B_360B|360C|360D|360E_360E|361B|361C|361D_361D",
                     componentId: "|30|30|30_30|30|30|30_30|30|30|30_30|30|30|30_30",
                     transferId: "|5|5|2_1|5|5|2_1|5|5|2_1|5|5|2_1"
                 ),
-                
+
                 // For other counts, extrapolate the pattern
                 _ => GenerateExtendedAddressPattern(periodCount)
             };
@@ -342,7 +317,7 @@ namespace NetDaemonApps.Models.Battery
                 {
                     // Add hex offset to addresses for additional periods
                     var offset = i * 4;
-                    var modifiedComm = baseCommPattern.Skip(1).Select(addr => 
+                    var modifiedComm = baseCommPattern.Skip(1).Select(addr =>
                         (Convert.ToInt32(addr, 16) + offset).ToString("X")).ToArray();
                     basePart = baseCommPattern[0] + "|" + string.Join("|", modifiedComm);
                     transferPart += "_1"; // Add weekday suffix
