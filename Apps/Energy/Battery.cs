@@ -69,7 +69,7 @@ namespace NetDaemonApps.Apps.Energy
             _priceHelper = priceHelper;
             _scheduler = scheduler;
 
-            _logger.LogInformation("Started battery energy program");
+            LogBatteryInfo("Started battery energy program with 3-checkpoint strategy");
 
             // Set the away mode based on entity state
             _awayMode = _entities.Switch.OurHomeAwayMode.State == "on";
@@ -115,7 +115,7 @@ namespace NetDaemonApps.Apps.Energy
         {
             try
             {
-                _logger.LogInformation("Preparing daily battery schedule");
+                LogBatteryInfo("Preparing daily battery schedule");
 
                 // Calculate the schedule for today
                 var schedule = CalculateInitialChargingSchedule();
@@ -132,7 +132,7 @@ namespace NetDaemonApps.Apps.Energy
                 // Schedule EMS management for each charge/discharge period
                 ScheduleEmsManagementForPeriods(schedule);
 
-                _logger.LogInformation("Daily schedule prepared with {PeriodCount} periods", schedule.Periods.Count);
+                LogBatteryInfo("Daily schedule prepared with {0} periods", schedule.Periods.Count);
             }
             catch (Exception ex)
             {
@@ -166,8 +166,9 @@ namespace NetDaemonApps.Apps.Energy
                 if (emsShutdownTime > DateTime.Now)
                 {
                     _scheduler.RunAt(emsShutdownTime, () => PrepareForBatteryPeriod(period));
-                    _logger.LogInformation("Scheduled EMS shutdown at {Time} for {PeriodType} period {StartTime}-{EndTime}", 
-                        emsShutdownTime.ToString("HH:mm"), period.ChargeType, period.StartTime, period.EndTime);
+                    LogBatteryInfo("Scheduled EMS shutdown at {0} for {1} period {2}-{3}", 
+                        emsShutdownTime.ToString("HH:mm"), period.ChargeType, 
+                        period.StartTime.ToString(@"hh\:mm"), period.EndTime.ToString(@"hh\:mm"));
                 }
 
                 // Schedule EMS re-enable after period ends
@@ -189,14 +190,14 @@ namespace NetDaemonApps.Apps.Energy
         {
             try
             {
-                _logger.LogInformation("Preparing for {PeriodType} period {StartTime}-{EndTime}", 
-                    period.ChargeType, period.StartTime, period.EndTime);
+                LogBatteryInfo("Preparing for {0} period {1}-{2}", 
+                    period.ChargeType, period.StartTime.ToString(@"hh\:mm"), period.EndTime.ToString(@"hh\:mm"));
 
                 // 1. Turn off EMS
                 var emsState = _entities.Switch.Ems.State;
                 if (emsState == "on")
                 {
-                    _logger.LogInformation("Turning off EMS before battery period");
+                    LogBatteryInfo("Turning off EMS before battery period");
                     _entities.Switch.Ems.TurnOff();
                     
                     // Wait a moment for EMS to shut down
@@ -211,7 +212,7 @@ namespace NetDaemonApps.Apps.Energy
                 var scheduleToApply = _preparedSchedule ?? GetPreparedSchedule();
                 if (scheduleToApply != null)
                 {
-                    _logger.LogInformation("Applying prepared battery schedule");
+                    LogBatteryInfo("Applying prepared battery schedule");
                     ApplyChargingSchedule(scheduleToApply, simulateOnly: Debugger.IsAttached);
                 }
                 else
@@ -233,13 +234,13 @@ namespace NetDaemonApps.Apps.Energy
         {
             try
             {
-                _logger.LogInformation("Restoring EMS after {PeriodType} period", period.ChargeType);
+                LogBatteryInfo("Restoring EMS after {0} period", period.ChargeType);
 
                 // Turn EMS back on
                 var emsState = _entities.Switch.Ems.State;
                 if (emsState == "off")
                 {
-                    _logger.LogInformation("Turning EMS back on");
+                    LogBatteryInfo("Turning EMS back on");
                     _entities.Switch.Ems.TurnOn();
                 }
                 else
@@ -423,7 +424,7 @@ namespace NetDaemonApps.Apps.Energy
                         PowerInWatts = 8000
                     });
 
-                    _logger.LogInformation("Added morning discharge at {Time} (SOC: {SOC}%, Price: €{Price})", 
+                    LogBatteryInfo("Added morning discharge at {0} (SOC: {1:F1}%, Price: €{2:F3})", 
                         morningDischargeStart.ToString(@"hh\:mm"), currentSOC, morningHighPrice.Value);
                 }
             }
@@ -451,7 +452,7 @@ namespace NetDaemonApps.Apps.Energy
 
             var schedule = new ChargingSchema { Periods = periods };
 
-            _logger.LogInformation("Created schedule with {PeriodCount} periods: {Periods}", 
+            LogBatteryInfo("Created schedule with {0} periods: {1}", 
                 periods.Count, 
                 string.Join(", ", periods.Select(p => $"{p.ChargeType} {p.StartTime:hh\\:mm}-{p.EndTime:hh\\:mm}")));
 
@@ -471,7 +472,7 @@ namespace NetDaemonApps.Apps.Energy
             if (checkTime > DateTime.Now)
             {
                 _scheduler.RunAt(checkTime, () => EvaluateEveningToMorningShift());
-                _logger.LogInformation("Scheduled evening price check at {Time} to evaluate discharge timing", 
+                LogBatteryInfo("Scheduled evening price check at {0} to evaluate discharge timing", 
                     checkTime.ToString("HH:mm"));
             }
         }
@@ -511,19 +512,19 @@ namespace NetDaemonApps.Apps.Energy
 
                 var bestMorningPrice = tomorrowMorningPrices.OrderByDescending(p => p.Value).First();
 
-                _logger.LogInformation("Price comparison - Tonight: €{TonightPrice} at {TonightTime}, Tomorrow morning: €{MorningPrice} at {MorningTime}",
+                LogBatteryInfo("Price comparison - Tonight: €{0:F3} at {1}, Tomorrow morning: €{2:F3} at {3}",
                     eveningPrice.Value, eveningPrice.Key.ToString("HH:mm"),
                     bestMorningPrice.Value, bestMorningPrice.Key.ToString("HH:mm"));
 
                 // If tomorrow morning price is higher than tonight, reschedule
                 if (bestMorningPrice.Value > eveningPrice.Value)
                 {
-                    _logger.LogInformation("Tomorrow morning price is higher, rescheduling discharge to tomorrow morning");
+                    LogBatteryInfo("Tomorrow morning price is higher, rescheduling discharge to tomorrow morning");
                     RescheduleDischargeTomorrowMorning(bestMorningPrice.Key);
                 }
                 else
                 {
-                    _logger.LogInformation("Keeping tonight's discharge schedule (better price)");
+                    LogBatteryInfo("Keeping tonight's discharge schedule (better price)");
                 }
             }
             catch (Exception ex)
@@ -559,7 +560,7 @@ namespace NetDaemonApps.Apps.Energy
                 var tomorrowDischargeTime = tomorrowMorningTime.AddMinutes(-5); // 5 minutes before to prepare
                 _scheduler.RunAt(tomorrowDischargeTime, () => ExecuteTomorrowMorningDischarge(tomorrowMorningTime));
                 
-                _logger.LogInformation("Scheduled tomorrow morning discharge at {Time}", 
+                LogBatteryInfo("Scheduled tomorrow morning discharge at {0}", 
                     tomorrowMorningTime.ToString("HH:mm"));
             }
             catch (Exception ex)
@@ -576,7 +577,7 @@ namespace NetDaemonApps.Apps.Energy
         {
             try
             {
-                _logger.LogInformation("Executing tomorrow morning discharge period");
+                LogBatteryInfo("Executing tomorrow morning discharge period at {0}", dischargeTime.ToString("HH:mm"));
 
                 // Create a temporary schedule with just the morning discharge
                 var morningDischargeSchedule = new ChargingSchema
@@ -608,6 +609,18 @@ namespace NetDaemonApps.Apps.Energy
         }
 
         #region Helper Methods
+
+        /// <summary>
+        /// Logs a message to both console (with [BATTERY] prefix) and the standard logger
+        /// </summary>
+        /// <param name="message">The message to log</param>
+        /// <param name="args">Optional format arguments</param>
+        private void LogBatteryInfo(string message, params object[] args)
+        {
+            var formattedMessage = args.Length > 0 ? string.Format(message, args) : message;
+            Console.WriteLine($"[BATTERY] {formattedMessage}");
+            _logger.LogInformation(message, args);
+        }
 
         /// <summary>
         /// Gets the current battery state of charge from the main battery sensor
