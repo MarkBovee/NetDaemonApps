@@ -1733,31 +1733,6 @@
           "cSharpName": "Bath"
         },
         {
-          "id": "input_boolean.dev_netdaemon_net_daemon_apps_apps_energy_appliances",
-          "friendlyName": "dev_netdaemon_net_daemon_apps_apps_energy_appliances",
-          "cSharpName": "DevNetdaemonNetDaemonAppsAppsEnergyAppliances"
-        },
-        {
-          "id": "input_boolean.dev_netdaemon_net_daemon_apps_apps_energy_battery",
-          "friendlyName": "dev_netdaemon_net_daemon_apps_apps_energy_battery",
-          "cSharpName": "DevNetdaemonNetDaemonAppsAppsEnergyBattery"
-        },
-        {
-          "id": "input_boolean.dev_netdaemon_net_daemon_apps_apps_energy_water_heater",
-          "friendlyName": "dev_netdaemon_net_daemon_apps_apps_energy_water_heater",
-          "cSharpName": "DevNetdaemonNetDaemonAppsAppsEnergyWaterHeater"
-        },
-        {
-          "id": "input_boolean.dev_netdaemon_net_daemon_apps_apps_vacation_alarm",
-          "friendlyName": "dev_netdaemon_net_daemon_apps_apps_vacation_alarm",
-          "cSharpName": "DevNetdaemonNetDaemonAppsAppsVacationAlarm"
-        },
-        {
-          "id": "input_boolean.dev_netdaemon_net_daemon_apps_apps_vacation_lights_on_vacation",
-          "friendlyName": "dev_netdaemon_net_daemon_apps_apps_vacation_lights_on_vacation",
-          "cSharpName": "DevNetdaemonNetDaemonAppsAppsVacationLightsOnVacation"
-        },
-        {
           "id": "input_boolean.netdaemon_net_daemon_apps_apps_energy_appliances",
           "friendlyName": "netdaemon_net_daemon_apps_apps_energy_appliances",
           "cSharpName": "NetdaemonNetDaemonAppsAppsEnergyAppliances"
@@ -6740,6 +6715,11 @@
           "id": "input_text.battery_discharge_schedule",
           "friendlyName": "Battery Discharge Schedule",
           "cSharpName": "BatteryDischargeSchedule"
+        },
+        {
+          "id": "input_text.battery_management_mode",
+          "friendlyName": "Battery Management Mode",
+          "cSharpName": "BatteryManagementMode"
         },
         {
           "id": "input_text.battery_management_status",

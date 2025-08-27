@@ -52,41 +52,37 @@ namespace NetDaemonApps.Apps.Energy
 
             // Check if the token is valid (diagnostic only)
             _saiPowerBatteryApi.IsTokenValid(true);
-
-            if (Debugger.IsAttached)
-            {
+            
+            if (Debugger.IsAttached) {
                 // Run schedule preparation immediately for debugging (non-blocking)
                 _ = PrepareScheduleForDayAsync();
             }
-            else
-            {
+            else {
+                // Start battery mode monitoring every 5 minutes
+                StartBatteryModeMonitoring();
+
                 // Start the scheduler and check if we have a active schedule for today or need to create one
                 var dailyTime = DateTime.Today.AddDays(1).AddMinutes(5);
                 scheduler.RunEvery(TimeSpan.FromDays(1), dailyTime, () => { _ = PrepareScheduleForDayAsync(); });
 
                 var existingSchedule = GetPreparedSchedule();
-                if (existingSchedule != null)
-                {
+                if (existingSchedule != null) {
                     _logger.LogInformation("Found existing prepared schedule for today, setting up EMS management");
-                    lock (_scheduleLock)
-                    {
+                    lock (_scheduleLock) {
                         _preparedSchedule = existingSchedule;
                     }
 
                     // If no upcoming windows remain (e.g., late restart), recompute today’s schedule
                     var upcoming = BuildMergedEmsWindows(existingSchedule);
-                    if (upcoming.Count == 0)
-                    {
+                    if (upcoming.Count == 0) {
                         _logger.LogInformation("Prepared schedule has no upcoming windows; recalculating schedule for today");
                         _ = PrepareScheduleForDayAsync();
                     }
-                    else
-                    {
+                    else {
                         ScheduleEmsManagementForPeriods(existingSchedule);
                     }
                 }
-                else
-                {
+                else {
                     _logger.LogInformation("No existing schedule found, preparing new schedule");
                     _ = PrepareScheduleForDayAsync();
                 }
@@ -831,6 +827,74 @@ namespace NetDaemonApps.Apps.Energy
             catch (Exception ex)
             {
                 _logger.LogDebug(ex, "Failed to set BatteryManagementStatus");
+            }
+        }
+
+        /// <summary>
+        /// Starts the battery mode monitoring that checks the SAJ API every 5 minutes
+        /// and updates the input_text.battery_management_mode entity.
+        /// </summary>
+        private void StartBatteryModeMonitoring()
+        {
+            if (!_saiPowerBatteryApi.IsConfigured)
+            {
+                _logger.LogWarning("SAJ API not configured - battery mode monitoring disabled");
+                return;
+            }
+
+            // Run initial check immediately (non-blocking)
+            _ = MonitorBatteryModeAsync();
+
+            // Schedule to run every 5 minutes
+            _scheduler.RunEvery(TimeSpan.FromMinutes(5), DateTime.Now.AddMinutes(5), () => { _ = MonitorBatteryModeAsync(); });
+            
+            _logger.LogInformation("Battery mode monitoring started - checking every 5 minutes");
+        }
+
+        /// <summary>
+        /// Monitors the current battery user mode and updates the Home Assistant input text entity.
+        /// </summary>
+        private async Task MonitorBatteryModeAsync()
+        {
+            try
+            {
+                var currentMode = await _saiPowerBatteryApi.GetUserModeAsync();
+                var modeText = currentMode.ToApiString();
+                
+                // Update the input text entity
+                try
+                {
+                    _entities.InputText.BatteryManagementMode.SetValue(modeText);
+                    _logger.LogDebug("Updated battery_management_mode to: {Mode}", modeText);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to update input_text.battery_management_mode entity");
+                }
+
+                // Check if mode changed from last known state
+                var lastMode = AppStateManager.GetState<BatteryUserMode?>(nameof(Battery), "LastKnownMode");
+                if (lastMode != currentMode)
+                {
+                    _logger.LogInformation("Battery mode changed from {LastMode} to {CurrentMode}", 
+                        lastMode?.ToApiString() ?? "Unknown", modeText);
+                    AppStateManager.SetState(nameof(Battery), "LastKnownMode", currentMode);
+                    AppStateManager.SetState(nameof(Battery), "LastModeChangeTime", DateTime.Now);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to monitor battery mode");
+                
+                // Update entity with error state
+                try
+                {
+                    _entities.InputText.BatteryManagementMode.SetValue("Error - Check Logs");
+                }
+                catch (Exception entityEx)
+                {
+                    _logger.LogDebug(entityEx, "Failed to update entity with error state");
+                }
             }
         }
 
