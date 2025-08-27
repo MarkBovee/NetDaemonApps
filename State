@@ -4,13 +4,6 @@
     "PreparedSchedule": {
       "Periods": [
         {
-          "ChargeType": 1,
-          "StartTime": "08:00:00",
-          "EndTime": "09:00:00",
-          "PowerInWatts": 8000,
-          "Weekdays": "1,1,1,1,1,1,1"
-        },
-        {
           "ChargeType": 0,
           "StartTime": "12:00:00",
           "EndTime": "14:59:00",
@@ -25,7 +18,7 @@
           "Weekdays": "1,1,1,1,1,1,1"
         }
       ],
-      "CreatedAt": "2025-08-27T14:32:40.0108041+02:00",
+      "CreatedAt": "2025-08-27T15:04:12.502111+02:00",
       "AppliedAt": null,
       "Source": "Unknown"
     },
@@ -110,6 +103,6 @@
       "2025-08-28T22:00:00\u002B02:00": 0.2698,
       "2025-08-28T23:00:00\u002B02:00": 0.2456
     },
-    "LastPricesUpdate": "2025-08-27T14:28:22.6200411\u002B02:00"
+    "LastPricesUpdate": "2025-08-27T15:01:12.4874609\u002B02:00"
   }
 }

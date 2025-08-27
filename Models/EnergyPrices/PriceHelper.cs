@@ -165,35 +165,6 @@ public class PriceHelper : IPriceHelper
         PricesToday = pricesTodayRaw?.ToDictionary(kvp => DateTime.Parse(kvp.Key), kvp => kvp.Value) ?? new Dictionary<DateTime, double>();
         PricesTomorrow = pricesTomorrowRaw?.ToDictionary(kvp => DateTime.Parse(kvp.Key), kvp => kvp.Value) ?? new Dictionary<DateTime, double>();
         LastPricesUpdate = lastUpdateRaw;
-
-        // Backward-compat migration from dated keys (PricesToday_yyyyMMdd, PricesTomorrow_yyyyMMdd)
-        if ((PricesToday == null || PricesToday.Count == 0) || (PricesTomorrow == null || PricesTomorrow.Count == 0))
-        {
-            var todayKey = $"PricesToday_{DateTime.Today:yyyyMMdd}";
-            var tomorrowKey = $"PricesTomorrow_{DateTime.Today:yyyyMMdd}";
-            var oldToday = AppStateManager.GetState<IDictionary<string, double>>(nameof(PriceHelper), todayKey);
-            var oldTomorrow = AppStateManager.GetState<IDictionary<string, double>>(nameof(PriceHelper), tomorrowKey);
-            var migrated = false;
-
-            if (oldToday != null && (PricesToday == null || PricesToday.Count == 0))
-            {
-                PricesToday = oldToday.ToDictionary(kvp => DateTime.Parse(kvp.Key), kvp => kvp.Value);
-                migrated = true;
-            }
-            if (oldTomorrow != null && (PricesTomorrow == null || PricesTomorrow.Count == 0))
-            {
-                PricesTomorrow = oldTomorrow.ToDictionary(kvp => DateTime.Parse(kvp.Key), kvp => kvp.Value);
-                migrated = true;
-            }
-
-            if (migrated)
-            {
-                SavePricesToStateFile();
-                // Remove the old dated keys
-                AppStateManager.SetState<IDictionary<string, double>?>(nameof(PriceHelper), todayKey, null);
-                AppStateManager.SetState<IDictionary<string, double>?>(nameof(PriceHelper), tomorrowKey, null);
-            }
-        }
     }
 
     /// <summary>
