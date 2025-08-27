@@ -325,11 +325,11 @@ namespace NetDaemonApps.Apps.Energy
             var periods = new List<ChargingPeriod>();
             var now = DateTime.Now;
 
-            // CHECKPOINT 1: Morning check (before charge) - add discharge if SOC > 40% and still relevant now
+            // CHECKPOINT 1: Morning check (before charge) - add discharge if SOC > configured threshold and still relevant now
             var currentSoc = GetCurrentBatterySoc();
             var morningCheckTime = chargeStart.AddHours(-_options.MorningCheckOffsetHours);
             var morningWindowStart = TimeSpan.FromHours(_options.MorningWindowStartHour);
-            if (currentSoc > 40.0 && morningCheckTime.TimeOfDay > morningWindowStart && now < chargeStart)
+            if (currentSoc > _options.MorningSocThresholdPercent && morningCheckTime.TimeOfDay > morningWindowStart && now < chargeStart)
             {
                 var morningPrices = pricesToday.Where(p => p.Key.TimeOfDay >= morningWindowStart &&
                                                           p.Key.TimeOfDay < chargeStart.TimeOfDay).ToList();
@@ -352,8 +352,8 @@ namespace NetDaemonApps.Apps.Energy
                             PowerInWatts = Math.Min(_options.DefaultDischargePowerW, _options.MaxInverterPowerW)
                         });
 
-                        LogStatus("Added morning discharge at {0} (SOC: {1:F1}%, Price: €{2:F3})",
-                            start.ToString(@"hh\:mm"), currentSoc, morningHighPrice.Value);
+                        LogStatus("Added morning discharge at {0} (SOC: {1:F1}% > {2:F1}%, Price: €{3:F3})",
+                            start.ToString(@"hh\:mm"), currentSoc, _options.MorningSocThresholdPercent, morningHighPrice.Value);
                     }
                 }
             }
@@ -391,6 +391,84 @@ namespace NetDaemonApps.Apps.Energy
         #endregion
 
         #region EMS Management
+
+        /// <summary>
+        /// Validates battery mode and turns off EMS if safe to do so.
+        /// Returns true if EMS was successfully turned off or was already off.
+        /// Returns false if operation should be retried later.
+        /// </summary>
+        private async Task<bool> ValidateAndTurnOffEmsAsync(string context, ChargingPeriod? period = null)
+        {
+            var emsState = _entities.Switch.Ems.State;
+            if (emsState != "on")
+            {
+                LogStatus("EMS is already off");
+                return true;
+            }
+
+            // Guard: if battery is in EMS Mode OR we cannot determine (including API not configured), do not turn off EMS and schedule a retry
+            string? blockReason = null;
+            if (!_saiPowerBatteryApi.IsConfigured)
+            {
+                blockReason = "Mode unknown (API not configured)";
+            }
+            else
+            {
+                try
+                {
+                    var mode = await _saiPowerBatteryApi.GetUserModeAsync();
+                    if (mode is BatteryUserMode.EmsMode or BatteryUserMode.Unknown)
+                    {
+                        blockReason = mode == BatteryUserMode.EmsMode ? "EMS Mode active" : "Mode unknown";
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to get battery user mode");
+                    blockReason = "Mode unknown (query failed)";
+                }
+            }
+
+            if (blockReason != null)
+            {
+                ScheduleRetryWithReason(blockReason, period);
+                return false;
+            }
+
+            LogStatus("Turning off EMS before {0}", context);
+            _entities.Switch.Ems.TurnOff();
+            await Task.Delay(TimeSpan.FromSeconds(5));
+            
+            return true;
+        }
+
+        /// <summary>
+        /// Schedules a retry for preparing battery period when EMS cannot be turned off.
+        /// </summary>
+        private void ScheduleRetryWithReason(string blockReason, ChargingPeriod? period, ChargingSchema? schedule = null, string? label = null)
+        {
+            var retryAt = RoundUpToNextFiveMinute(DateTime.Now);
+            if (!_applyRetryScheduled)
+            {
+                _applyRetryScheduled = true;
+                _scheduler.RunAt(retryAt, () =>
+                {
+                    _applyRetryScheduled = false;
+                    LogStatus($"{blockReason}");
+                    
+                    if (schedule != null && label != null)
+                        _ = PrepareForScheduleAsync(schedule, label);
+                    else
+                        _ = PrepareForBatteryPeriodAsync(period);
+                });
+
+                LogStatus($"{blockReason}");
+            }
+            else
+            {
+                LogStatus($"{blockReason}; retry already scheduled");
+            }
+        }
 
         /// <summary>
         /// Build merged EMS windows from periods to avoid flapping between adjacent/overlapping periods.
@@ -463,66 +541,11 @@ namespace NetDaemonApps.Apps.Energy
                 else
                     LogStatus("Preparing for battery window");
 
-                // 1. Turn off EMS
-                var emsState = _entities.Switch.Ems.State;
-                if (emsState == "on")
+                // 1. Validate and turn off EMS
+                if (!await ValidateAndTurnOffEmsAsync("battery period", period))
                 {
-                    // Guard: if battery is in EMS Mode OR we cannot determine (including API not configured), do not turn off EMS and schedule a retry
-                    string? blockReason = null;
-                    if (!_saiPowerBatteryApi.IsConfigured)
-                    {
-                        blockReason = "Mode unknown (API not configured)";
-                    }
-                    else
-                    {
-                        try
-                        {
-                            var mode = await _saiPowerBatteryApi.GetUserModeAsync();
-                            if (mode is BatteryUserMode.EmsMode or BatteryUserMode.Unknown)
-                            {
-                                blockReason = mode == BatteryUserMode.EmsMode ? "EMS Mode active" : "Mode unknown";
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger.LogWarning(ex, "Failed to get battery user mode");
-                            blockReason = "Mode unknown (query failed)";
-                        }
-                    }
-
-                    if (blockReason != null)
-                    {
-                        var retryAt = RoundUpToNextFiveMinute(DateTime.Now);
-                        if (!_applyRetryScheduled)
-                        {
-                            _applyRetryScheduled = true;
-                            _scheduler.RunAt(retryAt, () =>
-                            {
-                                _applyRetryScheduled = false;
-
-                                LogStatus($"{blockReason}");
-
-                                _ = PrepareForBatteryPeriodAsync(period);
-                            });
-
-                            LogStatus($"{blockReason}");
-                        }
-                        else
-                        {
-                            LogStatus($"{blockReason}; retry already scheduled");
-                        }
-                        return;
-                    }
-
-                    LogStatus("Turning off EMS before battery period");
-
-                    _entities.Switch.Ems.TurnOff();
-
-                    await Task.Delay(TimeSpan.FromSeconds(5));
-                }
-                else
-                {
-                    LogStatus("EMS is already off");
+                    ScheduleRetryWithReason("EMS validation failed", period);
+                    return; // Retry was scheduled, exit early
                 }
 
                 // 2. Apply the prepared schedule if we have one
@@ -557,57 +580,10 @@ namespace NetDaemonApps.Apps.Energy
             {
                 LogStatus("Preparing for ad-hoc schedule: {0}", label);
 
-                var emsState = _entities.Switch.Ems.State;
-                if (emsState == "on")
-                {
-                    // Guard: if battery is in EMS Mode OR we cannot determine (including API not configured), do not turn off EMS and schedule a retry
-                    string? blockReason = null;
-                    if (!_saiPowerBatteryApi.IsConfigured)
-                    {
-                        blockReason = "Mode unknown (API not configured)";
-                    }
-                    else
-                    {
-                        try
-                        {
-                            var mode = await _saiPowerBatteryApi.GetUserModeAsync();
-                            if (mode == BatteryUserMode.EmsMode || mode == BatteryUserMode.Unknown)
-                            {
-                                blockReason = mode == BatteryUserMode.EmsMode ? "EMS Mode active" : "Mode unknown";
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            blockReason = "Mode unknown (query failed)";
-                        }
-                    }
+                // Validate and turn off EMS
+                if (!await ValidateAndTurnOffEmsAsync($"ad-hoc schedule: {label}"))
+                    return; // Retry was scheduled, exit early
 
-                    if (blockReason != null)
-                    {
-                        var retryAt = RoundUpToNextFiveMinute(DateTime.Now);
-                        if (!_applyRetryScheduled)
-                        {
-                            _applyRetryScheduled = true;
-                            _scheduler.RunAt(retryAt, () =>
-                            {
-                                _applyRetryScheduled = false;
-
-                                LogStatus($"{blockReason}");
-
-                                _ = PrepareForScheduleAsync(schedule, label);
-                            });
-                        }
-
-                        LogStatus($"{blockReason}");
-
-                        return;
-                    }
-
-                    LogStatus("Turning off EMS before ad-hoc schedule");
-
-                    _entities.Switch.Ems.TurnOff();
-                    await Task.Delay(TimeSpan.FromSeconds(5));
-                }
                 await ApplyChargingScheduleAsync(schedule, simulateOnly: _simulationMode);
             }
             catch (Exception ex)

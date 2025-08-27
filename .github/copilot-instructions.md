@@ -9,6 +9,36 @@ NetDaemonApps is a .NET-based Home Assistant automation daemon using the NetDaem
 - Use language- and framework-specific best practices for code structure, error handling, naming, and security
 - Prefer explicit over implicit code, avoid magic numbers/strings, and keep code readable and maintainable
 
+---
+
+## Development Session Management (Required)
+When working on development tasks, especially complex implementations or multi-step processes:
+
+1. **Always check for existing progress**: Start by reading the `.github/copilot-progress.md` file to understand any ongoing work or previous session context.
+
+2. **Maintain progress documentation**: Update the progress file throughout your session with:
+[    - Current status and completed steps
+]()    - Technical decisions and implementation details
+    - Issues encountered and solutions applied
+    - Next steps and remaining work
+
+3. **Session completion**: When completing a task or major milestone:
+    - Add a "Task Completed Successfully" section with comprehensive summary
+    - Document what was implemented, tested, and verified
+    - Include key features delivered and technical approach
+    - Note any follow-up actions needed for production
+
+### Progress File Structure
+The `.github/copilot-progress.md` should follow this pattern:
+- **Header**: Task name, date, and completion status
+- **Summary**: Brief overview of accomplishments (for completed tasks)
+- **Detailed Steps**: Numbered list of completed work with checkmarks
+- **Implementation Details**: Technical specifics, file changes, patterns used
+- **Testing/Verification**: Test results, compilation status, validation steps
+- **Next Steps**: Future work or production deployment notes
+
+This approach ensures continuity between development sessions and provides clear documentation of progress for complex implementations.
+
 ## Architecture & Key Patterns
 
 ### App Structure

@@ -119,5 +119,14 @@ namespace NetDaemonApps.Models.Battery
         /// Default: 10 minutes.
         /// </summary>
         public int MinChargeBufferMinutes { get; set; } = 10;
+
+        // SOC thresholds
+        /// <summary>
+        /// Minimum state-of-charge (SOC) percentage required to trigger morning discharge.
+        /// If the battery SOC is above this threshold during the morning check window, a discharge period may be scheduled
+        /// during high-price hours before the planned charge period. Range: 0-100.
+        /// Default: 40%.
+        /// </summary>
+        public double MorningSocThresholdPercent { get; set; } = 40.0;
     }
 }
