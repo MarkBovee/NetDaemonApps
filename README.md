@@ -13,7 +13,13 @@ This project is designed for both non-developers and developers:
 
 ### Energy Management
 - **Energy/Appliances**: Automates and monitors home appliances for efficient energy use.
-- **Energy/Battery**: Manages battery storage, charging schedules, and integrates with SAJ Power Battery systems.
+- **Energy/Battery**: Advanced battery storage management with intelligent 3-checkpoint optimization strategy. Features include:
+  - **Smart Morning Check**: Automatically discharges in the morning if battery SOC > 40% during high price periods
+  - **Optimal Charging**: Always charges during the lowest price periods (typically early morning)
+  - **Dynamic Evening Evaluation**: Compares tomorrow morning vs tonight evening prices to optimize discharge timing
+  - **EMS Integration**: Automatically manages Energy Management System (EMS) shutdown/restore to prevent conflicts
+  - **SAJ Power Battery API**: Full integration with SAJ Power battery systems for schedule application
+  - **State Persistence**: Maintains schedules across daemon restarts with robust error handling
 - **Energy/WaterHeater**: Controls water heater operations for optimal energy savings.
 
 ### Vacation Mode
@@ -24,6 +30,67 @@ This project is designed for both non-developers and developers:
 - **Models/**: Contains helper classes for managing app state, battery APIs, and price information.
 - **Enums/**: Defines levels and other enums used throughout the apps.
 - **Utils.cs**: Utility functions shared by multiple apps.
+
+---
+
+## 🔋 Smart Battery Management: 3-Checkpoint Strategy
+
+The Energy/Battery app features an intelligent optimization strategy that adapts to price trends and battery conditions throughout the day. This advanced system maximizes energy savings and revenue by making smart decisions at three critical checkpoints.
+
+### How It Works
+
+#### 🌅 **Checkpoint 1: Morning Evaluation (Pre-Charge)**
+- **When**: 2 hours before the planned charging period
+- **Logic**: Checks current battery State of Charge (SOC)
+- **Action**: If SOC > 40%, automatically adds a morning discharge during high price periods (6 AM - charge time)
+- **Benefit**: Captures morning price peaks when battery has sufficient capacity
+
+#### ⚡ **Checkpoint 2: Optimal Charging**
+- **When**: During the lowest price period of the day (typically 2-5 AM)
+- **Logic**: Always charges at maximum power (8kW) during cheapest electricity hours
+- **Action**: Fills battery when energy costs are minimal
+- **EMS Integration**: Automatically shuts down Energy Management System 5 minutes before charging to prevent conflicts
+
+#### 🌆 **Checkpoint 3: Evening Price Comparison**
+- **When**: 30 minutes before scheduled evening discharge
+- **Logic**: Compares tomorrow morning prices (6-12 AM) vs tonight's evening prices
+- **Decision**:
+  - If **tomorrow morning price > tonight evening price**: Cancels tonight's discharge and reschedules for tomorrow morning
+  - If **tonight evening price ≥ tomorrow morning price**: Keeps original evening discharge schedule
+- **Benefit**: Maximizes revenue by choosing the most profitable discharge timing
+
+### Technical Features
+
+- **EMS Management**: Automatically handles Energy Management System shutdown/restore with proper timing buffers
+- **State Persistence**: Maintains schedules across daemon restarts using robust state management
+- **SAJ Power Integration**: Full API integration for applying schedules to SAJ Power battery systems
+- **Comprehensive Logging**: Detailed logs for all decisions, price comparisons, and schedule changes
+- **Error Handling**: Graceful fallbacks and recovery from API failures or missing data
+
+### Configuration Requirements
+
+- **Home Assistant Entities**:
+  - `switch.ems` - Energy Management System control
+  - Battery SOC sensors (main inverter + individual modules)
+  - Price data from energy provider integration
+
+- **SAJ Power Battery**: Valid credentials and network access to battery system
+
+### Example Daily Flow
+
+```
+00:05 - Daily schedule calculation
+├── SOC Check: 65% → Add morning discharge at 08:00-09:00 (€0.45/kWh)
+├── Charge: 02:00-05:00 at €0.18/kWh  
+└── Evening discharge: 20:00-21:00 at €0.38/kWh (pending evaluation)
+
+19:30 - Evening price comparison
+├── Tonight: €0.38/kWh at 20:00
+├── Tomorrow morning: €0.47/kWh at 08:00
+└── Decision: Cancel tonight, reschedule for tomorrow 08:00
+
+Result: 3 discharge periods (morning + rescheduled + next day) capturing optimal prices
+```
 
 ---
 
@@ -70,6 +137,14 @@ Edit `appsettings.json` or `appsettings.Development.json` to set up your Home As
 ---
 
 ## Debugging & Verification
+
+### Battery Strategy Debugging
+- **Debug Mode**: When running with a debugger attached, the Battery app simulates all operations without actually applying schedules to the battery system
+- **Comprehensive Logging**: All checkpoint decisions, price comparisons, and schedule changes are logged with detailed information
+- **State Inspection**: Use Home Assistant's Developer Tools to check `input_text.battery_charge_schedule` and `input_text.battery_discharge_schedule` entities for current schedules
+- **EMS Monitoring**: Watch the `switch.ems` entity to verify proper shutdown/restore timing around battery periods
+
+### Vacation Lighting Debugging
 - When running in debug mode (with a debugger attached), the Vacation/LightsOnVacation app will log the list of entities it considers to be lights or lamps. This helps you verify and tune the filter so only real lamps are included.
 - In production, only these entities will be controlled for vacation lighting.
 

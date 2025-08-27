@@ -380,8 +380,8 @@ namespace NetDaemonApps.Apps.Energy
         }
 
         /// <summary>
-        /// Calculates the initial charging schedule based on energy prices, solar production, and battery state
-        /// Currently implements the simplest strategy: charge during lowest prices, discharge during highest prices
+        /// Calculates the initial charging schedule based on energy prices and battery state
+        /// Implements 3-checkpoint strategy: morning check, charge moment, evening check
         /// </summary>
         /// <returns>Complete charging schedule for the day</returns>
         private ChargingSchema? CalculateInitialChargingSchedule()
@@ -393,71 +393,218 @@ namespace NetDaemonApps.Apps.Energy
                 return null;
             }
 
-            // CURRENT STRATEGY: Simple lowest/highest price periods
-            // Get charge and discharge timeslots using basic price analysis
+            // Get basic charge and discharge timeslots
             var (chargeStart, chargeEnd) = PriceHelper.GetLowestPriceTimeslot(pricesToday, 3);
             var (dischargeStart, dischargeEnd) = PriceHelper.GetHighestPriceTimeslot(pricesToday, 1);
 
-            // FUTURE ENHANCEMENTS: The following strategies can be implemented in the future:
+            var periods = new List<ChargingPeriod>();
 
-            // 1. DYNAMIC POWER CALCULATION
-            //    - Use GetCurrentBatterySOC() to adjust charge power based on current battery level
-            //    - Calculate optimal power based on battery capacity (16.4 kWh total) and max inverter power
-            //    - Consider charging time constraints (e.g., must be 80% charged by evening peak)
-
-            // 2. SOLAR FORECAST INTEGRATION
-            //    - Use weather API to get solar production forecast for tomorrow
-            //    - Reduce charging if high solar production is expected
-            //    - Adjust discharge timing based on expected solar self-consumption
-            //    - Use EstimateDailyEnergyConsumption() vs solar forecast to determine net energy need
-
-            // 3. MULTI-STRATEGY OPTIMIZATION
-            //    - Implement the 4 strategies from previous complex version:
-            //      a) Lowest Price Strategy (current implementation)
-            //      b) Solar Excess Strategy: charge only during solar overproduction
-            //      c) Peak Shaving Strategy: discharge during consumption peaks regardless of price
-            //      d) Hybrid Strategy: combine price and solar optimization
-
-            // 4. ADVANCED SCHEDULING
-            //    - Multiple charge/discharge periods per day
-            //    - Partial charging cycles (e.g., charge to 60% during cheap hours, top off during solar peak)
-            //    - Emergency reserve logic: always keep 20% for outages
-            //    - Grid services: participate in demand response programs
-
-            // 5. MACHINE LEARNING OPTIMIZATION
-            //    - Track actual vs predicted consumption and solar production
-            //    - Learn household usage patterns for better prediction
-            //    - Optimize based on actual battery efficiency and degradation
-
-            // 6. REAL-TIME ADJUSTMENTS
-            //    - Use EvaluateAndAdjustChargingSchedule() for dynamic updates
-            //    - Implement IsChargingAllowedAfterSunset() logic for sunset detection
-            //    - React to unexpected consumption spikes or grid outages
-
-            // CURRENT IMPLEMENTATION: Fixed 8kW charge/discharge at optimal price times
-            var schedule = new ChargingSchema
+            // CHECKPOINT 1: Morning check (before charge) - add discharge if SOC > 40%
+            var currentSOC = GetCurrentBatterySOC();
+            var morningCheckTime = chargeStart.AddHours(-2); // 2 hours before charge start
+            
+            if (currentSOC > 40.0 && morningCheckTime.TimeOfDay > TimeSpan.FromHours(6)) // Not too early
             {
-                Periods =
-                [
-                    new ChargingPeriod
-                    {
-                        StartTime = chargeStart.TimeOfDay,
-                        EndTime = chargeEnd.TimeOfDay,
-                        ChargeType = BatteryChargeType.Charge,
-                        PowerInWatts = 8000  // Future: make this dynamic based on SOC and time available
-                    },
+                // Find morning high price period for discharge
+                var morningPrices = pricesToday.Where(p => p.Key.TimeOfDay >= TimeSpan.FromHours(6) && 
+                                                          p.Key.TimeOfDay < chargeStart.TimeOfDay).ToList();
+                
+                if (morningPrices.Count > 0)
+                {
+                    var morningHighPrice = morningPrices.OrderByDescending(p => p.Value).First();
+                    var morningDischargeStart = morningHighPrice.Key.TimeOfDay;
+                    var morningDischargeEnd = morningDischargeStart.Add(TimeSpan.FromHours(1));
 
-                    new ChargingPeriod
+                    periods.Add(new ChargingPeriod
                     {
-                        StartTime = dischargeStart.TimeOfDay,
-                        EndTime = dischargeEnd.TimeOfDay,
+                        StartTime = morningDischargeStart,
+                        EndTime = morningDischargeEnd,
                         ChargeType = BatteryChargeType.Discharge,
-                        PowerInWatts = 8000  // Future: adjust based on consumption patterns and grid export limits
-                    }
-                ]
-            };
+                        PowerInWatts = 8000
+                    });
+
+                    _logger.LogInformation("Added morning discharge at {Time} (SOC: {SOC}%, Price: €{Price})", 
+                        morningDischargeStart.ToString(@"hh\:mm"), currentSOC, morningHighPrice.Value);
+                }
+            }
+
+            // CHECKPOINT 2: Always add charge moment at lowest price
+            periods.Add(new ChargingPeriod
+            {
+                StartTime = chargeStart.TimeOfDay,
+                EndTime = chargeEnd.TimeOfDay,
+                ChargeType = BatteryChargeType.Charge,
+                PowerInWatts = 8000
+            });
+
+            // CHECKPOINT 3: Add evening discharge (will be checked and potentially moved later)
+            periods.Add(new ChargingPeriod
+            {
+                StartTime = dischargeStart.TimeOfDay,
+                EndTime = dischargeEnd.TimeOfDay,
+                ChargeType = BatteryChargeType.Discharge,
+                PowerInWatts = 8000
+            });
+
+            // Schedule evening check to potentially move discharge to tomorrow morning
+            ScheduleEveningPriceCheck(dischargeStart);
+
+            var schedule = new ChargingSchema { Periods = periods };
+
+            _logger.LogInformation("Created schedule with {PeriodCount} periods: {Periods}", 
+                periods.Count, 
+                string.Join(", ", periods.Select(p => $"{p.ChargeType} {p.StartTime:hh\\:mm}-{p.EndTime:hh\\:mm}")));
 
             return schedule;
+        }
+
+        /// <summary>
+        /// Schedules an evening price check to potentially move discharge from tonight to tomorrow morning
+        /// This implements the third checkpoint: comparing tomorrow morning vs tonight evening prices
+        /// </summary>
+        /// <param name="currentDischargeTime">The currently scheduled discharge time for tonight</param>
+        private void ScheduleEveningPriceCheck(DateTime currentDischargeTime)
+        {
+            // Schedule the check 30 minutes before the evening discharge period
+            var checkTime = currentDischargeTime.AddMinutes(-30);
+            
+            if (checkTime > DateTime.Now)
+            {
+                _scheduler.RunAt(checkTime, () => EvaluateEveningToMorningShift());
+                _logger.LogInformation("Scheduled evening price check at {Time} to evaluate discharge timing", 
+                    checkTime.ToString("HH:mm"));
+            }
+        }
+
+        /// <summary>
+        /// Evaluates whether to move tonight's discharge to tomorrow morning based on price comparison
+        /// If tomorrow morning price > tonight evening price, reschedule discharge for tomorrow morning
+        /// </summary>
+        private void EvaluateEveningToMorningShift()
+        {
+            try
+            {
+                _logger.LogInformation("Evaluating evening to morning discharge shift");
+
+                var pricesToday = _priceHelper.PricesToday;
+                var pricesTomorrow = _priceHelper.PricesTomorrow;
+
+                if (pricesToday == null || pricesTomorrow == null)
+                {
+                    _logger.LogWarning("Missing price data for evening evaluation");
+                    return;
+                }
+
+                // Get current evening discharge price (highest price today)
+                var eveningPrice = pricesToday.OrderByDescending(p => p.Value).First();
+                
+                // Get tomorrow morning high price period (6-12 AM)
+                var tomorrowMorningPrices = pricesTomorrow.Where(p => 
+                    p.Key.TimeOfDay >= TimeSpan.FromHours(6) && 
+                    p.Key.TimeOfDay < TimeSpan.FromHours(12)).ToList();
+
+                if (tomorrowMorningPrices.Count == 0)
+                {
+                    _logger.LogWarning("No tomorrow morning prices available");
+                    return;
+                }
+
+                var bestMorningPrice = tomorrowMorningPrices.OrderByDescending(p => p.Value).First();
+
+                _logger.LogInformation("Price comparison - Tonight: €{TonightPrice} at {TonightTime}, Tomorrow morning: €{MorningPrice} at {MorningTime}",
+                    eveningPrice.Value, eveningPrice.Key.ToString("HH:mm"),
+                    bestMorningPrice.Value, bestMorningPrice.Key.ToString("HH:mm"));
+
+                // If tomorrow morning price is higher than tonight, reschedule
+                if (bestMorningPrice.Value > eveningPrice.Value)
+                {
+                    _logger.LogInformation("Tomorrow morning price is higher, rescheduling discharge to tomorrow morning");
+                    RescheduleDischargeTomorrowMorning(bestMorningPrice.Key);
+                }
+                else
+                {
+                    _logger.LogInformation("Keeping tonight's discharge schedule (better price)");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error during evening price evaluation");
+            }
+        }
+
+        /// <summary>
+        /// Reschedules the current evening discharge to tomorrow morning
+        /// </summary>
+        /// <param name="tomorrowMorningTime">The optimal time tomorrow morning for discharge</param>
+        private void RescheduleDischargeTomorrowMorning(DateTime tomorrowMorningTime)
+        {
+            try
+            {
+                // Update the prepared schedule to remove tonight's discharge
+                if (_preparedSchedule?.Periods != null)
+                {
+                    // Remove evening discharge periods
+                    var periodsToKeep = _preparedSchedule.Periods
+                        .Where(p => p.ChargeType != BatteryChargeType.Discharge || 
+                                   p.StartTime < TimeSpan.FromHours(17)) // Keep morning discharge if any
+                        .ToList();
+
+                    _preparedSchedule.Periods = periodsToKeep;
+                    SavePreparedSchedule(_preparedSchedule);
+                    
+                    _logger.LogInformation("Removed tonight's discharge from schedule");
+                }
+
+                // Schedule the new discharge for tomorrow morning
+                var tomorrowDischargeTime = tomorrowMorningTime.AddMinutes(-5); // 5 minutes before to prepare
+                _scheduler.RunAt(tomorrowDischargeTime, () => ExecuteTomorrowMorningDischarge(tomorrowMorningTime));
+                
+                _logger.LogInformation("Scheduled tomorrow morning discharge at {Time}", 
+                    tomorrowMorningTime.ToString("HH:mm"));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error rescheduling discharge to tomorrow morning");
+            }
+        }
+
+        /// <summary>
+        /// Executes the discharge that was moved to tomorrow morning
+        /// </summary>
+        /// <param name="dischargeTime">The time for the discharge period</param>
+        private void ExecuteTomorrowMorningDischarge(DateTime dischargeTime)
+        {
+            try
+            {
+                _logger.LogInformation("Executing tomorrow morning discharge period");
+
+                // Create a temporary schedule with just the morning discharge
+                var morningDischargeSchedule = new ChargingSchema
+                {
+                    Periods = new List<ChargingPeriod>
+                    {
+                        new ChargingPeriod
+                        {
+                            StartTime = dischargeTime.TimeOfDay,
+                            EndTime = dischargeTime.TimeOfDay.Add(TimeSpan.FromHours(1)),
+                            ChargeType = BatteryChargeType.Discharge,
+                            PowerInWatts = 8000
+                        }
+                    }
+                };
+
+                // Apply the discharge schedule (this will handle EMS management)
+                var period = morningDischargeSchedule.Periods.First();
+                PrepareForBatteryPeriod(period);
+
+                // Schedule EMS restoration after the period
+                var restoreTime = dischargeTime.AddHours(1).AddMinutes(1);
+                _scheduler.RunAt(restoreTime, () => RestoreEmsAfterPeriod(period));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error executing tomorrow morning discharge");
+            }
         }
 
         #region Helper Methods
