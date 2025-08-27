@@ -31,7 +31,6 @@ try
                 .AddAppsFromAssembly(Assembly.GetExecutingAssembly())   // Register app assemblies
                 .AddNetDaemonStateManager()                             // Add state manager
                 .AddNetDaemonScheduler()                                // Add scheduler
-                // Battery options and SAJ API
                 .Configure<BatteryOptions>(context.Configuration.GetSection("Battery"))
                 .AddSingleton(sp =>
                 {
@@ -40,7 +39,8 @@ try
                         username: opt.Username ?? string.Empty,
                         password: opt.Password ?? string.Empty,
                         deviceSerialNumber: opt.DeviceSerialNumber ?? string.Empty,
-                        baseUrl: opt.BaseUrl ?? "https://eop.saj-electric.com"
+                        plantUid: opt.PlantUid ?? string.Empty,
+                        baseUrl: opt.BaseUrl ?? string.Empty
                     );
                 })
 

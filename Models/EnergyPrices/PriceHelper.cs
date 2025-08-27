@@ -158,16 +158,42 @@ public class PriceHelper : IPriceHelper
     /// </summary>
     private void LoadPricesFromStateFile()
     {
-        var todayKey = $"PricesToday_{DateTime.Today:yyyyMMdd}";
-        var tomorrowKey = $"PricesTomorrow_{DateTime.Today:yyyyMMdd}";
-        var timestampKey = $"LastPricesUpdate";
-        var pricesTodayRaw = AppStateManager.GetState<IDictionary<string, double>>(nameof(PriceHelper), todayKey);
-        var pricesTomorrowRaw = AppStateManager.GetState<IDictionary<string, double>>(nameof(PriceHelper), tomorrowKey);
-        var lastUpdateRaw = AppStateManager.GetState<DateTime?>(nameof(PriceHelper), timestampKey);
+        var pricesTodayRaw = AppStateManager.GetState<IDictionary<string, double>>(nameof(PriceHelper), "PricesToday");
+        var pricesTomorrowRaw = AppStateManager.GetState<IDictionary<string, double>>(nameof(PriceHelper), "PricesTomorrow");
+        var lastUpdateRaw = AppStateManager.GetState<DateTime?>(nameof(PriceHelper), "LastPricesUpdate");
 
         PricesToday = pricesTodayRaw?.ToDictionary(kvp => DateTime.Parse(kvp.Key), kvp => kvp.Value) ?? new Dictionary<DateTime, double>();
         PricesTomorrow = pricesTomorrowRaw?.ToDictionary(kvp => DateTime.Parse(kvp.Key), kvp => kvp.Value) ?? new Dictionary<DateTime, double>();
         LastPricesUpdate = lastUpdateRaw;
+
+        // Backward-compat migration from dated keys (PricesToday_yyyyMMdd, PricesTomorrow_yyyyMMdd)
+        if ((PricesToday == null || PricesToday.Count == 0) || (PricesTomorrow == null || PricesTomorrow.Count == 0))
+        {
+            var todayKey = $"PricesToday_{DateTime.Today:yyyyMMdd}";
+            var tomorrowKey = $"PricesTomorrow_{DateTime.Today:yyyyMMdd}";
+            var oldToday = AppStateManager.GetState<IDictionary<string, double>>(nameof(PriceHelper), todayKey);
+            var oldTomorrow = AppStateManager.GetState<IDictionary<string, double>>(nameof(PriceHelper), tomorrowKey);
+            var migrated = false;
+
+            if (oldToday != null && (PricesToday == null || PricesToday.Count == 0))
+            {
+                PricesToday = oldToday.ToDictionary(kvp => DateTime.Parse(kvp.Key), kvp => kvp.Value);
+                migrated = true;
+            }
+            if (oldTomorrow != null && (PricesTomorrow == null || PricesTomorrow.Count == 0))
+            {
+                PricesTomorrow = oldTomorrow.ToDictionary(kvp => DateTime.Parse(kvp.Key), kvp => kvp.Value);
+                migrated = true;
+            }
+
+            if (migrated)
+            {
+                SavePricesToStateFile();
+                // Remove the old dated keys
+                AppStateManager.SetState<IDictionary<string, double>?>(nameof(PriceHelper), todayKey, null);
+                AppStateManager.SetState<IDictionary<string, double>?>(nameof(PriceHelper), tomorrowKey, null);
+            }
+        }
     }
 
     /// <summary>
@@ -175,15 +201,12 @@ public class PriceHelper : IPriceHelper
     /// </summary>
     private void SavePricesToStateFile()
     {
-        var todayKey = $"PricesToday_{DateTime.Today:yyyyMMdd}";
-        var tomorrowKey = $"PricesTomorrow_{DateTime.Today:yyyyMMdd}";
-        var timestampKey = $"LastPricesUpdate";
         if (PricesToday != null)
-            AppStateManager.SetState(nameof(PriceHelper), todayKey, PricesToday);
+            AppStateManager.SetState(nameof(PriceHelper), "PricesToday", PricesToday);
         if (PricesTomorrow != null)
-            AppStateManager.SetState(nameof(PriceHelper), tomorrowKey, PricesTomorrow);
+            AppStateManager.SetState(nameof(PriceHelper), "PricesTomorrow", PricesTomorrow);
         if (LastPricesUpdate != null)
-            AppStateManager.SetState(nameof(PriceHelper), timestampKey, LastPricesUpdate);
+            AppStateManager.SetState(nameof(PriceHelper), "LastPricesUpdate", LastPricesUpdate);
     }
 
     /// <summary>

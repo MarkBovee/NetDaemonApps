@@ -31,6 +31,13 @@ namespace NetDaemonApps.Models.Battery
         public string? DeviceSerialNumber { get; set; }
 
         /// <summary>
+        /// The plant UID (unique identifier) for your solar/battery installation as recognized by the SAJ platform.
+        /// This is required for retrieving device status information and user mode details from the API.
+        /// Can be found in the SAJ portal URL or API responses. If not provided, uses the default hardcoded value.
+        /// </summary>
+        public string? PlantUid { get; set; }
+
+        /// <summary>
         /// Base URL for the SAJ Power (Elekeeper) API. Override only if SAJ changes their endpoint or for testing.
         /// Default: https://eop.saj-electric.com
         /// </summary>

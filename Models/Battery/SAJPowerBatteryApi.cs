@@ -55,6 +55,11 @@ namespace NetDaemonApps.Models.Battery
         /// </summary>
         private readonly string _deviceSerialNumber;
 
+        /// <summary>
+        /// The plant UID for the device
+        /// </summary>
+        private readonly string _plantUid;
+
         #region HAR default values and static API parameters
         /// <summary>
         /// Elekeeper AES-ECB password encryption key
@@ -94,19 +99,48 @@ namespace NetDaemonApps.Models.Battery
         #endregion
 
         /// <summary>
+        /// Indicates whether the API has valid configuration (username, password, device SN, plant UID, base URL).
+        /// </summary>
+        public bool IsConfigured { get; }
+
+        /// <summary>
+        /// If configuration is invalid, contains the human-readable reason.
+        /// </summary>
+        public string? ConfigurationError { get; }
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="SAJPowerBatteryApi"/> class
         /// </summary>
         /// <param name="username">The username</param>
         /// <param name="password">The password</param>
         /// <param name="deviceSerialNumber">The device serial number</param>
+        /// <param name="plantUid">The plant UID for the device</param>
         /// <param name="baseUrl">The base url</param>
-        public SAJPowerBatteryApi(string username, string password, string deviceSerialNumber, string baseUrl = "https://eop.saj-electric.com")
+        public SAJPowerBatteryApi(string username, string password, string deviceSerialNumber, string plantUid, string baseUrl = "https://eop.saj-electric.com")
         {
             _username = username;
             _password = password;
             _deviceSerialNumber = deviceSerialNumber;
+            _plantUid = plantUid;
             _baseUrl = baseUrl;
             _httpClient = new HttpClient();
+
+            // Validate configuration
+            string? error = null;
+            if (string.IsNullOrWhiteSpace(_username)) error = (error == null ? "Missing Username" : error + ", Username");
+            if (string.IsNullOrWhiteSpace(_password)) error = (error == null ? "Missing Password" : error + ", Password");
+            if (string.IsNullOrWhiteSpace(_deviceSerialNumber)) error = (error == null ? "Missing DeviceSerialNumber" : error + ", DeviceSerialNumber");
+            if (string.IsNullOrWhiteSpace(_plantUid)) error = (error == null ? "Missing PlantUid" : error + ", PlantUid");
+            if (string.IsNullOrWhiteSpace(_baseUrl) || !Uri.TryCreate(_baseUrl, UriKind.Absolute, out var uri))
+                error = (error == null ? "Invalid BaseUrl" : error + ", BaseUrl");
+
+            IsConfigured = string.IsNullOrEmpty(error);
+            ConfigurationError = error;
+
+            if (!IsConfigured)
+            {
+                Console.Error.WriteLine($"SAJ API not configured: {ConfigurationError}");
+            }
         }
 
         /// <summary>
@@ -342,6 +376,11 @@ namespace NetDaemonApps.Models.Battery
 
         public async Task<bool> ClearBatteryScheduleAsync()
         {
+            if (!IsConfigured)
+            {
+                Console.Error.WriteLine($"Cannot clear schedule: SAJ API not configured ({ConfigurationError})");
+                return false;
+            }
             await EnsureAuthenticatedAsync();
             try
             {
@@ -397,6 +436,12 @@ namespace NetDaemonApps.Models.Battery
         /// <returns>True if successful, false otherwise.</returns>
         public async Task<bool> SaveBatteryScheduleAsync(BatteryScheduleParameters batterySchedule)
         {
+            if (!IsConfigured)
+            {
+                Console.Error.WriteLine($"Cannot save schedule: SAJ API not configured ({ConfigurationError})");
+                return false;
+            }
+
             await EnsureAuthenticatedAsync();
 
             try
@@ -652,5 +697,82 @@ namespace NetDaemonApps.Models.Battery
             return sb.ToString();
         }
         #endregion
+
+        /// <summary>
+        /// Retrieves the current user mode from the SAJ Power Battery API.
+        /// </summary>
+        /// <returns>The user mode as a BatteryUserMode enum value, or Unknown if failed to retrieve.</returns>
+        public async Task<BatteryUserMode> GetUserModeAsync()
+        {
+            if (!IsConfigured)
+            {
+                Console.Error.WriteLine($"Cannot get user mode: SAJ API not configured ({ConfigurationError})");
+                return BatteryUserMode.Unknown;
+            }
+
+            await EnsureAuthenticatedAsync();
+
+            try
+            {
+                var url = $"{_baseUrl}/dev-api/api/v1/monitor/home/getDeviceEneryFlowData";
+                var clientDate = DateTime.UtcNow.ToString("yyyy-MM-dd");
+                var timeStamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString();
+                var random = GenerateRandomAlphanumeric(32);
+
+                // Prepare parameters for signing
+                var signParamsDict = new Dictionary<string, string>
+                {
+                    { "plantUid", _plantUid },
+                    { "deviceSn", _deviceSerialNumber },
+                    { "appProjectName", DefaultAppProjectName },
+                    { "clientDate", clientDate },
+                    { "lang", DefaultLang },
+                    { "timeStamp", timeStamp },
+                    { "random", random },
+                    { "clientId", ClientId }
+                };
+
+                var signedParams = CalcSignatureElekeeper(signParamsDict);
+
+                // Build query string
+                var queryParams = string.Join("&", signedParams.Select(kvp => $"{kvp.Key}={Uri.EscapeDataString(kvp.Value)}"));
+                var fullUrl = $"{url}?{queryParams}";
+
+                var response = await _httpClient.GetAsync(fullUrl);
+                response.EnsureSuccessStatusCode();
+
+                var json = await response.Content.ReadAsStringAsync();
+                var doc = JsonDocument.Parse(json);
+                var root = doc.RootElement;
+
+                if (root.TryGetProperty("errCode", out var errCodeElem) && errCodeElem.GetInt32() == 0)
+                {
+                    if (root.TryGetProperty("data", out var data) && data.TryGetProperty("userModeName", out var userModeNameElem))
+                    {
+                        var userModeNameString = userModeNameElem.GetString();
+                        var userMode = BatteryUserModeExtensions.FromApiString(userModeNameString);
+
+                        Console.WriteLine($"Retrieved user mode: {userMode} ({userModeNameString})");
+                        return userMode;
+                    }
+                    else
+                    {
+                        Console.WriteLine("userModeName field not found in API response");
+                        return BatteryUserMode.Unknown;
+                    }
+                }
+                else
+                {
+                    var errMsg = root.TryGetProperty("errMsg", out var errMsgElem) ? errMsgElem.GetString() : "Unknown error";
+                    Console.WriteLine($"Failed to retrieve user mode. Error: {errMsg}");
+                    return BatteryUserMode.Unknown;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Exception while retrieving user mode: {ex.Message}");
+                return BatteryUserMode.Unknown;
+            }
+        }
     }
 }
