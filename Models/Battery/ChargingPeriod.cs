@@ -37,6 +37,6 @@ public class ChargingPeriod
     /// </summary>
     public string ToApiFormat()
     {
-        return $"{StartTime:hh\\:mm}|{EndTime:hh\\:mm}|{PowerInWatts}_{Weekdays}";
+        return $"{StartTime.ToString(@"hh\:mm")}|{EndTime.ToString(@"hh\:mm")}|{PowerInWatts}_{Weekdays}";
     }
 }

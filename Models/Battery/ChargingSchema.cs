@@ -66,7 +66,7 @@ public class ChargingSchema
     public string ToLogString()
     {
         var periods = Periods.OrderBy(p => p.StartTime)
-            .Select(p => $"{p.ChargeType} {p.StartTime:hh\\:mm}-{p.EndTime:hh\\:mm} @ {p.PowerInWatts}W");
+            .Select(p => $"{p.ChargeType} {p.StartTime.ToString(@"hh\:mm")}-{p.EndTime.ToString(@"hh\:mm")} @ {p.PowerInWatts}W");
         return string.Join(", ", periods);
     }
 

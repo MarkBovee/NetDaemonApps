@@ -8,6 +8,7 @@ namespace NetDaemonApps.Apps.Energy
     using Models.Battery;
     using Models.EnergyPrices;
     using NetDaemon.Extensions.Scheduler;
+    using Microsoft.Extensions.Options;
 
     /// <summary>
     /// Adjust the energy appliances schedule based on the power prices
@@ -15,103 +16,110 @@ namespace NetDaemonApps.Apps.Energy
     [NetDaemonApp]
     public class Battery
     {
-        /// <summary>
-        /// The logger
-        /// </summary>
+        // Dependencies
         private readonly ILogger<Battery> _logger;
-
-        /// <summary>
-        /// The entities
-        /// </summary>
         private readonly Entities _entities;
-
-        /// <summary>
-        /// The away mode
-        /// </summary>
-        private readonly bool _awayMode;
-
-        /// <summary>
-        /// The price helper
-        /// </summary>
+        private readonly BatteryOptions _options;
         private readonly IPriceHelper _priceHelper;
-
-        /// <summary>
-        /// The scheduler
-        /// </summary>
         private readonly INetDaemonScheduler _scheduler;
-
-        /// <summary>
-        /// The current prepared schedule (not yet applied)
-        /// </summary>
-        private ChargingSchema? _preparedSchedule;
-
-        /// <summary>
-        /// The sai power battery api
-        /// </summary>
         private readonly SAJPowerBatteryApi _saiPowerBatteryApi;
 
-        // Max values
-        private const double MaxInverterPower = 8000;       // W
+        // State
+        private ChargingSchema? _preparedSchedule;
+        private readonly object _scheduleLock = new();
+        private readonly bool _simulationMode;
+        private readonly bool _canWriteApi;
+
+        // Max values (kept only for non-config data)
+        // private const double MaxInverterPower = 8000;     // replaced by options.MaxInverterPowerW
         private const double MaxSolarProduction = 4500;     // W
-        private const double MaxBatteryCapacity = 25000;    // Wh
+        // private const double MaxBatteryCapacity = 25000;  // replaced by options.MaxBatteryCapacityWh
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Battery"/> class.
         /// </summary>
-        /// <param name="ha">The ha</param>
-        /// <param name="scheduler">The scheduler</param>
-        /// <param name="logger">The logger</param>
-        /// <param name="priceHelper">The price helper</param>
-        public Battery(IHaContext ha, INetDaemonScheduler scheduler, ILogger<Battery> logger, IPriceHelper priceHelper)
+        public Battery(IHaContext ha, INetDaemonScheduler scheduler, ILogger<Battery> logger, IPriceHelper priceHelper, SAJPowerBatteryApi api, IOptions<BatteryOptions> options)
         {
             _logger = logger;
             _entities = new Entities(ha);
             _priceHelper = priceHelper;
             _scheduler = scheduler;
+            _saiPowerBatteryApi = api;
+            _options = options.Value;
+            // Force simulation OFF for live API testing during this debug session
+            _simulationMode = false; // previously: _options.SimulationMode || Debugger.IsAttached;
+            _canWriteApi = !string.IsNullOrWhiteSpace(_options.DeviceSerialNumber)
+                           && !string.IsNullOrWhiteSpace(_options.Username)
+                           && !string.IsNullOrWhiteSpace(_options.Password);
+
+            if (Debugger.IsAttached)
+            {
+                LogBatteryInfo("Debugger attached; Simulation mode forcibly OFF for live API testing");
+            }
+
+            // Report startup status
+            SetBatteryStatus($"Started. Simulation: {(_simulationMode ? "ON" : "OFF")}");
+            if (!_canWriteApi)
+            {
+                var missing = new List<string>();
+                if (string.IsNullOrWhiteSpace(_options.Username)) missing.Add("Username");
+                if (string.IsNullOrWhiteSpace(_options.Password)) missing.Add("Password");
+                if (string.IsNullOrWhiteSpace(_options.DeviceSerialNumber)) missing.Add("DeviceSerialNumber");
+                var msg = $"Live apply blocked: missing {string.Join("/", missing)} in Battery options";
+                _logger.LogWarning(msg);
+                SetBatteryStatus(msg);
+            }
 
             LogBatteryInfo("Started battery energy program with 3-checkpoint strategy");
 
-            // Set the away mode based on entity state
-            _awayMode = _entities.Switch.OurHomeAwayMode.State == "on";
-
-            // Set the SAJ Power Battery API with your credentials
-            _saiPowerBatteryApi = new SAJPowerBatteryApi("MBovee", "fnq@tce8CTQ5kcm4cuw", "HST2083J2446E06861");
-
-            // Check if the token is valid
+            // Check if the token is valid (diagnostic only)
             _saiPowerBatteryApi.IsTokenValid(true);
 
             if (Debugger.IsAttached)
             {
-                // Run simulation for debugging
-                PrepareScheduleForDay();
+                // Run schedule preparation immediately for debugging (non-blocking)
+                _ = PrepareScheduleForDayAsync();
             }
             else
             {
-                // Calculate and prepare schedules daily at 00:05  
+                // Calculate and prepare schedules daily at 00:05
                 var dailyTime = DateTime.Today.AddDays(1).AddMinutes(5); // Tomorrow at 00:05
-                scheduler.RunEvery(TimeSpan.FromDays(1), dailyTime, PrepareScheduleForDay);
-                
+                scheduler.RunEvery(TimeSpan.FromDays(1), dailyTime, () => { _ = PrepareScheduleForDayAsync(); });
+
                 // On startup, check if we have a prepared schedule for today or need to create one
                 var existingSchedule = GetPreparedSchedule();
                 if (existingSchedule != null)
                 {
                     _logger.LogInformation("Found existing prepared schedule for today, setting up EMS management");
-                    _preparedSchedule = existingSchedule;
-                    ScheduleEmsManagementForPeriods(existingSchedule);
+                    lock (_scheduleLock)
+                    {
+                        _preparedSchedule = existingSchedule;
+                    }
+
+                    // If no upcoming windows remain (e.g., late restart), recompute today’s schedule
+                    var upcoming = BuildMergedEmsWindows(existingSchedule);
+                    if (upcoming.Count == 0)
+                    {
+                        _logger.LogInformation("Prepared schedule has no upcoming windows; recalculating schedule for today");
+                        var _ = PrepareScheduleForDayAsync();
+                    }
+                    else
+                    {
+                        ScheduleEmsManagementForPeriods(existingSchedule);
+                    }
                 }
                 else
                 {
                     _logger.LogInformation("No existing schedule found, preparing new schedule");
-                    PrepareScheduleForDay();
+                    var _ = PrepareScheduleForDayAsync();
                 }
             }
         }
 
         /// <summary>
         /// Prepares the daily battery schedule and schedules EMS management around charge/discharge periods.
-        /// This replaces the old approach of immediately applying schedules.
         /// </summary>
-        private void PrepareScheduleForDay()
+        private async Task PrepareScheduleForDayAsync()
         {
             try
             {
@@ -122,76 +130,109 @@ namespace NetDaemonApps.Apps.Energy
                 if (schedule == null)
                 {
                     _logger.LogWarning("Could not calculate schedule for today");
+                    SetBatteryStatus("No price data yet; will retry in 10 min");
+                    // Retry shortly in case price data arrives a bit later
+                    _scheduler.RunIn(TimeSpan.FromMinutes(10), () => { var _ = PrepareScheduleForDayAsync(); });
                     return;
                 }
 
                 // Store the prepared schedule (don't apply yet)
-                _preparedSchedule = schedule;
+                lock (_scheduleLock)
+                {
+                    _preparedSchedule = schedule;
+                }
                 SavePreparedSchedule(schedule);
 
-                // Schedule EMS management for each charge/discharge period
+                // Schedule EMS management for each charge/discharge period (merged windows)
                 ScheduleEmsManagementForPeriods(schedule);
 
                 LogBatteryInfo("Daily schedule prepared with {0} periods", schedule.Periods.Count);
+                var preparedSuffix = BuildNextChargeSuffix(schedule);
+                SetBatteryStatus($"Prepared schedule: {schedule.Periods.Count} periods | {preparedSuffix}");
+
+                // Optionally, in simulation mode apply immediately for visibility
+                if (_simulationMode)
+                {
+                    await ApplyChargingScheduleAsync(schedule, simulateOnly: true);
+                }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error preparing daily schedule");
+                SetBatteryStatus("Error preparing schedule");
             }
         }
 
         /// <summary>
-        /// Schedules EMS shutdown before each period and re-enable after each period ends.
+        /// Build merged EMS windows from periods to avoid flapping between adjacent/overlapping periods.
         /// </summary>
-        /// <param name="schedule">The charging schedule to manage EMS around</param>
-        private void ScheduleEmsManagementForPeriods(ChargingSchema schedule)
+        private List<(DateTime windowStart, DateTime windowEnd)> BuildMergedEmsWindows(ChargingSchema schedule)
         {
             var today = DateTime.Today;
-
-            foreach (var period in schedule.Periods)
+            var windows = new List<(DateTime s, DateTime e)>();
+            foreach (var p in schedule.Periods)
             {
-                var periodStart = today.Add(period.StartTime);
-                var periodEnd = today.Add(period.EndTime);
+                var start = today.Add(p.StartTime).AddMinutes(-_options.EmsPrepMinutesBefore);
+                var end = today.Add(p.EndTime).AddMinutes(_options.EmsRestoreMinutesAfter);
+                if (end <= DateTime.Now) continue; // skip past
+                if (start < DateTime.Now) start = DateTime.Now.AddSeconds(1); // guard in near-past
+                windows.Add((start, end));
+            }
 
-                // Skip periods that have already passed
-                if (periodEnd <= DateTime.Now)
+            // Sort and merge overlapping/contiguous windows
+            var merged = new List<(DateTime, DateTime)>();
+            foreach (var w in windows.OrderBy(w => w.s))
+            {
+                if (merged.Count == 0) { merged.Add(w); continue; }
+                var (ms, me) = merged[^1];
+                if (w.s <= me.AddMinutes(1))
                 {
-                    _logger.LogDebug("Skipping past period: {PeriodType} {StartTime}-{EndTime}", 
-                        period.ChargeType, period.StartTime, period.EndTime);
-                    continue;
+                    // overlap or within 1 minute gap — extend
+                    merged[^1] = (ms, w.e > me ? w.e : me);
+                }
+                else
+                {
+                    merged.Add(w);
+                }
+            }
+            return merged;
+        }
+
+        /// <summary>
+        /// Schedules EMS shutdown before each merged window and re-enable after each window ends.
+        /// </summary>
+        private void ScheduleEmsManagementForPeriods(ChargingSchema schedule)
+        {
+            var mergedWindows = BuildMergedEmsWindows(schedule);
+
+            foreach (var (windowStart, windowEnd) in mergedWindows)
+            {
+                if (windowStart > DateTime.Now)
+                {
+                    _scheduler.RunAt(windowStart, () => { var _ = PrepareForBatteryPeriodAsync(null); });
+                    LogBatteryInfo("Scheduled EMS shutdown at {0}", windowStart.ToString("HH:mm"));
                 }
 
-                // Schedule EMS shutdown 5 minutes before period starts
-                var emsShutdownTime = periodStart.AddMinutes(-5);
-                if (emsShutdownTime > DateTime.Now)
+                if (windowEnd > DateTime.Now)
                 {
-                    _scheduler.RunAt(emsShutdownTime, () => PrepareForBatteryPeriod(period));
-                    LogBatteryInfo("Scheduled EMS shutdown at {0} for {1} period {2}-{3}", 
-                        emsShutdownTime.ToString("HH:mm"), period.ChargeType, 
-                        period.StartTime.ToString(@"hh\:mm"), period.EndTime.ToString(@"hh\:mm"));
-                }
-
-                // Schedule EMS re-enable after period ends
-                var emsRestoreTime = periodEnd.AddMinutes(1);
-                if (emsRestoreTime > DateTime.Now)
-                {
-                    _scheduler.RunAt(emsRestoreTime, () => RestoreEmsAfterPeriod(period));
-                    _logger.LogInformation("Scheduled EMS restore at {Time} after {PeriodType} period", 
-                        emsRestoreTime.ToString("HH:mm"), period.ChargeType);
+                    _scheduler.RunAt(windowEnd, () => { var _ = RestoreEmsAfterWindowAsync(); });
+                    _logger.LogInformation("Scheduled EMS restore at {Time}", windowEnd.ToString("HH:mm"));
                 }
             }
         }
 
         /// <summary>
-        /// Prepares for a battery charge/discharge period by shutting down EMS and applying the schedule.
+        /// Prepares for a battery charge/discharge window by shutting down EMS and applying the schedule.
         /// </summary>
-        /// <param name="period">The period that is about to start</param>
-        private void PrepareForBatteryPeriod(ChargingPeriod period)
+        private async Task PrepareForBatteryPeriodAsync(ChargingPeriod? period)
         {
             try
             {
-                LogBatteryInfo("Preparing for {0} period {1}-{2}", 
-                    period.ChargeType, period.StartTime.ToString(@"hh\:mm"), period.EndTime.ToString(@"hh\:mm"));
+                if (period != null)
+                    LogBatteryInfo("Preparing for {0} period {1}-{2}",
+                        period.ChargeType, period.StartTime.ToString(@"hh\:mm"), period.EndTime.ToString(@"hh\:mm"));
+                else
+                    LogBatteryInfo("Preparing for battery window");
 
                 // 1. Turn off EMS
                 var emsState = _entities.Switch.Ems.State;
@@ -199,9 +240,8 @@ namespace NetDaemonApps.Apps.Energy
                 {
                     LogBatteryInfo("Turning off EMS before battery period");
                     _entities.Switch.Ems.TurnOff();
-                    
-                    // Wait a moment for EMS to shut down
-                    Task.Delay(TimeSpan.FromSeconds(10)).Wait();
+                    SetBatteryStatus("EMS OFF for battery window");
+                    await Task.Delay(TimeSpan.FromSeconds(5));
                 }
                 else
                 {
@@ -209,11 +249,15 @@ namespace NetDaemonApps.Apps.Energy
                 }
 
                 // 2. Apply the prepared schedule if we have one
-                var scheduleToApply = _preparedSchedule ?? GetPreparedSchedule();
+                ChargingSchema? scheduleToApply;
+                lock (_scheduleLock)
+                {
+                    scheduleToApply = _preparedSchedule ?? GetPreparedSchedule();
+                }
                 if (scheduleToApply != null)
                 {
                     LogBatteryInfo("Applying prepared battery schedule");
-                    ApplyChargingSchedule(scheduleToApply, simulateOnly: Debugger.IsAttached);
+                    await ApplyChargingScheduleAsync(scheduleToApply, simulateOnly: _simulationMode);
                 }
                 else
                 {
@@ -223,18 +267,41 @@ namespace NetDaemonApps.Apps.Energy
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error preparing for battery period");
+                SetBatteryStatus("Error preparing for battery window");
             }
         }
 
         /// <summary>
-        /// Restores EMS after a battery charge/discharge period ends.
+        /// Helper to prepare for and apply a specific schedule (used for ad-hoc morning discharge).
         /// </summary>
-        /// <param name="period">The period that just ended</param>
-        private void RestoreEmsAfterPeriod(ChargingPeriod period)
+        private async Task PrepareForScheduleAsync(ChargingSchema schedule, string label)
         {
             try
             {
-                LogBatteryInfo("Restoring EMS after {0} period", period.ChargeType);
+                LogBatteryInfo("Preparing for ad-hoc schedule: {0}", label);
+                var emsState = _entities.Switch.Ems.State;
+                if (emsState == "on")
+                {
+                    LogBatteryInfo("Turning off EMS before ad-hoc schedule");
+                    _entities.Switch.Ems.TurnOff();
+                    await Task.Delay(TimeSpan.FromSeconds(5));
+                }
+                await ApplyChargingScheduleAsync(schedule, simulateOnly: _simulationMode);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error preparing for specific schedule");
+            }
+        }
+
+        /// <summary>
+        /// Restores EMS after a battery charge/discharge window ends.
+        /// </summary>
+        private async Task RestoreEmsAfterWindowAsync()
+        {
+            try
+            {
+                LogBatteryInfo("Restoring EMS after battery window");
 
                 // Turn EMS back on
                 var emsState = _entities.Switch.Ems.State;
@@ -242,6 +309,8 @@ namespace NetDaemonApps.Apps.Energy
                 {
                     LogBatteryInfo("Turning EMS back on");
                     _entities.Switch.Ems.TurnOn();
+                    SetBatteryStatus("EMS ON after battery window");
+                    await Task.Delay(TimeSpan.FromSeconds(1));
                 }
                 else
                 {
@@ -251,6 +320,7 @@ namespace NetDaemonApps.Apps.Energy
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error restoring EMS after period");
+                SetBatteryStatus("Error restoring EMS");
             }
         }
 
@@ -258,113 +328,123 @@ namespace NetDaemonApps.Apps.Energy
         /// Evaluates current conditions and adjusts the charging schedule every 15 minutes
         /// Currently simplified - returns null to avoid complex logic during development
         /// </summary>
-        /// <returns>New charging schedule if recalculation was needed, null if only minor adjustments were performed</returns>
         private ChargingSchema? EvaluateAndAdjustChargingSchedule()
         {
-            // FUTURE ENHANCEMENTS: This method can implement real-time schedule adjustments:
-
-            // 1. SOLAR PRODUCTION MONITORING
-            //    - Monitor current solar production vs forecast
-            //    - If excess solar available, temporarily increase charging power
-            //    - If solar lower than expected, reduce charging to save battery capacity
-
-            // 2. CONSUMPTION PATTERN DETECTION
-            //    - Use EstimateDailyEnergyConsumption() to detect unusual consumption
-            //    - Adjust discharge timing if higher consumption detected
-            //    - Emergency mode: immediate charging if battery critically low and expensive hours ahead
-
-            // 3. GRID CONDITIONS
-            //    - Monitor grid frequency and voltage for grid services participation
-            //    - Implement demand response: reduce discharge during grid stress events
-            //    - Peak shaving: discharge during local consumption peaks regardless of price
-
-            // 4. WEATHER-BASED ADJUSTMENTS
-            //    - Check updated weather forecast and adjust solar expectations
-            //    - Prepare for storms: ensure battery is charged before bad weather
-            //    - Heat wave response: reserve capacity for increased AC usage
-
-            // 5. TIME-BASED LOGIC
-            //    - During solar hours (10-16): optimize for solar excess capture
-            //    - During evening peak (17-22): ensure adequate discharge if profitable
-            //    - Night hours: minimal adjustments, prepare for next day
-            //    - Use IsChargingAllowedAfterSunset() to prevent wasteful charging
-
-            // 6. PRICE CHANGE RESPONSE
-            //    - React to intraday price updates from energy markets
-            //    - Implement imbalance price monitoring for additional revenue
-            //    - Dynamic pricing: adjust schedule if day-ahead prices change significantly
-
-            // CURRENT IMPLEMENTATION: Always return null to keep existing schedule
-            // This prevents unwanted schedule changes during development and testing
+            // Placeholder for future real-time adjustments
             return null;
         }
 
         /// <summary>
         /// Applies a charging schedule by converting it to SAJ API format and uploading
         /// </summary>
-        /// <param name="chargingSchedule">The charging schedule to apply</param>
-        private void ApplyChargingSchedule(ChargingSchema chargingSchedule)
+        private Task ApplyChargingSchedule(ChargingSchema chargingSchedule)
         {
-            ApplyChargingSchedule(chargingSchedule, simulateOnly: Debugger.IsAttached);
+            return ApplyChargingScheduleAsync(chargingSchedule, simulateOnly: _simulationMode);
         }
 
         /// <summary>
         /// Applies the given charging schema to the battery system via the SAJ Power API
         /// </summary>
-        /// <param name="chargingSchema">The charging schema to apply</param>
-        /// <param name="simulateOnly">If true, simulates the API call without actually executing it</param>
-        private void ApplyChargingSchedule(ChargingSchema chargingSchedule, bool simulateOnly)
+        private async Task ApplyChargingScheduleAsync(ChargingSchema chargingSchedule, bool simulateOnly)
         {
             if (chargingSchedule?.Periods == null || chargingSchedule.Periods.Count == 0)
             {
                 _logger.LogWarning("No charging schedule to apply");
+                SetBatteryStatus("No schedule to apply");
                 return;
             }
 
             try
             {
-                // Convert our charging schedule to SAJ API format using all periods
                 var allPeriods = chargingSchedule.Periods.ToList();
-
-                // Validate the charging periods
                 if (allPeriods.Count == 0)
                 {
                     _logger.LogWarning("No valid periods in schedule");
+                    SetBatteryStatus("No valid periods in schedule");
                     return;
                 }
 
-                // Build the schedule parameters using the new method signature
-                var scheduleParameters = SAJPowerBatteryApi.BuildBatteryScheduleParameters(allPeriods);
+                // Dynamic optimization: compute required charge time from SOC, capacity and max power
+                var soc = GetCurrentBatterySOC();
+                var requiredChargeMinutes = CalculateRequiredChargeMinutes(soc);
 
-                // Apply the schedule to the battery
-                var saved = simulateOnly || _saiPowerBatteryApi.SaveBatteryScheduleAsync(scheduleParameters).Result;
+                // Compute remaining scheduled charge minutes from now
+                var now = DateTime.Now.TimeOfDay;
+                var remainingScheduledChargeMinutes = allPeriods
+                    .Where(p => p.ChargeType == BatteryChargeType.Charge)
+                    .Sum(p => Math.Max(0, (int)Math.Ceiling((p.EndTime - (p.StartTime > now ? p.StartTime : now)).TotalMinutes)));
 
-                if (saved)
+                ChargingSchema scheduleToApply = chargingSchedule;
+                if (remainingScheduledChargeMinutes > 0)
                 {
-                    // Update state tracking
-                    SaveCurrentAppliedSchedule(chargingSchedule);
-
-                    // Log the applied schedule
-                    if (simulateOnly)
+                    if (remainingScheduledChargeMinutes > requiredChargeMinutes)
                     {
-                        // Log the applied schedule details
-                        var scheduleDescription = string.Join(", ", chargingSchedule.Periods.Select(p =>  $@"{p.ChargeType} {p.StartTime:hh\:mm}-{p.EndTime:hh\:mm} @ {p.PowerInWatts}W"));
-                        _logger.LogInformation("Applied charging schedule: {ScheduleDescription}", scheduleDescription);
+                        var (adjusted, summary) = TrimChargePeriodsToTotalMinutes(chargingSchedule, requiredChargeMinutes);
+                        scheduleToApply = adjusted ?? chargingSchedule;
+                        var suffix = BuildNextChargeSuffix(scheduleToApply);
+                        var detail = $"SOC {soc:F1}%, need ~{requiredChargeMinutes}m to full, had {remainingScheduledChargeMinutes}m scheduled. {summary} | {suffix}";
+                        _logger.LogInformation(detail);
+                        SetBatteryStatus(detail);
                     }
                     else
                     {
-                        var chargePeriods = allPeriods.Where(p => p.ChargeType == BatteryChargeType.Charge).ToList();
-                        var dischargePeriods = allPeriods.Where(p => p.ChargeType == BatteryChargeType.Discharge).ToList();
+                        var suffix = BuildNextChargeSuffix(chargingSchedule);
+                        var detail = $"SOC {soc:F1}%, need ~{requiredChargeMinutes}m, scheduled {remainingScheduledChargeMinutes}m (<= needed) | {suffix}";
+                        _logger.LogInformation(detail);
+                        SetBatteryStatus(detail);
+                    }
+                }
+
+                // Idempotency: compare with current applied schedule using the adjusted schedule
+                var currentApplied = GetCurrentAppliedSchedule();
+                if (!simulateOnly && currentApplied != null && scheduleToApply.IsEquivalentTo(currentApplied))
+                {
+                    _logger.LogInformation("Schedule unchanged from current applied; skipping API call");
+                    var suffix = BuildNextChargeSuffix(scheduleToApply);
+                    SetBatteryStatus($"Schedule unchanged; skipping apply | {suffix}");
+                    return;
+                }
+
+                var scheduleParameters = SAJPowerBatteryApi.BuildBatteryScheduleParameters(scheduleToApply.Periods.ToList());
+                var liveWrite = !simulateOnly && _canWriteApi;
+                bool saved;
+                if (liveWrite)
+                {
+                    saved = await _saiPowerBatteryApi.SaveBatteryScheduleAsync(scheduleParameters);
+                }
+                else
+                {
+                    if (!simulateOnly && !_canWriteApi)
+                    {
+                        _logger.LogWarning("Skipping live API write due to missing credentials or device SN; simulating apply");
+                    }
+                    saved = true; // treat as success for simulated apply
+                }
+
+                if (saved)
+                {
+                    if (liveWrite)
+                    {
+                        SaveCurrentAppliedSchedule(scheduleToApply);
+                    }
+
+                    var suffix = BuildNextChargeSuffix(scheduleToApply);
+                    SetBatteryStatus($"Applied schedule{(liveWrite ? string.Empty : " (sim)")}: {scheduleToApply.Periods.Count} periods | {suffix}");
+
+                    if (liveWrite)
+                    {
+                        var chargePeriods = scheduleToApply.Periods.Where(p => p.ChargeType == BatteryChargeType.Charge).ToList();
+                        var dischargePeriods = scheduleToApply.Periods.Where(p => p.ChargeType == BatteryChargeType.Discharge).ToList();
 
                         if (chargePeriods.Count > 0)
                         {
-                            var chargeSchedule = $@"{chargePeriods.First().StartTime:hh\:mm}-{chargePeriods.Last().EndTime:hh\:mm}";
+                            var chargeSchedule = $"{chargePeriods.First().StartTime.ToString(@"hh\:mm")}-{chargePeriods.Last().EndTime.ToString(@"hh\:mm")}";
                             _entities.InputText.BatteryChargeSchedule?.SetValue(chargeSchedule);
                         }
 
                         if (dischargePeriods.Count > 0)
                         {
-                            var dischargeSchedule = $@"{dischargePeriods.First().StartTime:hh\:mm}-{dischargePeriods.Last().EndTime:hh\:mm}";
+                            var dischargeSchedule = $"{dischargePeriods.First().StartTime.ToString(@"hh\:mm")}-{dischargePeriods.Last().EndTime.ToString(@"hh\:mm")}";
                             _entities.InputText.BatteryDischargeSchedule?.SetValue(dischargeSchedule);
                         }
                     }
@@ -372,11 +452,13 @@ namespace NetDaemonApps.Apps.Energy
                 else
                 {
                     _logger.LogWarning("Failed to apply charging schedule via SAJ API");
+                    SetBatteryStatus("Failed to apply schedule");
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error applying charging schedule");
+                SetBatteryStatus("Error applying schedule");
             }
         }
 
@@ -384,7 +466,6 @@ namespace NetDaemonApps.Apps.Energy
         /// Calculates the initial charging schedule based on energy prices and battery state
         /// Implements 3-checkpoint strategy: morning check, charge moment, evening check
         /// </summary>
-        /// <returns>Complete charging schedule for the day</returns>
         private ChargingSchema? CalculateInitialChargingSchedule()
         {
             var pricesToday = _priceHelper.PricesToday;
@@ -394,7 +475,7 @@ namespace NetDaemonApps.Apps.Energy
                 return null;
             }
 
-            // Get basic charge and discharge timeslots
+            // Get basic charge and discharge timeslot
             var (chargeStart, chargeEnd) = PriceHelper.GetLowestPriceTimeslot(pricesToday, 3);
             var (dischargeStart, dischargeEnd) = PriceHelper.GetHighestPriceTimeslot(pricesToday, 1);
 
@@ -402,14 +483,13 @@ namespace NetDaemonApps.Apps.Energy
 
             // CHECKPOINT 1: Morning check (before charge) - add discharge if SOC > 40%
             var currentSOC = GetCurrentBatterySOC();
-            var morningCheckTime = chargeStart.AddHours(-2); // 2 hours before charge start
-            
-            if (currentSOC > 40.0 && morningCheckTime.TimeOfDay > TimeSpan.FromHours(6)) // Not too early
+            var morningCheckTime = chargeStart.AddHours(-_options.MorningCheckOffsetHours);
+            var morningWindowStart = TimeSpan.FromHours(_options.MorningWindowStartHour);
+            if (currentSOC > 40.0 && morningCheckTime.TimeOfDay > morningWindowStart)
             {
-                // Find morning high price period for discharge
-                var morningPrices = pricesToday.Where(p => p.Key.TimeOfDay >= TimeSpan.FromHours(6) && 
+                var morningPrices = pricesToday.Where(p => p.Key.TimeOfDay >= morningWindowStart &&
                                                           p.Key.TimeOfDay < chargeStart.TimeOfDay).ToList();
-                
+
                 if (morningPrices.Count > 0)
                 {
                     var morningHighPrice = morningPrices.OrderByDescending(p => p.Value).First();
@@ -421,10 +501,10 @@ namespace NetDaemonApps.Apps.Energy
                         StartTime = morningDischargeStart,
                         EndTime = morningDischargeEnd,
                         ChargeType = BatteryChargeType.Discharge,
-                        PowerInWatts = 8000
+                        PowerInWatts = Math.Min(_options.DefaultDischargePowerW, _options.MaxInverterPowerW)
                     });
 
-                    LogBatteryInfo("Added morning discharge at {0} (SOC: {1:F1}%, Price: €{2:F3})", 
+                    LogBatteryInfo("Added morning discharge at {0} (SOC: {1:F1}%, Price: €{2:F3})",
                         morningDischargeStart.ToString(@"hh\:mm"), currentSOC, morningHighPrice.Value);
                 }
             }
@@ -435,7 +515,7 @@ namespace NetDaemonApps.Apps.Energy
                 StartTime = chargeStart.TimeOfDay,
                 EndTime = chargeEnd.TimeOfDay,
                 ChargeType = BatteryChargeType.Charge,
-                PowerInWatts = 8000
+                PowerInWatts = Math.Min(_options.DefaultChargePowerW, _options.MaxInverterPowerW)
             });
 
             // CHECKPOINT 3: Add evening discharge (will be checked and potentially moved later)
@@ -444,7 +524,7 @@ namespace NetDaemonApps.Apps.Energy
                 StartTime = dischargeStart.TimeOfDay,
                 EndTime = dischargeEnd.TimeOfDay,
                 ChargeType = BatteryChargeType.Discharge,
-                PowerInWatts = 8000
+                PowerInWatts = Math.Min(_options.DefaultDischargePowerW, _options.MaxInverterPowerW)
             });
 
             // Schedule evening check to potentially move discharge to tomorrow morning
@@ -452,36 +532,32 @@ namespace NetDaemonApps.Apps.Energy
 
             var schedule = new ChargingSchema { Periods = periods };
 
-            LogBatteryInfo("Created schedule with {0} periods: {1}", 
-                periods.Count, 
-                string.Join(", ", periods.Select(p => $"{p.ChargeType} {p.StartTime:hh\\:mm}-{p.EndTime:hh\\:mm}")));
+            LogBatteryInfo("Created schedule with {0} periods: {1}",
+                periods.Count,
+                string.Join(", ", periods.Select(p => $"{p.ChargeType} {p.StartTime.ToString(@"hh\:mm")}-{p.EndTime.ToString(@"hh\:mm")}")));
 
             return schedule;
         }
 
         /// <summary>
-        /// Schedules an evening price check to potentially move discharge from tonight to tomorrow morning
-        /// This implements the third checkpoint: comparing tomorrow morning vs tonight evening prices
+        /// Schedule an evening price check to potentially move discharge from tonight to tomorrow morning.
         /// </summary>
-        /// <param name="currentDischargeTime">The currently scheduled discharge time for tonight</param>
         private void ScheduleEveningPriceCheck(DateTime currentDischargeTime)
         {
-            // Schedule the check 30 minutes before the evening discharge period
             var checkTime = currentDischargeTime.AddMinutes(-30);
-            
+
             if (checkTime > DateTime.Now)
             {
-                _scheduler.RunAt(checkTime, () => EvaluateEveningToMorningShift());
-                LogBatteryInfo("Scheduled evening price check at {0} to evaluate discharge timing", 
+                _scheduler.RunAt(checkTime, () => { var _ = EvaluateEveningToMorningShiftAsync(); });
+                LogBatteryInfo("Scheduled evening price check at {0} to evaluate discharge timing",
                     checkTime.ToString("HH:mm"));
             }
         }
 
         /// <summary>
-        /// Evaluates whether to move tonight's discharge to tomorrow morning based on price comparison
-        /// If tomorrow morning price > tonight evening price, reschedule discharge for tomorrow morning
+        /// Evaluate whether to move tonight's discharge to tomorrow morning based on price comparison.
         /// </summary>
-        private void EvaluateEveningToMorningShift()
+        private async Task EvaluateEveningToMorningShiftAsync()
         {
             try
             {
@@ -496,13 +572,21 @@ namespace NetDaemonApps.Apps.Energy
                     return;
                 }
 
-                // Get current evening discharge price (highest price today)
-                var eveningPrice = pricesToday.OrderByDescending(p => p.Value).First();
-                
-                // Get tomorrow morning high price period (6-12 AM)
-                var tomorrowMorningPrices = pricesTomorrow.Where(p => 
-                    p.Key.TimeOfDay >= TimeSpan.FromHours(6) && 
-                    p.Key.TimeOfDay < TimeSpan.FromHours(12)).ToList();
+                // Define evening window to avoid picking midday peak
+                var eveningStart = TimeSpan.FromHours(_options.EveningThresholdHour);
+                var eveningPrices = pricesToday.Where(p => p.Key.TimeOfDay >= eveningStart).ToList();
+                if (eveningPrices.Count == 0)
+                {
+                    _logger.LogWarning("No evening prices available");
+                    return;
+                }
+
+                var eveningPrice = eveningPrices.OrderByDescending(p => p.Value).First();
+
+                // Tomorrow morning window
+                var tomorrowMorningPrices = pricesTomorrow.Where(p =>
+                    p.Key.TimeOfDay >= TimeSpan.FromHours(_options.MorningWindowStartHour) &&
+                    p.Key.TimeOfDay < TimeSpan.FromHours(_options.MorningWindowEndHour)).ToList();
 
                 if (tomorrowMorningPrices.Count == 0)
                 {
@@ -516,27 +600,28 @@ namespace NetDaemonApps.Apps.Energy
                     eveningPrice.Value, eveningPrice.Key.ToString("HH:mm"),
                     bestMorningPrice.Value, bestMorningPrice.Key.ToString("HH:mm"));
 
-                // If tomorrow morning price is higher than tonight, reschedule
                 if (bestMorningPrice.Value > eveningPrice.Value)
                 {
                     LogBatteryInfo("Tomorrow morning price is higher, rescheduling discharge to tomorrow morning");
+                    SetBatteryStatus($"Shifting discharge to tomorrow {bestMorningPrice.Key.ToString("HH:mm")}");
                     RescheduleDischargeTomorrowMorning(bestMorningPrice.Key);
                 }
                 else
                 {
                     LogBatteryInfo("Keeping tonight's discharge schedule (better price)");
+                    SetBatteryStatus("Keeping evening discharge (better price)");
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error during evening price evaluation");
+                SetBatteryStatus("Error evaluating evening shift");
             }
         }
 
         /// <summary>
-        /// Reschedules the current evening discharge to tomorrow morning
+        /// Reschedule the current evening discharge to tomorrow morning.
         /// </summary>
-        /// <param name="tomorrowMorningTime">The optimal time tomorrow morning for discharge</param>
         private void RescheduleDischargeTomorrowMorning(DateTime tomorrowMorningTime)
         {
             try
@@ -544,42 +629,51 @@ namespace NetDaemonApps.Apps.Energy
                 // Update the prepared schedule to remove tonight's discharge
                 if (_preparedSchedule?.Periods != null)
                 {
-                    // Remove evening discharge periods
-                    var periodsToKeep = _preparedSchedule.Periods
-                        .Where(p => p.ChargeType != BatteryChargeType.Discharge || 
-                                   p.StartTime < TimeSpan.FromHours(17)) // Keep morning discharge if any
-                        .ToList();
+                    lock (_scheduleLock)
+                    {
+                        if (_preparedSchedule?.Periods != null)
+                        {
+                            var periodsToKeep = _preparedSchedule.Periods
+                                .Where(p => p.ChargeType != BatteryChargeType.Discharge ||
+                                           p.StartTime < TimeSpan.FromHours(_options.EveningThresholdHour))
+                                .ToList();
 
-                    _preparedSchedule.Periods = periodsToKeep;
-                    SavePreparedSchedule(_preparedSchedule);
-                    
+                            _preparedSchedule.Periods = periodsToKeep;
+                            SavePreparedSchedule(_preparedSchedule);
+                        }
+                    }
+
                     _logger.LogInformation("Removed tonight's discharge from schedule");
                 }
 
                 // Schedule the new discharge for tomorrow morning
-                var tomorrowDischargeTime = tomorrowMorningTime.AddMinutes(-5); // 5 minutes before to prepare
-                _scheduler.RunAt(tomorrowDischargeTime, () => ExecuteTomorrowMorningDischarge(tomorrowMorningTime));
-                
-                LogBatteryInfo("Scheduled tomorrow morning discharge at {0}", 
+                var tomorrowDischargeTime = tomorrowMorningTime.AddMinutes(-_options.EmsPrepMinutesBefore);
+                _scheduler.RunAt(tomorrowDischargeTime, async () =>
+                {
+                    await ExecuteTomorrowMorningDischargeAsync(tomorrowMorningTime);
+                });
+
+                LogBatteryInfo("Scheduled tomorrow morning discharge at {0}",
                     tomorrowMorningTime.ToString("HH:mm"));
+                SetBatteryStatus($"Rescheduled discharge to {tomorrowMorningTime.ToString("HH:mm")}");
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error rescheduling discharge to tomorrow morning");
+                SetBatteryStatus("Error rescheduling to morning");
             }
         }
 
         /// <summary>
-        /// Executes the discharge that was moved to tomorrow morning
+        /// Execute the discharge that was moved to tomorrow morning.
         /// </summary>
-        /// <param name="dischargeTime">The time for the discharge period</param>
-        private void ExecuteTomorrowMorningDischarge(DateTime dischargeTime)
+        private async Task ExecuteTomorrowMorningDischargeAsync(DateTime dischargeTime)
         {
             try
             {
                 LogBatteryInfo("Executing tomorrow morning discharge period at {0}", dischargeTime.ToString("HH:mm"));
+                SetBatteryStatus($"Executing morning discharge {dischargeTime.ToString("HH:mm")}");
 
-                // Create a temporary schedule with just the morning discharge
                 var morningDischargeSchedule = new ChargingSchema
                 {
                     Periods = new List<ChargingPeriod>
@@ -589,32 +683,25 @@ namespace NetDaemonApps.Apps.Energy
                             StartTime = dischargeTime.TimeOfDay,
                             EndTime = dischargeTime.TimeOfDay.Add(TimeSpan.FromHours(1)),
                             ChargeType = BatteryChargeType.Discharge,
-                            PowerInWatts = 8000
+                            PowerInWatts = Math.Min(_options.DefaultDischargePowerW, _options.MaxInverterPowerW)
                         }
                     }
                 };
 
-                // Apply the discharge schedule (this will handle EMS management)
-                var period = morningDischargeSchedule.Periods.First();
-                PrepareForBatteryPeriod(period);
+                await PrepareForScheduleAsync(morningDischargeSchedule, label: "Morning Discharge");
 
-                // Schedule EMS restoration after the period
-                var restoreTime = dischargeTime.AddHours(1).AddMinutes(1);
-                _scheduler.RunAt(restoreTime, () => RestoreEmsAfterPeriod(period));
+                var restoreTime = dischargeTime.AddHours(1).AddMinutes(_options.EmsRestoreMinutesAfter);
+                _scheduler.RunAt(restoreTime, () => { var _ = RestoreEmsAfterWindowAsync(); });
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error executing tomorrow morning discharge");
+                SetBatteryStatus("Error executing morning discharge");
             }
         }
 
         #region Helper Methods
 
-        /// <summary>
-        /// Logs a message to both console (with [BATTERY] prefix) and the standard logger
-        /// </summary>
-        /// <param name="message">The message to log</param>
-        /// <param name="args">Optional format arguments</param>
         private void LogBatteryInfo(string message, params object[] args)
         {
             var formattedMessage = args.Length > 0 ? string.Format(message, args) : message;
@@ -622,20 +709,27 @@ namespace NetDaemonApps.Apps.Energy
             _logger.LogInformation(message, args);
         }
 
-        /// <summary>
-        /// Gets the current battery state of charge from the main battery sensor
-        /// </summary>
-        /// <returns>Battery SOC as percentage (0-100)</returns>
+        // New helper: write to Home Assistant status label
+        private void SetBatteryStatus(string message)
+        {
+            try
+            {
+                _entities.InputText.BatteryManagementStatus?.SetValue(message);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogDebug(ex, "Failed to set BatteryManagementStatus");
+            }
+        }
+
         private double GetCurrentBatterySOC()
         {
-            // Try to get SOC from the main inverter sensor first
             var mainBatterySoc = _entities.Sensor.InverterHst2083j2446e06861BatteryStateOfCharge.State;
             if (mainBatterySoc.HasValue)
             {
                 return mainBatterySoc.Value;
             }
 
-            // Fallback: Calculate average SOC from individual battery modules
             var batteryModules = new[]
             {
                 _entities.Sensor.BatteryB2n0200j2403e01735BatSoc.State,
@@ -647,79 +741,156 @@ namespace NetDaemonApps.Apps.Energy
             };
 
             var validModules = batteryModules.Where(soc => soc.HasValue).ToList();
-
-            // Default to 50% if no data
             return validModules.Count != 0 ? validModules.Average(soc => soc!.Value) : 50.0;
         }
 
-        /// <summary>
-        /// Estimates daily energy consumption based on historical patterns and current usage
-        /// </summary>
-        /// <returns>Estimated daily consumption in kWh</returns>
         private double EstimateDailyEnergyConsumption()
         {
-            // Get current grid power (positive = consuming, negative = feeding back)
             var currentGridPower = _entities.Sensor.BatteryGridPower.State ?? 0;
             var currentSolarPower = _entities.Sensor.PowerProductionNow.State ?? 0;
             var currentTime = DateTime.Now;
 
-            // Base consumption estimate (typical Dutch household with heat pump)
-            var baseConsumptionKwh = _awayMode ? 15.0 : 25.0; // Reduced when away
+            var awayMode = _entities.Switch.OurHomeAwayMode.State == "on";
+            var baseConsumptionKwh = awayMode ? 15.0 : 25.0;
 
-            // Seasonal adjustments
             var month = currentTime.Month;
             var seasonalMultiplier = month switch
             {
-                12 or 1 or 2 => 1.4,            // Winter - higher heating
-                3 or 11 => 1.2,                 // Shoulder months
-                4 or 5 or 9 or 10 => 1.0,       // Moderate months
-                6 or 7 or 8 => 0.9,             // Summer - lower heating, some cooling
+                12 or 1 or 2 => 1.4,
+                3 or 11 => 1.2,
+                4 or 5 or 9 or 10 => 1.0,
+                6 or 7 or 8 => 0.9,
                 _ => 1.0
             };
 
-            // If we have real-time data, factor in current consumption patterns
             if (!(currentGridPower > 0) || !(currentSolarPower >= 0)) return baseConsumptionKwh * seasonalMultiplier;
 
             var currentTotalConsumption = currentGridPower + currentSolarPower;
-            var hourlyConsumption = currentTotalConsumption / 1000.0; // Convert W to kWh
+            var hourlyConsumption = currentTotalConsumption / 1000.0;
 
-            // Extrapolate based on time of day patterns
             var timeMultiplier = currentTime.Hour switch
             {
-                >= 7 and <= 9 => 1.2,    // Morning peak
-                >= 10 and <= 16 => 0.8,  // Daytime low
-                >= 17 and <= 22 => 1.4,  // Evening peak
-                _ => 0.6                 // Night
+                >= 7 and <= 9 => 1.2,
+                >= 10 and <= 16 => 0.8,
+                >= 17 and <= 22 => 1.4,
+                _ => 0.6
             };
 
             var estimatedDailyFromCurrent = (hourlyConsumption / timeMultiplier) * 24;
-
-            // Average the base estimate with real-time extrapolation
             return (baseConsumptionKwh * seasonalMultiplier + estimatedDailyFromCurrent) / 2;
-
         }
 
-        /// <summary>
-        /// Determines if charging should be allowed based on remaining solar production
-        /// If there's no more solar production expected today, the sun has set and we shouldn't charge
-        /// </summary>
-        /// <param name="energyProductionTodayRemaining">Remaining solar production expected today in kWh</param>
-        /// <returns>True if charging is allowed, false if sun has set</returns>
         private bool IsChargingAllowedAfterSunset(double energyProductionTodayRemaining)
         {
-            // If there's less than 0.1 kWh remaining production, consider the sun to be down
             const double sunsetThreshold = 0.1;
             return energyProductionTodayRemaining > sunsetThreshold;
+        }
+
+        // Compute minutes required to charge from current SOC to 100% at max inverter power
+        private int CalculateRequiredChargeMinutes(double socPercent)
+        {
+            var missingFraction = Math.Clamp((100.0 - socPercent) / 100.0, 0.0, 1.0);
+            var hours = (_options.MaxBatteryCapacityWh * missingFraction) / Math.Max(1, _options.MaxInverterPowerW); // Wh / W = h
+            var minutes = (int)Math.Ceiling(hours * 60.0);
+            if (missingFraction > 0 && minutes < _options.MinChargeBufferMinutes)
+            {
+                minutes = _options.MinChargeBufferMinutes;
+            }
+            return minutes;
+        }
+
+        // Trim charge periods so the total remaining charge time from now equals requiredMinutes (if possible)
+        private (ChargingSchema? adjusted, string summary) TrimChargePeriodsToTotalMinutes(ChargingSchema original, int requiredMinutes)
+        {
+            var now = DateTime.Now.TimeOfDay;
+            var adjusted = original.Clone();
+            var periods = adjusted.Periods.ToList();
+
+            // Calculate available remaining charge minutes
+            var remaining = periods.Where(p => p.ChargeType == BatteryChargeType.Charge)
+                .Sum(p => Math.Max(0, (int)Math.Ceiling((p.EndTime - (p.StartTime > now ? p.StartTime : now)).TotalMinutes)));
+
+            if (remaining <= requiredMinutes)
+            {
+                return (original, $"No trim needed (remaining {remaining}m <= required {requiredMinutes}m)");
+            }
+
+            var minutesToTrim = remaining - requiredMinutes;
+            var trimmed = 0; var removed = 0;
+
+            // Work through charge periods from earliest to latest
+            foreach (var p in periods.Where(p => p.ChargeType == BatteryChargeType.Charge).OrderBy(p => p.StartTime).ToList())
+            {
+                if (minutesToTrim <= 0) break;
+
+                var remStart = p.StartTime > now ? p.StartTime : now;
+                if (remStart >= p.EndTime) continue; // nothing left in this period
+
+                var remSpanMin = (int)Math.Ceiling((p.EndTime - remStart).TotalMinutes);
+
+                if (minutesToTrim >= remSpanMin)
+                {
+                    // Remove the remaining portion entirely
+                    if (remStart <= p.StartTime)
+                    {
+                        // Whole period is within trim window: remove
+                        adjusted.Periods.Remove(p);
+                        removed++;
+                    }
+                    else
+                    {
+                        // Keep only the past portion before now
+                        p.EndTime = remStart;
+                        trimmed++;
+                    }
+                    minutesToTrim -= remSpanMin;
+                    continue;
+                }
+
+                // Partial trim: move the start of remaining part forward
+                var newStart = remStart.Add(TimeSpan.FromMinutes(minutesToTrim));
+                if (newStart <= p.EndTime)
+                {
+                    p.StartTime = newStart;
+                    trimmed++;
+                    minutesToTrim = 0;
+                    break;
+                }
+            }
+
+            // Clean up invalid periods
+            adjusted.Periods = adjusted.Periods.Where(x => x.EndTime > x.StartTime).ToList();
+
+            var afterRemaining = adjusted.Periods.Where(p => p.ChargeType == BatteryChargeType.Charge)
+                .Sum(p => Math.Max(0, (int)Math.Ceiling((p.EndTime - (p.StartTime > now ? p.StartTime : now)).TotalMinutes)));
+
+            var summary = $"Trimmed {remaining - afterRemaining}m (removed={removed}, trimmed={trimmed}), target {requiredMinutes}m, now {afterRemaining}m";
+            return (adjusted, summary);
+        }
+
+        // Returns human-friendly suffix about next/ongoing charge
+        private static string BuildNextChargeSuffix(ChargingSchema schedule)
+        {
+            var now = DateTime.Now.TimeOfDay;
+            var charges = schedule.Periods.Where(p => p.ChargeType == BatteryChargeType.Charge)
+                .OrderBy(p => p.StartTime)
+                .ToList();
+
+            var current = charges.FirstOrDefault(p => now >= p.StartTime && now < p.EndTime);
+            if (current != null)
+                return $"charging now until {current.EndTime.ToString(@"hh\:mm")}";
+
+            var next = charges.FirstOrDefault(p => p.StartTime >= now);
+            if (next != null)
+                return $"next charge {next.StartTime.ToString(@"hh\:mm")}";
+
+            return "no charge planned";
         }
 
         #endregion
 
         #region State Management
 
-        /// <summary>
-        /// Retrieves the currently applied charging schedule from persistent state
-        /// </summary>
-        /// <returns>The currently applied charging schedule, or null if none exists</returns>
         private ChargingSchema? GetCurrentAppliedSchedule()
         {
             try
@@ -733,16 +904,11 @@ namespace NetDaemonApps.Apps.Energy
             }
         }
 
-        /// <summary>
-        /// Saves the currently applied charging schedule to persistent state
-        /// </summary>
-        /// <param name="schedule">The charging schedule that was applied</param>
         private void SaveCurrentAppliedSchedule(ChargingSchema schedule)
         {
             try
             {
                 AppStateManager.SetState(nameof(Battery), "CurrentAppliedSchema", schedule);
-
                 _logger.LogDebug("Saved current applied schedule to state");
             }
             catch (Exception ex)
@@ -751,17 +917,12 @@ namespace NetDaemonApps.Apps.Energy
             }
         }
 
-        /// <summary>
-        /// Saves the prepared schedule (not yet applied) to persistent state
-        /// </summary>
-        /// <param name="schedule">The prepared charging schedule</param>
         private void SavePreparedSchedule(ChargingSchema schedule)
         {
             try
             {
                 AppStateManager.SetState(nameof(Battery), "PreparedSchedule", schedule);
                 AppStateManager.SetState(nameof(Battery), "PreparedScheduleDate", DateTime.Today);
-
                 _logger.LogDebug("Saved prepared schedule to state");
             }
             catch (Exception ex)
@@ -770,10 +931,6 @@ namespace NetDaemonApps.Apps.Energy
             }
         }
 
-        /// <summary>
-        /// Retrieves the prepared schedule from persistent state
-        /// </summary>
-        /// <returns>The prepared schedule for today, or null if none exists</returns>
         private ChargingSchema? GetPreparedSchedule()
         {
             try
@@ -781,7 +938,7 @@ namespace NetDaemonApps.Apps.Energy
                 var preparedDate = AppStateManager.GetState<DateTime?>(nameof(Battery), "PreparedScheduleDate");
                 if (preparedDate?.Date != DateTime.Today)
                 {
-                    return null; // Schedule is for a different day
+                    return null;
                 }
 
                 return AppStateManager.GetState<ChargingSchema?>(nameof(Battery), "PreparedSchedule");

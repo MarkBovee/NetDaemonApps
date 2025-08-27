@@ -12,6 +12,8 @@ using NetDaemon.Runtime;
 using System.Reflection;
 
 using NetDaemonApps.Models.EnergyPrices;
+using NetDaemonApps.Models.Battery;
+using Microsoft.Extensions.Options;
 
 try
 {
@@ -24,11 +26,23 @@ try
         .UseNetDaemonDefaultLogging()                                   // Configure logging
         .UseNetDaemonRuntime()                                          // Add NetDaemon runtime
         .UseNetDaemonTextToSpeech()                                     // Add TTS support
-        .ConfigureServices((_, services) =>
+        .ConfigureServices((context, services) =>
             services
                 .AddAppsFromAssembly(Assembly.GetExecutingAssembly())   // Register app assemblies
                 .AddNetDaemonStateManager()                             // Add state manager
                 .AddNetDaemonScheduler()                                // Add scheduler
+                // Battery options and SAJ API
+                .Configure<BatteryOptions>(context.Configuration.GetSection("Battery"))
+                .AddSingleton(sp =>
+                {
+                    var opt = sp.GetRequiredService<IOptions<BatteryOptions>>().Value;
+                    return new SAJPowerBatteryApi(
+                        username: opt.Username ?? string.Empty,
+                        password: opt.Password ?? string.Empty,
+                        deviceSerialNumber: opt.DeviceSerialNumber ?? string.Empty,
+                        baseUrl: opt.BaseUrl ?? "https://eop.saj-electric.com"
+                    );
+                })
 
         // Add next line if using code generator
         // .AddHomeAssistantGenerated()
