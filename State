@@ -61,28 +61,28 @@
   },
   "Battery": {
     "LastStatusMessage": "No battery activity planned today",
-    "PreparedScheduleDate": "2025-08-28T00:00:00+02:00",
     "PreparedSchedule": {
       "Periods": [
-        {
-          "ChargeType": 1,
-          "StartTime": "08:00:00",
-          "EndTime": "08:59:00",
-          "PowerInWatts": 8000,
-          "Weekdays": "0,0,0,1,0,0,0"
-        },
         {
           "ChargeType": 0,
           "StartTime": "14:00:00",
           "EndTime": "16:59:00",
           "PowerInWatts": 8000,
           "Weekdays": "0,0,0,0,1,0,0"
+        },
+        {
+          "ChargeType": 1,
+          "StartTime": "20:00:00",
+          "EndTime": "20:59:00",
+          "PowerInWatts": 8000,
+          "Weekdays": "0,0,0,1,0,0,0"
         }
       ],
-      "CreatedAt": "2025-08-28T17:06:05.7873428+02:00",
+      "CreatedAt": "2025-08-28T17:25:39.1976171+02:00",
       "AppliedAt": null,
       "Source": "Unknown"
     },
+    "PreparedScheduleDate": "2025-08-28T00:00:00+02:00",
     "LastKnownMode": 3,
     "LastModeChangeTime": "2025-08-28T16:47:22.5808703\u002B02:00"
   }

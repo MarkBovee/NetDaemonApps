@@ -489,9 +489,14 @@ namespace NetDaemonApps.Apps.Energy
         {
             var now = DateTime.Now;
             
+            // Filter out past prices for discharge optimization (only look at future times)
+            var futurePrices = pricesToday.Where(p => p.Key > now).ToDictionary(p => p.Key, p => p.Value);
+            
             // Default to traditional single-day optimization
             var (defaultChargeStart, defaultChargeEnd) = PriceHelper.GetLowestPriceTimeslot(pricesToday, 3);
-            var (defaultDischargeStart, defaultDischargeEnd) = PriceHelper.GetHighestPriceTimeslot(pricesToday, 1);
+            var (defaultDischargeStart, defaultDischargeEnd) = futurePrices.Any() ? 
+                PriceHelper.GetHighestPriceTimeslot(futurePrices, 1) : 
+                PriceHelper.GetHighestPriceTimeslot(pricesToday, 1);
 
             // Enhanced optimization when SOC is high and tomorrow's prices are available
             if (currentSoc > _options.HighSocThresholdPercent && pricesTomorrow != null && pricesTomorrow.Any())
@@ -541,8 +546,8 @@ namespace NetDaemonApps.Apps.Energy
                         LogStatus($"Cross-day optimization selected", 
                             $"Savings: {savings:P1} (€{todayBestPrice:F3} → €{crossDayPrice:F3}), Charge: {crossDayChargeStart:HH:mm}-{crossDayChargeEnd:HH:mm}");
                         
-                        // Find optimal discharge window in the higher price periods
-                        var highPricePeriods = combinedPrices.Where(p => p.Value > crossDayPrice * 1.15).ToDictionary(p => p.Key, p => p.Value);
+                        // Find optimal discharge window in the higher price periods (only future times)
+                        var highPricePeriods = combinedPrices.Where(p => p.Value > crossDayPrice * 1.15 && p.Key > now).ToDictionary(p => p.Key, p => p.Value);
                         
                         if (highPricePeriods.Any())
                         {
