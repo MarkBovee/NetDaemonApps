@@ -50,6 +50,9 @@ namespace NetDaemonApps.Apps.Energy
 
             LogStatus("Started battery energy program with 3-checkpoint strategy");
 
+            // Clear battery state at startup for fresh testing/operation
+            ClearBatteryState();
+
             // Check if the token is valid (diagnostic only)
             _saiPowerBatteryApi.IsTokenValid(true);
 
@@ -237,15 +240,15 @@ namespace NetDaemonApps.Apps.Energy
                                 $"Need {requiredHours:F1}h (was {currentScheduledHours}h), finding new optimal {requiredHours:F1}-hour window");
 
                             // Get the optimal window for the required hours (fractional allowed)
-                            var (newChargeStart, newChargeEnd) = PriceHelper.GetLowestPriceTimeslot(_priceHelper.PricesToday, requiredHours);
+                            var (newChargeStart, newChargeEnd) = PriceHelper.GetLowestPriceTimeslot(_priceHelper.PricesToday!, requiredHours);
 
                             // Create new schedule with optimal window
                             var newPeriods = chargingSchedule.Periods
                                 .Where(p => p.ChargeType != BatteryChargeType.Charge) // Keep non-charge periods
                                 .ToList();
 
-                            // Add the new optimal charge period
-                            newPeriods.Add(CreateChargePeriod(newChargeStart.TimeOfDay, newChargeEnd.TimeOfDay));
+                            // Add the new optimal charge period (for tomorrow)
+                            newPeriods.Add(CreateChargePeriod(newChargeStart.TimeOfDay, newChargeEnd.TimeOfDay, GetChargeWeekdayPattern()));
 
                             scheduleToApply = new ChargingSchema { Periods = newPeriods };
 
@@ -331,7 +334,11 @@ namespace NetDaemonApps.Apps.Energy
                     {
                         if (chargePeriods.Count > 0)
                         {
-                            var chargeSchedule = $"{chargePeriods.First().StartTime.ToString(@"hh\:mm")}-{chargePeriods.Last().EndTime.ToString(@"hh\:mm")}";
+                            var firstCharge = chargePeriods.First();
+                            var lastCharge = chargePeriods.Last();
+                            var dayAbbreviation = GetDayAbbreviationFromPattern(firstCharge.Weekdays);
+                            var dayDisplay = !string.IsNullOrEmpty(dayAbbreviation) ? $" {dayAbbreviation}" : "";
+                            var chargeSchedule = $"{firstCharge.StartTime.ToString(@"hh\:mm")}-{lastCharge.EndTime.ToString(@"hh\:mm")}{dayDisplay}";
                             _entities.InputText.BatteryChargeSchedule.SetValue(chargeSchedule);
                         }
                         else
@@ -341,7 +348,11 @@ namespace NetDaemonApps.Apps.Energy
 
                         if (dischargePeriods.Count > 0)
                         {
-                            var dischargeSchedule = $"{dischargePeriods.First().StartTime.ToString(@"hh\:mm")}-{dischargePeriods.Last().EndTime.ToString(@"hh\:mm")}";
+                            var firstDischarge = dischargePeriods.First();
+                            var lastDischarge = dischargePeriods.Last();
+                            var dayAbbreviation = GetDayAbbreviationFromPattern(firstDischarge.Weekdays);
+                            var dayDisplay = !string.IsNullOrEmpty(dayAbbreviation) ? $" {dayAbbreviation}" : "";
+                            var dischargeSchedule = $"{firstDischarge.StartTime.ToString(@"hh\:mm")}-{lastDischarge.EndTime.ToString(@"hh\:mm")}{dayDisplay}";
                             _entities.InputText.BatteryDischargeSchedule.SetValue(dischargeSchedule);
                         }
                         else
@@ -367,7 +378,7 @@ namespace NetDaemonApps.Apps.Energy
 
         /// <summary>
         /// Calculates the initial charging schedule based on energy prices and battery state
-        /// Implements 3-checkpoint strategy: morning check, charge moment, evening check
+        /// Implements enhanced 3-checkpoint strategy with cross-day optimization and SOC-aware late charging
         /// </summary>
         private ChargingSchema? CalculateInitialChargingSchedule()
         {
@@ -378,21 +389,21 @@ namespace NetDaemonApps.Apps.Energy
                 return null;
             }
 
-            // Get basic charge and discharge timeslot
-            var (chargeStart, chargeEnd) = PriceHelper.GetLowestPriceTimeslot(pricesToday, 3);
-            var (dischargeStart, dischargeEnd) = PriceHelper.GetHighestPriceTimeslot(pricesToday, 1);
-
             var periods = new List<ChargingPeriod>();
             var now = DateTime.Now;
+            var currentSoc = GetCurrentBatterySoc();
+
+            // Enhanced optimization: Consider cross-day price analysis when available
+            var (optimizedChargeStart, optimizedChargeEnd, optimizedDischargeStart, optimizedDischargeEnd) = 
+                CalculateOptimalChargingWindows(pricesToday, _priceHelper.PricesTomorrow, currentSoc);
 
             // CHECKPOINT 1: Morning check (before charge) - add discharge if SOC > configured threshold and still relevant now
-            var currentSoc = GetCurrentBatterySoc();
-            var morningCheckTime = chargeStart.AddHours(-_options.MorningCheckOffsetHours);
+            var morningCheckTime = optimizedChargeStart.AddHours(-_options.MorningCheckOffsetHours);
             var morningWindowStart = TimeSpan.FromHours(_options.MorningWindowStartHour);
-            if (currentSoc > _options.MorningSocThresholdPercent && morningCheckTime.TimeOfDay > morningWindowStart && now < chargeStart)
+            if (currentSoc > _options.MorningSocThresholdPercent && morningCheckTime.TimeOfDay > morningWindowStart && now < optimizedChargeStart)
             {
                 var morningPrices = pricesToday.Where(p => p.Key.TimeOfDay >= morningWindowStart &&
-                                                          p.Key.TimeOfDay < chargeStart.TimeOfDay).ToList();
+                                                          p.Key.TimeOfDay < optimizedChargeStart.TimeOfDay).ToList();
 
                 if (morningPrices.Count > 0)
                 {
@@ -404,7 +415,10 @@ namespace NetDaemonApps.Apps.Energy
                     if (now.TimeOfDay < morningDischargeEnd)
                     {
                         var start = now.TimeOfDay > morningDischargeStart ? now.TimeOfDay : morningDischargeStart;
-                        var period = CreateMorningDischargePeriod(start);
+                        var morningPattern = _options.EnableDaySpecificScheduling ? 
+                            GetSingleDayPattern(DateTime.Today.DayOfWeek) : 
+                            GetAllDaysPattern();
+                        var period = CreateMorningDischargePeriod(start, 1.0, morningPattern);
                         period.EndTime = morningDischargeEnd; // Override the default end time to maintain original logic
                         periods.Add(period);
 
@@ -414,14 +428,14 @@ namespace NetDaemonApps.Apps.Energy
                 }
             }
 
-            // CHECKPOINT 2: Always add charge moment at lowest price
-            periods.Add(CreateChargePeriod(chargeStart.TimeOfDay, chargeEnd.TimeOfDay));
+            // CHECKPOINT 2: Add optimized charge period (for tomorrow)
+            periods.Add(CreateChargePeriod(optimizedChargeStart.TimeOfDay, optimizedChargeEnd.TimeOfDay, GetChargeWeekdayPattern()));
 
-            // CHECKPOINT 3: Add evening discharge (will be checked and potentially moved later)
-            periods.Add(CreateEveningDischargePeriod(dischargeStart.TimeOfDay, dischargeEnd.TimeOfDay));
+            // CHECKPOINT 3: Add optimized discharge period (for today)
+            periods.Add(CreateEveningDischargePeriod(optimizedDischargeStart.TimeOfDay, optimizedDischargeEnd.TimeOfDay, GetDischargeWeekdayPattern()));
 
             // Schedule evening check to potentially move discharge to tomorrow morning
-            ScheduleEveningPriceCheck(dischargeStart);
+            ScheduleEveningPriceCheck(optimizedDischargeStart);
 
         // Validate and fix any overlapping periods before creating the schedule
         periods = ValidateAndFixOverlaps(periods);
@@ -461,7 +475,116 @@ namespace NetDaemonApps.Apps.Energy
                 var avgDischargePrice = dischargePeriods.Select(p => pricesToday.FirstOrDefault(pr => pr.Key.TimeOfDay == p.StartTime).Value).Average();
                 LogStatus($"  Discharge periods avg price: €{avgDischargePrice:F3}");
             }
-        }            return schedule;
+        }
+        
+        return schedule;
+        }
+
+        /// <summary>
+        /// Enhanced optimization method that considers cross-day pricing and SOC-aware scheduling
+        /// Returns optimal charge and discharge windows considering current battery state and multi-day prices
+        /// </summary>
+        private (DateTime ChargeStart, DateTime ChargeEnd, DateTime DischargeStart, DateTime DischargeEnd) 
+            CalculateOptimalChargingWindows(IDictionary<DateTime, double> pricesToday, IDictionary<DateTime, double>? pricesTomorrow, double currentSoc)
+        {
+            var now = DateTime.Now;
+            
+            // Default to traditional single-day optimization
+            var (defaultChargeStart, defaultChargeEnd) = PriceHelper.GetLowestPriceTimeslot(pricesToday, 3);
+            var (defaultDischargeStart, defaultDischargeEnd) = PriceHelper.GetHighestPriceTimeslot(pricesToday, 1);
+
+            // Enhanced optimization when SOC is high and tomorrow's prices are available
+            if (currentSoc > _options.HighSocThresholdPercent && pricesTomorrow != null && pricesTomorrow.Any())
+            {
+                LogStatus($"High SOC optimization (SOC: {currentSoc:F1}% > {_options.HighSocThresholdPercent:F1}%)", 
+                    "Analyzing cross-day optimization opportunities");
+
+                // Calculate required charge time based on current SOC
+                var requiredChargeMinutes = CalculateRequiredChargeMinutes(currentSoc);
+                var requiredChargeHours = requiredChargeMinutes / 60.0;
+
+                // Find today's remaining hours (from now until midnight)
+                var remainingTodayHours = (24 - now.Hour) - (now.Minute / 60.0);
+                
+                // Combine today's remaining prices with tomorrow's prices for analysis
+                var combinedPrices = new Dictionary<DateTime, double>();
+                
+                // Add remaining today's prices
+                foreach (var price in pricesToday.Where(p => p.Key > now))
+                {
+                    combinedPrices[price.Key] = price.Value;
+                }
+                
+                // Add tomorrow's prices
+                if (pricesTomorrow != null)
+                {
+                    foreach (var price in pricesTomorrow)
+                    {
+                        combinedPrices[price.Key] = price.Value;
+                    }
+                }
+
+                if (combinedPrices.Count >= 6) // Ensure we have enough data for analysis
+                {
+                    // Find the absolute cheapest charging window in the next 24-48 hours
+                    var (crossDayChargeStart, crossDayChargeEnd) = PriceHelper.GetLowestPriceTimeslot(combinedPrices, requiredChargeHours);
+                    
+                    // Check if cross-day optimization provides significant savings
+                    var todayBestPrice = pricesToday.Where(p => p.Key > now).OrderBy(p => p.Value).Take((int)Math.Ceiling(requiredChargeHours)).Average(p => p.Value);
+                    var crossDayPrice = combinedPrices.Where(p => p.Key >= crossDayChargeStart && p.Key <= crossDayChargeEnd).Average(p => p.Value);
+                    
+                    var savings = (todayBestPrice - crossDayPrice) / todayBestPrice;
+                    
+                    // If savings are significant (>5%) and the battery can bridge to the optimal time, use cross-day optimization
+                    if (savings > 0.05 && CanBatteryBridgeToTime(currentSoc, crossDayChargeStart))
+                    {
+                        LogStatus($"Cross-day optimization selected", 
+                            $"Savings: {savings:P1} (€{todayBestPrice:F3} → €{crossDayPrice:F3}), Charge: {crossDayChargeStart:HH:mm}-{crossDayChargeEnd:HH:mm}");
+                        
+                        // Find optimal discharge window in the higher price periods
+                        var highPricePeriods = combinedPrices.Where(p => p.Value > crossDayPrice * 1.15).ToDictionary(p => p.Key, p => p.Value);
+                        
+                        if (highPricePeriods.Any())
+                        {
+                            var (optimalDischargeStart, optimalDischargeEnd) = PriceHelper.GetHighestPriceTimeslot(highPricePeriods, 1);
+                            return (crossDayChargeStart, crossDayChargeEnd, optimalDischargeStart, optimalDischargeEnd);
+                        }
+                    }
+                }
+            }
+
+            // Log why we're using default optimization
+            var reason = currentSoc <= _options.HighSocThresholdPercent ? 
+                $"SOC too low ({currentSoc:F1}% ≤ {_options.HighSocThresholdPercent:F1}%)" :
+                "Tomorrow's prices not available or insufficient savings";
+                
+            LogStatus("Using single-day optimization", reason);
+            
+            return (defaultChargeStart, defaultChargeEnd, defaultDischargeStart, defaultDischargeEnd);
+        }
+
+        /// <summary>
+        /// Checks if the battery can bridge to the specified charge time based on current SOC and consumption patterns
+        /// </summary>
+        private bool CanBatteryBridgeToTime(double currentSoc, DateTime targetChargeTime)
+        {
+            var hoursUntilCharge = (targetChargeTime - DateTime.Now).TotalHours;
+            
+            // Rough estimate: assume ~5% SOC consumption per day for a typical household
+            // This should ideally be configurable or learned from historical data
+            var estimatedSocDrop = (hoursUntilCharge / 24.0) * _options.DailyConsumptionSocPercent;
+            var projectedSoc = currentSoc - estimatedSocDrop;
+            
+            // Ensure we maintain at least minimum SOC plus some safety margin
+            var canBridge = projectedSoc >= (_options.MinimumSocPercent + _options.SocSafetyMarginPercent);
+            
+            if (Debugger.IsAttached)
+            {
+                LogStatus($"🔍 Bridge analysis: {hoursUntilCharge:F1}h until charge", 
+                    $"Current: {currentSoc:F1}%, Estimated drop: {estimatedSocDrop:F1}%, Projected: {projectedSoc:F1}%, Min required: {_options.MinimumSocPercent + _options.SocSafetyMarginPercent:F1}%, Can bridge: {canBridge}");
+            }
+            
+            return canBridge;
         }
 
         #endregion
@@ -705,13 +828,38 @@ namespace NetDaemonApps.Apps.Energy
         /// <returns>A configured ChargingPeriod for morning discharge</returns>
         private ChargingPeriod CreateMorningDischargePeriod(TimeSpan startTime, double durationHours = 1.0)
         {
+            return CreateMorningDischargePeriod(startTime, durationHours, GetAllDaysPattern());
+        }
+
+        /// <summary>
+        /// Creates a morning discharge period with the specified start time, duration, and weekday pattern.
+        /// </summary>
+        /// <param name="startTime">The start time for the discharge period</param>
+        /// <param name="durationHours">Duration in hours (default: 1 hour)</param>
+        /// <param name="weekdayPattern">Weekday pattern (e.g., "1,1,1,1,1,0,0" for weekdays only)</param>
+        /// <returns>A configured ChargingPeriod for morning discharge</returns>
+        private ChargingPeriod CreateMorningDischargePeriod(TimeSpan startTime, double durationHours, string weekdayPattern)
+        {
             return new ChargingPeriod
             {
                 StartTime = startTime,
                 EndTime = startTime.Add(TimeSpan.FromHours(durationHours)),
                 ChargeType = BatteryChargeType.Discharge,
-                PowerInWatts = Math.Min(_options.DefaultDischargePowerW, _options.MaxInverterPowerW)
+                PowerInWatts = Math.Min(_options.DefaultDischargePowerW, _options.MaxInverterPowerW),
+                Weekdays = weekdayPattern
             };
+        }
+
+        /// <summary>
+        /// Creates a morning discharge period for a specific day of the week.
+        /// </summary>
+        /// <param name="startTime">The start time for the discharge period</param>
+        /// <param name="durationHours">Duration in hours (default: 1 hour)</param>
+        /// <param name="dayOfWeek">Specific day of the week</param>
+        /// <returns>A configured ChargingPeriod for morning discharge</returns>
+        private ChargingPeriod CreateMorningDischargePeriod(TimeSpan startTime, double durationHours, DayOfWeek dayOfWeek)
+        {
+            return CreateMorningDischargePeriod(startTime, durationHours, GetSingleDayPattern(dayOfWeek));
         }
 
         /// <summary>
@@ -722,13 +870,38 @@ namespace NetDaemonApps.Apps.Energy
         /// <returns>A configured ChargingPeriod for charging</returns>
         private ChargingPeriod CreateChargePeriod(TimeSpan startTime, TimeSpan endTime)
         {
+            return CreateChargePeriod(startTime, endTime, GetAllDaysPattern());
+        }
+
+        /// <summary>
+        /// Creates a charging period with the specified start and end times and weekday pattern.
+        /// </summary>
+        /// <param name="startTime">The start time for the charge period</param>
+        /// <param name="endTime">The end time for the charge period</param>
+        /// <param name="weekdayPattern">Weekday pattern (e.g., "1,1,1,1,1,0,0" for weekdays only)</param>
+        /// <returns>A configured ChargingPeriod for charging</returns>
+        private ChargingPeriod CreateChargePeriod(TimeSpan startTime, TimeSpan endTime, string weekdayPattern)
+        {
             return new ChargingPeriod
             {
                 StartTime = startTime,
                 EndTime = endTime,
                 ChargeType = BatteryChargeType.Charge,
-                PowerInWatts = Math.Min(_options.DefaultChargePowerW, _options.MaxInverterPowerW)
+                PowerInWatts = Math.Min(_options.DefaultChargePowerW, _options.MaxInverterPowerW),
+                Weekdays = weekdayPattern
             };
+        }
+
+        /// <summary>
+        /// Creates a charging period for a specific day of the week.
+        /// </summary>
+        /// <param name="startTime">The start time for the charge period</param>
+        /// <param name="endTime">The end time for the charge period</param>
+        /// <param name="dayOfWeek">Specific day of the week</param>
+        /// <returns>A configured ChargingPeriod for charging</returns>
+        private ChargingPeriod CreateChargePeriod(TimeSpan startTime, TimeSpan endTime, DayOfWeek dayOfWeek)
+        {
+            return CreateChargePeriod(startTime, endTime, GetSingleDayPattern(dayOfWeek));
         }
 
         /// <summary>
@@ -739,13 +912,38 @@ namespace NetDaemonApps.Apps.Energy
         /// <returns>A configured ChargingPeriod for evening discharge</returns>
         private ChargingPeriod CreateEveningDischargePeriod(TimeSpan startTime, TimeSpan endTime)
         {
+            return CreateEveningDischargePeriod(startTime, endTime, GetAllDaysPattern());
+        }
+
+        /// <summary>
+        /// Creates an evening discharge period with the specified start and end times and weekday pattern.
+        /// </summary>
+        /// <param name="startTime">The start time for the discharge period</param>
+        /// <param name="endTime">The end time for the discharge period</param>
+        /// <param name="weekdayPattern">Weekday pattern (e.g., "1,1,1,1,1,0,0" for weekdays only)</param>
+        /// <returns>A configured ChargingPeriod for evening discharge</returns>
+        private ChargingPeriod CreateEveningDischargePeriod(TimeSpan startTime, TimeSpan endTime, string weekdayPattern)
+        {
             return new ChargingPeriod
             {
                 StartTime = startTime,
                 EndTime = endTime,
                 ChargeType = BatteryChargeType.Discharge,
-                PowerInWatts = Math.Min(_options.DefaultDischargePowerW, _options.MaxInverterPowerW)
+                PowerInWatts = Math.Min(_options.DefaultDischargePowerW, _options.MaxInverterPowerW),
+                Weekdays = weekdayPattern
             };
+        }
+
+        /// <summary>
+        /// Creates an evening discharge period for a specific day of the week.
+        /// </summary>
+        /// <param name="startTime">The start time for the discharge period</param>
+        /// <param name="endTime">The end time for the discharge period</param>
+        /// <param name="dayOfWeek">Specific day of the week</param>
+        /// <returns>A configured ChargingPeriod for evening discharge</returns>
+        private ChargingPeriod CreateEveningDischargePeriod(TimeSpan startTime, TimeSpan endTime, DayOfWeek dayOfWeek)
+        {
+            return CreateEveningDischargePeriod(startTime, endTime, GetSingleDayPattern(dayOfWeek));
         }
 
         /// <summary>
@@ -959,8 +1157,11 @@ namespace NetDaemonApps.Apps.Energy
                     allPeriods = new List<ChargingPeriod>();
                 }
 
-                // Add the new morning discharge period
-                allPeriods.Add(CreateMorningDischargePeriod(dischargeTime.TimeOfDay));
+                // Add the new morning discharge period (tomorrow specific when day scheduling enabled)
+                var tomorrowPattern = _options.EnableDaySpecificScheduling ? 
+                    GetSingleDayPattern(dischargeTime.DayOfWeek) : 
+                    GetAllDaysPattern();
+                allPeriods.Add(CreateMorningDischargePeriod(dischargeTime.TimeOfDay, 1.0, tomorrowPattern));
 
                 // Validate and fix any remaining overlaps
                 allPeriods = ValidateAndFixOverlaps(allPeriods);
@@ -1177,6 +1378,159 @@ namespace NetDaemonApps.Apps.Energy
             var contextSuffix = string.IsNullOrEmpty(context) ? "" : $" ({context})";
 
             return $"{actionType} scheduled {timeInfo}{contextSuffix}";
+        }
+
+        /// <summary>
+        /// Generates weekday patterns for charging periods.
+        /// Format: "Mon,Tue,Wed,Thu,Fri,Sat,Sun" where 1=active, 0=inactive
+        /// </summary>
+        /// <param name="dayOfWeek">Specific day of week (Monday=1)</param>
+        /// <returns>Weekday pattern string</returns>
+        private static string GetSingleDayPattern(DayOfWeek dayOfWeek)
+        {
+            var pattern = new[] { "0", "0", "0", "0", "0", "0", "0" };
+            // .NET DayOfWeek: Sunday=0, Monday=1, ... Saturday=6
+            // API format: Monday=index 0, Tuesday=index 1, ... Sunday=index 6
+            var apiIndex = dayOfWeek == DayOfWeek.Sunday ? 6 : (int)dayOfWeek - 1;
+            pattern[apiIndex] = "1";
+            return string.Join(",", pattern);
+        }
+
+        /// <summary>
+        /// Gets a short day abbreviation from weekday pattern.
+        /// Returns the first active day found, or empty string if no days active.
+        /// </summary>
+        /// <param name="weekdayPattern">Pattern like "0,0,0,0,1,0,0"</param>
+        /// <returns>Day abbreviation like "Fri" or empty string</returns>
+        private static string GetDayAbbreviationFromPattern(string weekdayPattern)
+        {
+            if (string.IsNullOrEmpty(weekdayPattern))
+                return "";
+                
+            var dayAbbreviations = new[] { "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun" };
+            var days = weekdayPattern.Split(',');
+            
+            for (int i = 0; i < Math.Min(days.Length, dayAbbreviations.Length); i++)
+            {
+                if (days[i].Trim() == "1")
+                {
+                    return dayAbbreviations[i];
+                }
+            }
+            
+            return "";
+        }
+
+        /// <summary>
+        /// Gets weekday pattern for business days (Monday-Friday).
+        /// </summary>
+        /// <returns>Weekday pattern string for weekdays only</returns>
+        private static string GetWeekdaysPattern()
+        {
+            return "1,1,1,1,1,0,0"; // Mon-Fri active, Sat-Sun inactive
+        }
+
+        /// <summary>
+        /// Gets weekday pattern for weekends (Saturday-Sunday).
+        /// </summary>
+        /// <returns>Weekday pattern string for weekends only</returns>
+        private static string GetWeekendsPattern()
+        {
+            return "0,0,0,0,0,1,1"; // Mon-Fri inactive, Sat-Sun active
+        }
+
+        /// <summary>
+        /// Gets weekday pattern for all days (default behavior).
+        /// </summary>
+        /// <returns>Weekday pattern string for all days</returns>
+        private static string GetAllDaysPattern()
+        {
+            return "1,1,1,1,1,1,1"; // All days active
+        }
+
+        /// <summary>
+        /// Determines the optimal weekday pattern based on configuration and current day context.
+        /// </summary>
+        /// <returns>Weekday pattern string based on configuration settings</returns>
+        private string GetOptimalWeekdayPattern()
+        {
+            if (!_options.EnableDaySpecificScheduling)
+                return GetAllDaysPattern();
+
+            // For day-specific scheduling, use current day only
+            // This could be enhanced to consider tomorrow's schedule as well
+            var currentDay = DateTime.Now.DayOfWeek;
+            var pattern = GetSingleDayPattern(currentDay);
+            var description = $"{currentDay} only";
+
+            if (Debugger.IsAttached)
+            {
+                LogStatus($"Day-specific scheduling: {description}", $"Using weekday pattern: {pattern}");
+            }
+
+            return pattern;
+        }
+
+        /// <summary>
+        /// Gets the optimal weekday pattern for discharge periods (today only).
+        /// </summary>
+        /// <returns>Weekday pattern string for today</returns>
+        private string GetDischargeWeekdayPattern()
+        {
+            if (!_options.EnableDaySpecificScheduling)
+                return GetAllDaysPattern();
+
+            var today = DateTime.Now.DayOfWeek;
+            var pattern = GetSingleDayPattern(today);
+            
+            if (Debugger.IsAttached)
+            {
+                LogStatus($"Discharge pattern: {today} only", $"Using pattern: {pattern}");
+            }
+            
+            return pattern;
+        }
+
+        /// <summary>
+        /// Gets the optimal weekday pattern for charge periods (tomorrow only).
+        /// </summary>
+        /// <returns>Weekday pattern string for tomorrow</returns>
+        private string GetChargeWeekdayPattern()
+        {
+            if (!_options.EnableDaySpecificScheduling)
+                return GetAllDaysPattern();
+
+            var tomorrow = DateTime.Now.AddDays(1).DayOfWeek;
+            var pattern = GetSingleDayPattern(tomorrow);
+            
+            if (Debugger.IsAttached)
+            {
+                LogStatus($"Charge pattern: {tomorrow} only", $"Using pattern: {pattern}");
+            }
+            
+            return pattern;
+        }
+
+        /// <summary>
+        /// Gets a day-specific pattern for a given day with debug logging when enabled.
+        /// </summary>
+        /// <param name="dayOfWeek">Day of the week to create pattern for</param>
+        /// <param name="context">Optional context for logging (e.g., "charge", "discharge")</param>
+        /// <returns>Weekday pattern string for the specified day</returns>
+        private string GetDaySpecificPattern(DayOfWeek dayOfWeek, string context = "")
+        {
+            if (!_options.EnableDaySpecificScheduling)
+                return GetAllDaysPattern();
+
+            var pattern = GetSingleDayPattern(dayOfWeek);
+            
+            if (Debugger.IsAttached)
+            {
+                var contextStr = string.IsNullOrEmpty(context) ? "" : $" for {context}";
+                LogStatus($"Day-specific pattern{contextStr}: {dayOfWeek} only", $"Using pattern: {pattern}");
+            }
+
+            return pattern;
         }
 
         /// <summary>
@@ -1463,6 +1817,30 @@ namespace NetDaemonApps.Apps.Energy
                 // State retrieval errors can be handled silently or with minimal logging
                 LogStatus("State retrieval failed", $"Could not retrieve prepared schedule from state: {ex.Message}");
                 return null;
+            }
+        }
+
+        /// <summary>
+        /// Clears all battery-related state data at startup for fresh operation.
+        /// Useful for testing and ensuring clean initialization.
+        /// </summary>
+        private void ClearBatteryState()
+        {
+            try
+            {
+                // Clear persisted state
+                AppStateManager.SetState(nameof(Battery), "CurrentAppliedSchema", (ChargingSchema?)null);
+                AppStateManager.SetState(nameof(Battery), "PreparedSchedule", (ChargingSchema?)null);
+                AppStateManager.SetState(nameof(Battery), "PreparedScheduleDate", (DateTime?)null);
+                
+                // Clear retry flag to prevent hanging EMS messages
+                _applyRetryScheduled = false;
+                
+                LogStatus("Battery state cleared", "Cleared all persisted battery state and reset retry flags for fresh startup");
+            }
+            catch (Exception ex)
+            {
+                LogStatus("State clear failed", $"Could not clear battery state: {ex.Message}");
             }
         }
 

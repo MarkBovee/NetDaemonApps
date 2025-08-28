@@ -128,5 +128,43 @@ namespace NetDaemonApps.Models.Battery
         /// Default: 40%.
         /// </summary>
         public double MorningSocThresholdPercent { get; set; } = 40.0;
+
+        /// <summary>
+        /// High state-of-charge (SOC) percentage threshold that enables cross-day optimization.
+        /// When SOC is above this level, the system will consider delaying charging to find better prices
+        /// across multiple days instead of forcing charging today. Range: 0-100.
+        /// Default: 70%.
+        /// </summary>
+        public double HighSocThresholdPercent { get; set; } = 70.0;
+
+        /// <summary>
+        /// Minimum state-of-charge (SOC) percentage that must be maintained as a safety reserve.
+        /// The battery should never be discharged below this level. Range: 0-100.
+        /// Default: 10%.
+        /// </summary>
+        public double MinimumSocPercent { get; set; } = 10.0;
+
+        /// <summary>
+        /// Additional SOC safety margin added to MinimumSocPercent when calculating if battery can bridge to optimal charge times.
+        /// This provides extra buffer for unexpected consumption or calculation errors. Range: 0-100.
+        /// Default: 5%.
+        /// </summary>
+        public double SocSafetyMarginPercent { get; set; } = 5.0;
+
+        /// <summary>
+        /// Estimated daily battery consumption as a percentage of total capacity.
+        /// Used to calculate if battery can bridge to optimal charging windows in cross-day optimization.
+        /// Should be adjusted based on household consumption patterns. Range: 0-100.
+        /// Default: 15% (conservative estimate for typical household).
+        /// </summary>
+        public double DailyConsumptionSocPercent { get; set; } = 15.0;
+
+        // Day-specific scheduling options
+        /// <summary>
+        /// Enable day-of-week specific scheduling optimization.
+        /// When true, charge periods target tomorrow and discharge periods target today.
+        /// Default: false (applies schedules to all days).
+        /// </summary>
+        public bool EnableDaySpecificScheduling { get; set; } = false;
     }
 }

@@ -52,7 +52,7 @@
       "2025-08-29T22:00:00": 0.2638,
       "2025-08-29T23:00:00": 0.2517
     },
-    "LastPricesUpdate": "2025-08-28T15:29:38.0908252\u002B02:00"
+    "LastPricesUpdate": "2025-08-28T17:04:22.4410527\u002B02:00"
   },
   "WaterHeater": {
     "TargetTemperature": 35,
@@ -60,7 +60,8 @@
     "HeaterOn": false
   },
   "Battery": {
-    "LastStatusMessage": "Next: Charging at 16:32",
+    "LastStatusMessage": "No battery activity planned today",
+    "PreparedScheduleDate": "2025-08-28T00:00:00+02:00",
     "PreparedSchedule": {
       "Periods": [
         {
@@ -68,43 +69,21 @@
           "StartTime": "08:00:00",
           "EndTime": "08:59:00",
           "PowerInWatts": 8000,
-          "Weekdays": "1,1,1,1,1,1,1"
+          "Weekdays": "0,0,0,1,0,0,0"
         },
         {
           "ChargeType": 0,
           "StartTime": "14:00:00",
           "EndTime": "16:59:00",
           "PowerInWatts": 8000,
-          "Weekdays": "1,1,1,1,1,1,1"
+          "Weekdays": "0,0,0,0,1,0,0"
         }
       ],
-      "CreatedAt": "2025-08-28T14:31:56.2460293\u002B02:00",
+      "CreatedAt": "2025-08-28T17:06:05.7873428+02:00",
       "AppliedAt": null,
       "Source": "Unknown"
     },
-    "PreparedScheduleDate": "2025-08-28T00:00:00\u002B02:00",
     "LastKnownMode": 3,
-    "LastModeChangeTime": "2025-08-28T14:31:58.5124938\u002B02:00",
-    "CurrentAppliedSchema": {
-      "Periods": [
-        {
-          "ChargeType": 1,
-          "StartTime": "08:00:00",
-          "EndTime": "08:59:00",
-          "PowerInWatts": 8000,
-          "Weekdays": "1,1,1,1,1,1,1"
-        },
-        {
-          "ChargeType": 0,
-          "StartTime": "16:32:58.5207336",
-          "EndTime": "16:59:00",
-          "PowerInWatts": 8000,
-          "Weekdays": "1,1,1,1,1,1,1"
-        }
-      ],
-      "CreatedAt": "2025-08-28T14:31:56.2460293\u002B02:00",
-      "AppliedAt": null,
-      "Source": "Unknown"
-    }
+    "LastModeChangeTime": "2025-08-28T16:47:22.5808703\u002B02:00"
   }
 }

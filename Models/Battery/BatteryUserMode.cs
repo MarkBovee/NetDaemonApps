@@ -85,6 +85,7 @@ namespace NetDaemonApps.Models.Battery
                 case "self use mode":
                 case "self-use":
                 case "self use":
+                case "self-consumption mode":
                     return BatteryUserMode.SelfUseMode;
                 case "time-of-use mode":
                 case "time of use mode":
