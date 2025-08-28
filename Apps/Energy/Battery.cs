@@ -52,7 +52,7 @@ namespace NetDaemonApps.Apps.Energy
 
             // Check if the token is valid (diagnostic only)
             _saiPowerBatteryApi.IsTokenValid(true);
-            
+
             if (Debugger.IsAttached) {
                 // Run schedule preparation immediately for debugging (non-blocking)
                 _ = PrepareScheduleForDayAsync();
@@ -277,7 +277,7 @@ namespace NetDaemonApps.Apps.Energy
                     }
 
                     var nextEventSummary = BuildNextEventSummary(scheduleToApply);
-                    LogStatus($"{nextEventSummary}{(liveWrite ? string.Empty : " (sim)")}", 
+                    LogStatus($"{nextEventSummary}{(liveWrite ? string.Empty : " (sim)")}",
                         $"{scheduleToApply.Periods.Count} periods");
 
                     if (liveWrite)
@@ -384,22 +384,22 @@ namespace NetDaemonApps.Apps.Energy
                 var period = periods[i];
                 var priceAtTime = pricesToday.FirstOrDefault(p => p.Key.TimeOfDay == period.StartTime);
                 var priceInfo = priceAtTime.Key != default ? $"Price: €{priceAtTime.Value:F3}" : "Price: N/A";
-                LogStatus($"  Period {i+1}: {period.ChargeType} {period.StartTime:hh\\:mm}-{period.EndTime:hh\\:mm}", 
+                LogStatus($"  Period {i+1}: {period.ChargeType} {period.StartTime:hh\\:mm}-{period.EndTime:hh\\:mm}",
                     $"Power: {period.PowerInWatts}W, {priceInfo}");
             }
-            
+
             // Log charge vs discharge period pricing validation
             var chargePeriods = periods.Where(p => p.ChargeType == BatteryChargeType.Charge).ToList();
             var dischargePeriods = periods.Where(p => p.ChargeType == BatteryChargeType.Discharge).ToList();
-            
+
             LogStatus($"🔍 Validation: {chargePeriods.Count} charge periods, {dischargePeriods.Count} discharge periods");
-            
+
             if (chargePeriods.Any())
             {
                 var avgChargePrice = chargePeriods.Select(p => pricesToday.FirstOrDefault(pr => pr.Key.TimeOfDay == p.StartTime).Value).Average();
                 LogStatus($"  Charge periods avg price: €{avgChargePrice:F3}");
             }
-            
+
             if (dischargePeriods.Any())
             {
                 var avgDischargePrice = dischargePeriods.Select(p => pricesToday.FirstOrDefault(pr => pr.Key.TimeOfDay == p.StartTime).Value).Average();
@@ -458,7 +458,7 @@ namespace NetDaemonApps.Apps.Energy
             LogStatus($"Turning off EMS before {context}");
             _entities.Switch.Ems.TurnOff();
             await Task.Delay(TimeSpan.FromSeconds(5));
-            
+
             return true;
         }
 
@@ -475,7 +475,7 @@ namespace NetDaemonApps.Apps.Energy
                 {
                     _applyRetryScheduled = false;
                     LogStatus($"{blockReason}");
-                    
+
                     if (schedule != null && label != null)
                         _ = PrepareForScheduleAsync(schedule, label);
                     else
@@ -709,7 +709,7 @@ namespace NetDaemonApps.Apps.Energy
             foreach (var period in sortedPeriods)
             {
                 var lastPeriod = result.LastOrDefault();
-                
+
                 // If no overlap with previous period, add as-is
                 if (lastPeriod == null || lastPeriod.EndTime <= period.StartTime)
                 {
@@ -723,7 +723,7 @@ namespace NetDaemonApps.Apps.Energy
                     // Same type: merge periods by extending the end time
                     var mergedEndTime = period.EndTime > lastPeriod.EndTime ? period.EndTime : lastPeriod.EndTime;
                     lastPeriod.EndTime = mergedEndTime;
-                    LogStatus("Merged overlapping periods", 
+                    LogStatus("Merged overlapping periods",
                         $"Merged {period.ChargeType} periods: {lastPeriod.StartTime:hh\\:mm}-{lastPeriod.EndTime:hh\\:mm}");
                 }
                 else
@@ -734,13 +734,13 @@ namespace NetDaemonApps.Apps.Energy
                     {
                         period.StartTime = adjustedStart;
                         result.Add(period);
-                        LogStatus("Adjusted overlapping period", 
+                        LogStatus("Adjusted overlapping period",
                             $"Adjusted {period.ChargeType} period to start at {period.StartTime:hh\\:mm} (was overlapping with {lastPeriod.ChargeType})");
                     }
                     else
                     {
                         // Period would be invalid after adjustment, skip it
-                        LogStatus("Removed invalid overlapping period", 
+                        LogStatus("Removed invalid overlapping period",
                             $"Removed {period.ChargeType} period {period.StartTime:hh\\:mm}-{period.EndTime:hh\\:mm} (would be invalid after overlap adjustment)");
                     }
                 }
@@ -884,18 +884,18 @@ namespace NetDaemonApps.Apps.Energy
                 {
                     // Add to existing schedule, but remove any overlapping discharge periods first
                     allPeriods = existingSchedule.Periods.ToList();
-                    
+
                     // Remove existing discharge periods that would overlap with the new morning discharge
                     var newDischargeStart = dischargeTime.TimeOfDay;
                     var newDischargeEnd = newDischargeStart.Add(TimeSpan.FromHours(1));
-                    
-                    var periodsToKeep = allPeriods.Where(p => 
+
+                    var periodsToKeep = allPeriods.Where(p =>
                         p.ChargeType != BatteryChargeType.Discharge ||
                         p.EndTime <= newDischargeStart ||
                         p.StartTime >= newDischargeEnd).ToList();
-                    
+
                     allPeriods = periodsToKeep;
-                    LogStatus("Removed overlapping discharge periods", 
+                    LogStatus("Removed overlapping discharge periods",
                         $"Removed {existingSchedule.Periods.Count - periodsToKeep.Count} overlapping discharge periods for new morning discharge");
                 }
                 else
@@ -934,7 +934,7 @@ namespace NetDaemonApps.Apps.Energy
         private void LogStatus(string dashboardMessage, string? detailMessage = null)
         {
             var consoleMessage = !string.IsNullOrEmpty(detailMessage) ? $"{dashboardMessage} | {detailMessage}" : dashboardMessage;
-            
+
             try
             {
                 Console.WriteLine($"[BATTERY] {consoleMessage}");
@@ -979,11 +979,15 @@ namespace NetDaemonApps.Apps.Energy
 
             // Run initial check immediately (non-blocking)
             _ = MonitorBatteryModeAsync();
+            _ = UpdateScheduleStatusAsync();
 
             // Schedule to run every 5 minutes
             _scheduler.RunEvery(TimeSpan.FromMinutes(5), DateTime.Now.AddMinutes(5), () => { _ = MonitorBatteryModeAsync(); });
-            
-            LogStatus("Battery monitoring started", "Battery mode monitoring started - checking every 5 minutes");
+
+            // Schedule status updates every minute for more responsive UI
+            _scheduler.RunEvery(TimeSpan.FromMinutes(1), DateTime.Now.AddMinutes(1), () => { _ = UpdateScheduleStatusAsync(); });
+
+            LogStatus("Battery monitoring started", "Battery mode monitoring and status updates started");
         }
 
         /// <summary>
@@ -995,7 +999,7 @@ namespace NetDaemonApps.Apps.Energy
             {
                 var currentMode = await _saiPowerBatteryApi.GetUserModeAsync();
                 var modeText = currentMode.ToApiString();
-                
+
                 // Update the input text entity
                 try
                 {
@@ -1020,7 +1024,7 @@ namespace NetDaemonApps.Apps.Energy
             catch (Exception ex)
             {
                 LogStatus("Battery monitoring error", $"Failed to monitor battery mode: {ex.Message}");
-                
+
                 // Update entity with error state
                 try
                 {
@@ -1030,6 +1034,52 @@ namespace NetDaemonApps.Apps.Energy
                 {
                     // Debug-level error can be omitted or kept minimal for entity update failures
                 }
+            }
+        }
+
+        /// <summary>
+        /// Updates the schedule status based on the current applied schedule and time
+        /// </summary>
+        private async Task UpdateScheduleStatusAsync()
+        {
+            try
+            {
+                var currentSchedule = GetCurrentAppliedSchedule();
+                if (currentSchedule == null)
+                {
+                    // No schedule applied, check if we should have one
+                    var preparedSchedule = GetPreparedSchedule();
+                    if (preparedSchedule != null)
+                    {
+                        UpdateStatusIfChanged("No active schedule", "Prepared schedule exists but not yet applied");
+                    }
+                    else
+                    {
+                        UpdateStatusIfChanged("No battery activity planned today");
+                    }
+                    return;
+                }
+
+                // Update status based on current schedule
+                var statusMessage = BuildNextEventSummary(currentSchedule);
+                UpdateStatusIfChanged(statusMessage);
+            }
+            catch (Exception ex)
+            {
+                LogStatus("Status update error", $"Failed to update schedule status: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Updates the status only if it has changed from the last status message
+        /// </summary>
+        private void UpdateStatusIfChanged(string dashboardMessage, string? detailMessage = null)
+        {
+            var lastStatus = AppStateManager.GetState<string>(nameof(Battery), "LastStatusMessage");
+            if (lastStatus != dashboardMessage)
+            {
+                LogStatus(dashboardMessage, detailMessage);
+                AppStateManager.SetState(nameof(Battery), "LastStatusMessage", dashboardMessage);
             }
         }
 
@@ -1043,10 +1093,10 @@ namespace NetDaemonApps.Apps.Energy
         {
             var now = DateTime.Now;
             var timeUntil = scheduledTime - now;
-            
+
             if (timeUntil.TotalMinutes < 1)
                 return "now";
-                
+
             // For times within the next 24 hours
             if (timeUntil.TotalHours < 24)
             {
@@ -1071,7 +1121,7 @@ namespace NetDaemonApps.Apps.Energy
                     return $"in {hours}h ({scheduledTime:HH:mm})";
                 }
             }
-            
+
             // For times beyond 24 hours (tomorrow+)
             if (scheduledTime.Date == now.Date.AddDays(1))
                 return $"tomorrow at {scheduledTime:HH:mm}";
@@ -1086,7 +1136,7 @@ namespace NetDaemonApps.Apps.Energy
         {
             var timeInfo = FormatScheduledTime(scheduledTime, actionType);
             var contextSuffix = string.IsNullOrEmpty(context) ? "" : $" ({context})";
-            
+
             return $"{actionType} scheduled {timeInfo}{contextSuffix}";
         }
 
@@ -1098,7 +1148,7 @@ namespace NetDaemonApps.Apps.Energy
         {
             var now = DateTime.Now.TimeOfDay;
             var today = DateTime.Today;
-            
+
             var allPeriods = schedule.Periods
                 .Select(p => new {
                     Period = p,
@@ -1114,8 +1164,8 @@ namespace NetDaemonApps.Apps.Energy
             var activePeriod = allPeriods.FirstOrDefault(p => p.IsActive);
             if (activePeriod != null)
             {
-                var action = activePeriod.Period.ChargeType == BatteryChargeType.Charge ? "Charging" : "Discharging";
-                return $"{action} now - ends {FormatScheduledTime(activePeriod.EndDateTime)}";
+                var action = activePeriod.Period.ChargeType == BatteryChargeType.Charge ? "Charging Active" : "Discharging Active";
+                return action;
             }
 
             // Find next upcoming period
@@ -1193,8 +1243,8 @@ namespace NetDaemonApps.Apps.Energy
             var minutesToTrim = remaining - requiredMinutes;
             var trimmed = 0; var removed = 0;
 
-            // Work through charge periods from earliest to latest
-            foreach (var p in periods.Where(p => p.ChargeType == BatteryChargeType.Charge).OrderBy(p => p.StartTime).ToList())
+            // Work through charge periods from latest to earliest to preserve optimal pricing
+            foreach (var p in periods.Where(p => p.ChargeType == BatteryChargeType.Charge).OrderByDescending(p => p.StartTime).ToList())
             {
                 if (minutesToTrim <= 0) break;
 
@@ -1222,11 +1272,11 @@ namespace NetDaemonApps.Apps.Energy
                     continue;
                 }
 
-                // Partial trim: move the start of remaining part forward
-                var newStart = remStart.Add(TimeSpan.FromMinutes(minutesToTrim));
-                if (newStart <= p.EndTime)
+                // Partial trim: reduce the end time to preserve optimal start timing
+                var newEnd = p.EndTime.Subtract(TimeSpan.FromMinutes(minutesToTrim));
+                if (newEnd > remStart)
                 {
-                    p.StartTime = newStart;
+                    p.EndTime = newEnd;
                     trimmed++;
                     minutesToTrim = 0;
                     break;
@@ -1248,11 +1298,11 @@ namespace NetDaemonApps.Apps.Energy
         {
             var now = DateTime.Now.TimeOfDay;
             var today = DateTime.Today;
-            
+
             var charges = schedule.Periods.Where(p => p.ChargeType == BatteryChargeType.Charge)
                 .OrderBy(p => p.StartTime)
                 .ToList();
-                
+
             var discharges = schedule.Periods.Where(p => p.ChargeType == BatteryChargeType.Discharge)
                 .OrderBy(p => p.StartTime)
                 .ToList();
@@ -1264,7 +1314,7 @@ namespace NetDaemonApps.Apps.Energy
                 var endTime = today.Add(currentCharge.EndTime);
                 return $"charging now, ends {FormatScheduledTime(endTime)}";
             }
-            
+
             // Check if currently in a discharge period
             var currentDischarge = discharges.FirstOrDefault(p => now >= p.StartTime && now < p.EndTime);
             if (currentDischarge != null)
@@ -1276,10 +1326,10 @@ namespace NetDaemonApps.Apps.Energy
             // Find next activity (charge or discharge)
             var nextCharge = charges.FirstOrDefault(p => p.StartTime >= now);
             var nextDischarge = discharges.FirstOrDefault(p => p.StartTime >= now);
-            
+
             DateTime? nextActivity = null;
             string activityType = "";
-            
+
             if (nextCharge != null && nextDischarge != null)
             {
                 // Both exist, pick the earlier one
@@ -1304,7 +1354,7 @@ namespace NetDaemonApps.Apps.Energy
                 nextActivity = today.Add(nextDischarge.StartTime);
                 activityType = "discharge";
             }
-            
+
             if (nextActivity.HasValue)
                 return $"next {activityType} {FormatScheduledTime(nextActivity.Value)}";
 
