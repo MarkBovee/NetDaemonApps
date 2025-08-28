@@ -32,29 +32,7 @@ try {
     Write-Host "${Blue}Project Directory:${Reset} $ProjectRoot"
     Write-Host ""
 
-    # Step 1: Generate Home Assistant types (unless skipped)
-    if (-not $SkipCodegen) {
-        Write-Host "${Yellow}🔄 Generating Home Assistant types...${Reset}"
-        
-        # Check if nd-codegen tool is available
-        $toolCheck = dotnet tool list | Select-String "netdaemon.hassclient.codegen"
-        if (-not $toolCheck) {
-            Write-Host "${Yellow}⚠️  Installing NetDaemon codegen tool...${Reset}"
-            dotnet tool install NetDaemon.HassClient.CodeGen
-        }
-        
-        dotnet tool run nd-codegen
-        if ($LASTEXITCODE -ne 0) {
-            throw "Code generation failed with exit code $LASTEXITCODE"
-        }
-        Write-Host "${Green}✅ Code generation completed${Reset}"
-        Write-Host ""
-    } else {
-        Write-Host "${Yellow}⏭️  Skipping code generation${Reset}"
-        Write-Host ""
-    }
-
-    # Step 2: Build the project (unless skipped)
+    # Step 1: Build the project
     if (-not $SkipBuild) {
         Write-Host "${Yellow}🔨 Building project...${Reset}"
         
@@ -69,7 +47,7 @@ try {
         Write-Host ""
     }
 
-    # Step 3: Publish to NetDaemon5
+    # Step 2: Publish to NetDaemon5
     Write-Host "${Yellow}📦 Publishing to NetDaemon5...${Reset}"
     
     # Check if target directory is accessible
@@ -88,19 +66,13 @@ try {
     Write-Host "${Green}✅ Published successfully to: $publishDir${Reset}"
     Write-Host ""
 
-    # Step 4: Success message and next steps
+    # Step 3: Success message and next steps
     Write-Host "${Green}🎉 Publish completed successfully!${Reset}"
     Write-Host ""
     Write-Host "${Blue}Next steps:${Reset}"
     Write-Host "1. ${Yellow}Restart NetDaemon5 add-on${Reset} in Home Assistant"
     Write-Host "2. ${Yellow}Check logs${Reset} for any startup errors"
     Write-Host "3. ${Yellow}Verify${Reset} that battery_management_mode entity is updating"
-    Write-Host ""
-    Write-Host "${Blue}Published features:${Reset}"
-    Write-Host "• 🔋 Battery mode monitoring (every 5 minutes)"
-    Write-Host "• ⚡ Energy management automations"
-    Write-Host "• 🏠 Vacation security features"
-    Write-Host ""
 
 } catch {
     Write-Host ""

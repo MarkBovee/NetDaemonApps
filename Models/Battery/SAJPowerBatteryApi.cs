@@ -254,6 +254,14 @@ namespace NetDaemonApps.Models.Battery
 
             Console.WriteLine($"Schedule analysis: {chargePeriods.Count} charge periods, {dischargePeriods.Count} discharge periods");
 
+            // 🔍 DIAGNOSTIC: Log detailed period ordering for API parameter building
+            Console.WriteLine("🔍 DIAGNOSTIC - API Parameter Building:");
+            for (int i = 0; i < chargingPeriods.Count; i++)
+            {
+                var period = chargingPeriods[i];
+                Console.WriteLine($"  Period {i+1}: {period.ChargeType} {period.StartTime:hh\\:mm}-{period.EndTime:hh\\:mm} → API: {period.ToApiFormat()}");
+            }
+
             // Validate minimum requirements
             if (chargePeriods.Count == 0 && dischargePeriods.Count == 0)
             {
@@ -263,12 +271,18 @@ namespace NetDaemonApps.Models.Battery
             // Build the value string: mode|period1|period2|...
             var valueBuilder = new StringBuilder("1"); // Mode 1 = enabled
 
+            // 🔍 DIAGNOSTIC: Check if period ordering affects SAJ API interpretation
+            Console.WriteLine($"🔍 Building API value string with {chargingPeriods.Count} periods in order:");
+            
             foreach (var period in chargingPeriods)
             {
-                valueBuilder.Append("|").Append(period.ToApiFormat());
+                var apiFormat = period.ToApiFormat();
+                valueBuilder.Append("|").Append(apiFormat);
+                Console.WriteLine($"  Adding to API: {period.ChargeType} → {apiFormat}");
             }
 
             var value = valueBuilder.ToString();
+            Console.WriteLine($"🔍 Final API value string: {value}");
 
             // Generate address patterns based on charge/discharge pattern
             var (commAddress, componentId, transferId) = GenerateAddressPatterns(chargingPeriods);

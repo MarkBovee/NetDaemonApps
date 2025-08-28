@@ -118,7 +118,10 @@ namespace NetDaemonApps.Apps.Energy
             var lowestDayPrice = PriceHelper.GetLowestDayPrice(_priceHelper.PricesToday);
             var nextNightPrice = PriceHelper.GetNextNightPrice(_priceHelper.PricesTomorrow);
 
-            var startTime = useNightProgram ? lowestNightPrice.Key : lowestDayPrice.Key;
+            // For day programs, only use the lowest day price if current price is reasonable
+            // Otherwise, schedule for the actual lowest price time
+            var startTime = useNightProgram ? lowestNightPrice.Key : 
+                (_priceHelper.CurrentPrice <= _priceHelper.PriceThreshold ? timeStamp : lowestDayPrice.Key);
 
             // Check if the value 1 hour before the start time is lower than 1 hour after the start time
             if (useLegionellaProtection && startTime.Hour is > 0 and < 23 && _priceHelper.PricesToday[startTime.AddHours(-1)] < _priceHelper.PricesToday[startTime.AddHours(1)])
@@ -166,11 +169,15 @@ namespace NetDaemonApps.Apps.Energy
                 // Set the program temperature value based on the heating program
                 if (useNightProgram)
                 {
-                    // Set the temperature to 56 degrees for the night program if the night price is lower than the day price
+                    // During night hours, compare night price with current day average, not just lowest day price
                     var nightValue = lowestNightPrice.Value;
                     var dayValue = lowestDayPrice.Value;
+                    var currentDayAverage = _priceHelper.PricesToday
+                        .Where(p => p.Key.TimeOfDay >= TimeSpan.FromHours(8) && p.Key.TimeOfDay <= TimeSpan.FromHours(22))
+                        .Average(p => p.Value);
 
-                    programTemperature = nightValue < dayValue ? 56 : 52;
+                    // Use higher temp (56°) if night price is significantly better than day average
+                    programTemperature = nightValue < (currentDayAverage * 0.9) ? 56 : 52;
                 }
                 else if (useLegionellaProtection)
                 {
@@ -200,8 +207,20 @@ namespace NetDaemonApps.Apps.Energy
             // Set the water heating temperature
             try
             {
+                // Check if current price is too high for day heating (unless it's a scheduled program)
+                var scheduledProgram = timeStamp.TimeOfDay >= startTime.TimeOfDay && timeStamp <= endTime;
+                var priceToHigh = !useNightProgram && !useLegionellaProtection && 
+                                 _priceHelper.CurrentPrice > _priceHelper.PriceThreshold * 1.1;
+
+                if (priceToHigh && !scheduledProgram)
+                {
+                    // Skip heating during high price periods, wait for scheduled time
+                    DisplayMessage($"Waiting for lower prices. Next heating at: {startTime:HH:mm}");
+                    return;
+                }
+
                 // Check if the heater is off and the current timestamp is within the schedule
-                if (timeStamp.TimeOfDay >= startTime.TimeOfDay && timeStamp <= endTime)
+                if (scheduledProgram)
                 {
                     // Started program
                     if (programTemperature <= _targetTemperature && _heaterOn) return;

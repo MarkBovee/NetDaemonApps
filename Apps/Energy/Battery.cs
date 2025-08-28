@@ -67,7 +67,7 @@ namespace NetDaemonApps.Apps.Energy
 
                 var existingSchedule = GetPreparedSchedule();
                 if (existingSchedule != null) {
-                    _logger.LogInformation("Found existing prepared schedule for today, setting up EMS management");
+                    LogStatus("Resuming prepared schedule", "Found existing prepared schedule for today, setting up EMS management");
                     lock (_scheduleLock) {
                         _preparedSchedule = existingSchedule;
                     }
@@ -75,7 +75,7 @@ namespace NetDaemonApps.Apps.Energy
                     // If no upcoming windows remain (e.g., late restart), recompute today’s schedule
                     var upcoming = BuildMergedEmsWindows(existingSchedule);
                     if (upcoming.Count == 0) {
-                        _logger.LogInformation("Prepared schedule has no upcoming windows; recalculating schedule for today");
+                        LogStatus("Recalculating schedule", "Prepared schedule has no upcoming windows; recalculating schedule for today");
                         _ = PrepareScheduleForDayAsync();
                     }
                     else {
@@ -83,7 +83,7 @@ namespace NetDaemonApps.Apps.Energy
                     }
                 }
                 else {
-                    _logger.LogInformation("No existing schedule found, preparing new schedule");
+                    LogStatus("Creating schedule", "No existing schedule found, preparing new schedule");
                     _ = PrepareScheduleForDayAsync();
                 }
             }
@@ -98,15 +98,14 @@ namespace NetDaemonApps.Apps.Energy
         {
             try
             {
-                LogStatus("Preparing daily battery schedule");
+                LogStatus("Calculating schedule");
 
                 // Calculate the schedule for today
                 var schedule = CalculateInitialChargingSchedule();
                 if (schedule == null)
                 {
                     // Retry shortly in case price data arrives a bit later
-                    _logger.LogWarning("Could not calculate schedule for today");
-                    LogStatus("No price data yet; will retry in 10 min");
+                    LogStatus("No price data yet; will retry in 10 min", "Could not calculate schedule for today");
 
                     _scheduler.RunIn(TimeSpan.FromMinutes(10), () => { _ = PrepareScheduleForDayAsync(); });
                     return;
@@ -122,8 +121,8 @@ namespace NetDaemonApps.Apps.Energy
                 // Schedule EMS management for each charge/discharge period (merged windows)
                 ScheduleEmsManagementForPeriods(schedule);
 
-                var preparedSuffix = BuildNextChargeSuffix(schedule);
-                LogStatus($"Prepared schedule: {schedule.Periods.Count} periods | {preparedSuffix}");
+                var nextEventSummary = BuildNextEventSummary(schedule);
+                LogStatus(nextEventSummary, $"Prepared {schedule.Periods.Count} periods for today");
 
                 // Optionally, in simulation mode apply immediately for visibility
                 if (_simulationMode)
@@ -133,8 +132,7 @@ namespace NetDaemonApps.Apps.Energy
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error preparing daily schedule");
-                LogStatus("Error preparing schedule");
+                LogStatus("Error preparing", $"Error preparing daily schedule: {ex.Message}");
             }
         }
 
@@ -145,8 +143,7 @@ namespace NetDaemonApps.Apps.Energy
         {
             if (chargingSchedule.Periods == null || chargingSchedule.Periods.Count == 0)
             {
-                _logger.LogWarning("No charging schedule to apply");
-                LogStatus("No schedule to apply");
+                LogStatus("No schedule to apply", "No charging schedule to apply");
                 return;
             }
 
@@ -171,28 +168,24 @@ namespace NetDaemonApps.Apps.Energy
                                 _ = ApplyChargingScheduleAsync(chargingSchedule, simulateOnly: _simulationMode);
                             });
 
-                            _logger.LogInformation("Schedule apply blocked by EMS Mode; retry scheduled at {Time}", retryAt.ToString("HH:mm"));
+                            LogStatus($"EMS Mode active - {FormatScheduledAction("retry", retryAt).ToLower()}");
                         }
                         else
                         {
-                            _logger.LogInformation("Schedule apply blocked by EMS Mode; retry already scheduled");
+                            LogStatus("EMS Mode active - retry already scheduled", "Schedule apply blocked by EMS Mode; retry already scheduled");
                         }
-
-                        LogStatus("EMS Mode active");
 
                         return;
                     }
                     else
                     {
                         var modeDescription = currentUserMode.ToApiString();
-                        LogStatus($"Mode OK ({modeDescription}) - applying schedule...");
+                        LogStatus($"Mode OK ({modeDescription}) - applying...");
                     }
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogWarning(ex, "Failed to verify battery user mode; proceeding with schedule application");
-
-                    LogStatus("Mode check failed - proceeding anyway...");
+                    LogStatus("Mode check failed - proceeding...", $"Failed to verify battery user mode; proceeding with schedule application: {ex.Message}");
                 }
             }
 
@@ -201,8 +194,7 @@ namespace NetDaemonApps.Apps.Energy
                 var allPeriods = chargingSchedule.Periods.ToList();
                 if (allPeriods.Count == 0)
                 {
-                    _logger.LogWarning("No valid periods in schedule");
-                    LogStatus("No valid periods in schedule");
+                    LogStatus("No valid periods in schedule", "No valid periods in schedule");
                     return;
                 }
 
@@ -226,15 +218,13 @@ namespace NetDaemonApps.Apps.Energy
                         scheduleToApply = adjusted ?? chargingSchedule;
                         var suffix = BuildNextChargeSuffix(scheduleToApply);
                         var detail = $"SOC {soc:F1}%, need ~{requiredChargeMinutes}m to full, had {remainingScheduledChargeMinutes}m scheduled. {summary} | {suffix}";
-                        _logger.LogInformation(detail);
-                        LogStatus(detail);
+                        LogStatus($"SOC {soc:F1}%, optimized schedule", detail);
                     }
                     else
                     {
                         var suffix = BuildNextChargeSuffix(chargingSchedule);
                         var detail = $"SOC {soc:F1}%, need ~{requiredChargeMinutes}m, scheduled {remainingScheduledChargeMinutes}m (<= needed) | {suffix}";
-                        _logger.LogInformation(detail);
-                        LogStatus(detail);
+                        LogStatus($"SOC {soc:F1}%, schedule fits", detail);
                     }
                 }
 
@@ -242,13 +232,28 @@ namespace NetDaemonApps.Apps.Energy
                 var currentApplied = GetCurrentAppliedSchedule();
                 if (!simulateOnly && currentApplied != null && scheduleToApply.IsEquivalentTo(currentApplied))
                 {
-                    _logger.LogInformation("Schedule unchanged from current applied; skipping API call");
-                    var suffix = BuildNextChargeSuffix(scheduleToApply);
-                    LogStatus($"Schedule unchanged; skipping apply | {suffix}");
+                    var nextEventSummary = BuildNextEventSummary(scheduleToApply);
+                    LogStatus($"{nextEventSummary} (unchanged)", "Schedule unchanged from current applied; skipping API call");
                     return;
                 }
 
-                var scheduleParameters = SAJPowerBatteryApi.BuildBatteryScheduleParameters(scheduleToApply.Periods.ToList());
+                var orderedPeriods = scheduleToApply.Periods
+                    .OrderBy(p => p.ChargeType == BatteryChargeType.Charge ? 0 : 1) // Charge periods first, then discharge
+                    .ThenBy(p => p.StartTime) // Then by start time within each type
+                    .ToList();
+
+                // 🔍 DIAGNOSTIC: Log period ordering sent to SAJ API
+                if (Debugger.IsAttached)
+                {
+                    LogStatus("🔍 DIAGNOSTIC - API Period Ordering", "Checking period order sent to SAJ API");
+                    for (int i = 0; i < orderedPeriods.Count; i++)
+                    {
+                        var period = orderedPeriods[i];
+                        LogStatus($"  API Position {i+1}: {period.ChargeType} {period.StartTime:hh\\:mm}-{period.EndTime:hh\\:mm}");
+                    }
+                }
+
+                var scheduleParameters = SAJPowerBatteryApi.BuildBatteryScheduleParameters(orderedPeriods);
                 var liveWrite = !simulateOnly && _saiPowerBatteryApi.IsConfigured;
                 bool saved;
                 if (liveWrite)
@@ -259,7 +264,7 @@ namespace NetDaemonApps.Apps.Energy
                 {
                     if (!simulateOnly && !_saiPowerBatteryApi.IsConfigured)
                     {
-                        _logger.LogWarning($"Skipping live API write: SAJ API not configured ({_saiPowerBatteryApi.ConfigurationError}); simulating apply");
+                        LogStatus("SAJ API not configured; simulating", $"Skipping live API write: SAJ API not configured ({_saiPowerBatteryApi.ConfigurationError}); simulating apply");
                     }
                     saved = true; // treat as success for simulated apply
                 }
@@ -271,8 +276,9 @@ namespace NetDaemonApps.Apps.Energy
                         SaveCurrentAppliedSchedule(scheduleToApply);
                     }
 
-                    var suffix = BuildNextChargeSuffix(scheduleToApply);
-                    LogStatus($"Applied schedule{(liveWrite ? string.Empty : " (sim)")}: {scheduleToApply.Periods.Count} periods | {suffix}");
+                    var nextEventSummary = BuildNextEventSummary(scheduleToApply);
+                    LogStatus($"{nextEventSummary}{(liveWrite ? string.Empty : " (sim)")}", 
+                        $"{scheduleToApply.Periods.Count} periods");
 
                     if (liveWrite)
                     {
@@ -294,14 +300,12 @@ namespace NetDaemonApps.Apps.Energy
                 }
                 else
                 {
-                    _logger.LogWarning("Failed to apply charging schedule via SAJ API");
-                    LogStatus("Failed to apply schedule");
+                    LogStatus("Failed to apply", "Failed to apply charging schedule via SAJ API");
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error applying charging schedule");
-                LogStatus("Error applying schedule");
+                LogStatus("Error applying", $"Error applying charging schedule: {ex.Message}");
             }
         }
 
@@ -314,7 +318,7 @@ namespace NetDaemonApps.Apps.Energy
             var pricesToday = _priceHelper.PricesToday;
             if (pricesToday == null || pricesToday.Count < 3)
             {
-                _logger.LogWarning("Not enough price data to set battery schedule.");
+                LogStatus("Not enough price data", "Not enough price data to set battery schedule");
                 return null;
             }
 
@@ -344,13 +348,9 @@ namespace NetDaemonApps.Apps.Energy
                     if (now.TimeOfDay < morningDischargeEnd)
                     {
                         var start = now.TimeOfDay > morningDischargeStart ? now.TimeOfDay : morningDischargeStart;
-                        periods.Add(new ChargingPeriod
-                        {
-                            StartTime = start,
-                            EndTime = morningDischargeEnd,
-                            ChargeType = BatteryChargeType.Discharge,
-                            PowerInWatts = Math.Min(_options.DefaultDischargePowerW, _options.MaxInverterPowerW)
-                        });
+                        var period = CreateMorningDischargePeriod(start);
+                        period.EndTime = morningDischargeEnd; // Override the default end time to maintain original logic
+                        periods.Add(period);
 
                         LogStatus("Added morning discharge at {0} (SOC: {1:F1}% > {2:F1}%, Price: €{3:F3})",
                             start.ToString(@"hh\:mm"), currentSoc, _options.MorningSocThresholdPercent, morningHighPrice.Value);
@@ -359,33 +359,50 @@ namespace NetDaemonApps.Apps.Energy
             }
 
             // CHECKPOINT 2: Always add charge moment at lowest price
-            periods.Add(new ChargingPeriod
-            {
-                StartTime = chargeStart.TimeOfDay,
-                EndTime = chargeEnd.TimeOfDay,
-                ChargeType = BatteryChargeType.Charge,
-                PowerInWatts = Math.Min(_options.DefaultChargePowerW, _options.MaxInverterPowerW)
-            });
+            periods.Add(CreateChargePeriod(chargeStart.TimeOfDay, chargeEnd.TimeOfDay));
 
             // CHECKPOINT 3: Add evening discharge (will be checked and potentially moved later)
-            periods.Add(new ChargingPeriod
-            {
-                StartTime = dischargeStart.TimeOfDay,
-                EndTime = dischargeEnd.TimeOfDay,
-                ChargeType = BatteryChargeType.Discharge,
-                PowerInWatts = Math.Min(_options.DefaultDischargePowerW, _options.MaxInverterPowerW)
-            });
+            periods.Add(CreateEveningDischargePeriod(dischargeStart.TimeOfDay, dischargeEnd.TimeOfDay));
 
             // Schedule evening check to potentially move discharge to tomorrow morning
             ScheduleEveningPriceCheck(dischargeStart);
 
-            var schedule = new ChargingSchema { Periods = periods };
+        var schedule = new ChargingSchema { Periods = periods };
 
-            LogStatus("Created schedule with {0} periods: {1}",
-                periods.Count,
-                string.Join(", ", periods.Select(p => $"{p.ChargeType} {p.StartTime.ToString(@"hh\:mm")}-{p.EndTime.ToString(@"hh\:mm")}")));
+        var periodsDescription = string.Join(", ", periods.Select(p => $"{p.ChargeType} {p.StartTime.ToString(@"hh\:mm")}-{p.EndTime.ToString(@"hh\:mm")}"));
+        LogStatus($"Created schedule with {periods.Count} periods", periodsDescription);
 
-            return schedule;
+        // 🔍 DIAGNOSTIC: Log detailed period analysis for charge/discharge debugging
+        if (Debugger.IsAttached)
+        {
+            LogStatus("🔍 DIAGNOSTIC - Period Analysis", "Analyzing created periods for charge/discharge logic verification");
+            for (int i = 0; i < periods.Count; i++)
+            {
+                var period = periods[i];
+                var priceAtTime = pricesToday.FirstOrDefault(p => p.Key.TimeOfDay == period.StartTime);
+                var priceInfo = priceAtTime.Key != default ? $"Price: €{priceAtTime.Value:F3}" : "Price: N/A";
+                LogStatus($"  Period {i+1}: {period.ChargeType} {period.StartTime:hh\\:mm}-{period.EndTime:hh\\:mm}", 
+                    $"Power: {period.PowerInWatts}W, {priceInfo}");
+            }
+            
+            // Log charge vs discharge period pricing validation
+            var chargePeriods = periods.Where(p => p.ChargeType == BatteryChargeType.Charge).ToList();
+            var dischargePeriods = periods.Where(p => p.ChargeType == BatteryChargeType.Discharge).ToList();
+            
+            LogStatus($"🔍 Validation: {chargePeriods.Count} charge periods, {dischargePeriods.Count} discharge periods");
+            
+            if (chargePeriods.Any())
+            {
+                var avgChargePrice = chargePeriods.Select(p => pricesToday.FirstOrDefault(pr => pr.Key.TimeOfDay == p.StartTime).Value).Average();
+                LogStatus($"  Charge periods avg price: €{avgChargePrice:F3}");
+            }
+            
+            if (dischargePeriods.Any())
+            {
+                var avgDischargePrice = dischargePeriods.Select(p => pricesToday.FirstOrDefault(pr => pr.Key.TimeOfDay == p.StartTime).Value).Average();
+                LogStatus($"  Discharge periods avg price: €{avgDischargePrice:F3}");
+            }
+        }            return schedule;
         }
 
         #endregion
@@ -424,7 +441,7 @@ namespace NetDaemonApps.Apps.Energy
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogWarning(ex, "Failed to get battery user mode");
+                    LogStatus("Mode query failed", $"Failed to get battery user mode: {ex.Message}");
                     blockReason = "Mode unknown (query failed)";
                 }
             }
@@ -435,7 +452,7 @@ namespace NetDaemonApps.Apps.Energy
                 return false;
             }
 
-            LogStatus("Turning off EMS before {0}", context);
+            LogStatus($"Turning off EMS before {context}");
             _entities.Switch.Ems.TurnOff();
             await Task.Delay(TimeSpan.FromSeconds(5));
             
@@ -462,7 +479,7 @@ namespace NetDaemonApps.Apps.Energy
                         _ = PrepareForBatteryPeriodAsync(period);
                 });
 
-                LogStatus($"{blockReason}");
+                LogStatus($"{blockReason} - {FormatScheduledAction("retry", retryAt).ToLower()}");
             }
             else
             {
@@ -517,13 +534,13 @@ namespace NetDaemonApps.Apps.Energy
                 if (windowStart > DateTime.Now)
                 {
                     _scheduler.RunAt(windowStart, () => { _ = PrepareForBatteryPeriodAsync(null); });
-                    LogStatus("Scheduled EMS shutdown at {0}", windowStart.ToString("HH:mm"));
+                    LogStatus(FormatScheduledAction("Battery window", windowStart));
                 }
 
                 if (windowEnd > DateTime.Now)
                 {
                     _scheduler.RunAt(windowEnd, () => { _ = RestoreEmsAfterWindowAsync(); });
-                    _logger.LogInformation("Scheduled EMS restore at {Time}", windowEnd.ToString("HH:mm"));
+                    // Note: This is debug-level scheduling info, not shown on dashboard
                 }
             }
         }
@@ -536,10 +553,9 @@ namespace NetDaemonApps.Apps.Energy
             try
             {
                 if (period != null)
-                    LogStatus("Preparing for {0} period {1}-{2}",
-                        period.ChargeType, period.StartTime.ToString(@"hh\:mm"), period.EndTime.ToString(@"hh\:mm"));
+                    LogStatus($"{period.ChargeType} period {period.StartTime.ToString(@"hh\:mm")}-{period.EndTime.ToString(@"hh\:mm")}");
                 else
-                    LogStatus("Preparing for battery window");
+                    LogStatus("Battery window starting");
 
                 // 1. Validate and turn off EMS
                 if (!await ValidateAndTurnOffEmsAsync("battery period", period))
@@ -557,17 +573,17 @@ namespace NetDaemonApps.Apps.Energy
 
                 if (scheduleToApply != null)
                 {
-                    LogStatus("Applying prepared battery schedule");
+                    LogStatus("Applying schedule");
                     await ApplyChargingScheduleAsync(scheduleToApply, simulateOnly: _simulationMode);
                 }
                 else
                 {
-                    LogStatus("No prepared schedule available to apply");
+                    LogStatus("No schedule to apply");
                 }
             }
             catch (Exception ex)
             {
-                LogStatus("Error preparing for battery window");
+                LogStatus("Error preparing battery window");
             }
         }
 
@@ -578,7 +594,7 @@ namespace NetDaemonApps.Apps.Energy
         {
             try
             {
-                LogStatus("Preparing for ad-hoc schedule: {0}", label);
+                LogStatus($"Preparing for ad-hoc schedule: {label}");
 
                 // Validate and turn off EMS
                 if (!await ValidateAndTurnOffEmsAsync($"ad-hoc schedule: {label}"))
@@ -588,7 +604,7 @@ namespace NetDaemonApps.Apps.Energy
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error preparing for specific schedule");
+                LogStatus("Error preparing ad-hoc schedule", $"Error preparing for specific schedule: {ex.Message}");
             }
         }
 
@@ -622,6 +638,57 @@ namespace NetDaemonApps.Apps.Energy
             }
         }
 
+        /// <summary>
+        /// Creates a morning discharge period with the specified start time and duration.
+        /// </summary>
+        /// <param name="startTime">The start time for the discharge period</param>
+        /// <param name="durationHours">Duration in hours (default: 1 hour)</param>
+        /// <returns>A configured ChargingPeriod for morning discharge</returns>
+        private ChargingPeriod CreateMorningDischargePeriod(TimeSpan startTime, double durationHours = 1.0)
+        {
+            return new ChargingPeriod
+            {
+                StartTime = startTime,
+                EndTime = startTime.Add(TimeSpan.FromHours(durationHours)),
+                ChargeType = BatteryChargeType.Discharge,
+                PowerInWatts = Math.Min(_options.DefaultDischargePowerW, _options.MaxInverterPowerW)
+            };
+        }
+
+        /// <summary>
+        /// Creates a charging period with the specified start and end times.
+        /// </summary>
+        /// <param name="startTime">The start time for the charge period</param>
+        /// <param name="endTime">The end time for the charge period</param>
+        /// <returns>A configured ChargingPeriod for charging</returns>
+        private ChargingPeriod CreateChargePeriod(TimeSpan startTime, TimeSpan endTime)
+        {
+            return new ChargingPeriod
+            {
+                StartTime = startTime,
+                EndTime = endTime,
+                ChargeType = BatteryChargeType.Charge,
+                PowerInWatts = Math.Min(_options.DefaultChargePowerW, _options.MaxInverterPowerW)
+            };
+        }
+
+        /// <summary>
+        /// Creates an evening discharge period with the specified start and end times.
+        /// </summary>
+        /// <param name="startTime">The start time for the discharge period</param>
+        /// <param name="endTime">The end time for the discharge period</param>
+        /// <returns>A configured ChargingPeriod for evening discharge</returns>
+        private ChargingPeriod CreateEveningDischargePeriod(TimeSpan startTime, TimeSpan endTime)
+        {
+            return new ChargingPeriod
+            {
+                StartTime = startTime,
+                EndTime = endTime,
+                ChargeType = BatteryChargeType.Discharge,
+                PowerInWatts = Math.Min(_options.DefaultDischargePowerW, _options.MaxInverterPowerW)
+            };
+        }
+
         #endregion
 
         #region Price Evaluation
@@ -636,8 +703,7 @@ namespace NetDaemonApps.Apps.Energy
             if (checkTime > DateTime.Now)
             {
                 _scheduler.RunAt(checkTime, () => { _ = EvaluateEveningToMorningShiftAsync(); });
-                LogStatus("Scheduled evening price check at {0} to evaluate discharge timing",
-                    checkTime.ToString("HH:mm"));
+                LogStatus(FormatScheduledAction("Evening price check", checkTime, "discharge timing evaluation"));
             }
         }
 
@@ -648,14 +714,14 @@ namespace NetDaemonApps.Apps.Energy
         {
             try
             {
-                _logger.LogInformation("Evaluating evening to morning discharge shift");
+                // Debug: Evaluating evening to morning discharge shift
 
                 var pricesToday = _priceHelper.PricesToday;
                 var pricesTomorrow = _priceHelper.PricesTomorrow;
 
                 if (pricesToday == null || pricesTomorrow == null)
                 {
-                    _logger.LogWarning("Missing price data for evening evaluation");
+                    LogStatus("Missing price data", "Missing price data for evening evaluation");
                     return;
                 }
 
@@ -664,7 +730,7 @@ namespace NetDaemonApps.Apps.Energy
                 var eveningPrices = pricesToday.Where(p => p.Key.TimeOfDay >= eveningStart).ToList();
                 if (eveningPrices.Count == 0)
                 {
-                    _logger.LogWarning("No evening prices available");
+                    LogStatus("No evening prices", "No evening prices available");
                     return;
                 }
 
@@ -677,15 +743,13 @@ namespace NetDaemonApps.Apps.Energy
 
                 if (tomorrowMorningPrices.Count == 0)
                 {
-                    _logger.LogWarning("No tomorrow morning prices available");
+                    LogStatus("No morning prices", "No tomorrow morning prices available");
                     return;
                 }
 
                 var bestMorningPrice = tomorrowMorningPrices.OrderByDescending(p => p.Value).First();
 
-                LogStatus("Price comparison - Tonight: €{0:F3} at {1}, Tomorrow morning: €{2:F3} at {3}",
-                    eveningPrice.Value, eveningPrice.Key.ToString("HH:mm"),
-                    bestMorningPrice.Value, bestMorningPrice.Key.ToString("HH:mm"));
+                LogStatus("Price comparison", $"Tonight: €{eveningPrice.Value:F3} at {eveningPrice.Key.ToString("HH:mm")}, Tomorrow morning: €{bestMorningPrice.Value:F3} at {bestMorningPrice.Key.ToString("HH:mm")}");
 
                 if (bestMorningPrice.Value > eveningPrice.Value)
                 {
@@ -699,8 +763,7 @@ namespace NetDaemonApps.Apps.Energy
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error during evening price evaluation");
-                LogStatus("Error evaluating evening shift");
+                LogStatus("Error evaluating evening shift", $"Error during evening price evaluation: {ex.Message}");
             }
         }
 
@@ -728,21 +791,19 @@ namespace NetDaemonApps.Apps.Energy
                         }
                     }
 
-                    _logger.LogInformation("Removed tonight's discharge from schedule");
+                    // Debug: Removed tonight's discharge from schedule
                 }
 
                 // Schedule the new discharge for tomorrow morning
                 var tomorrowDischargeTime = tomorrowMorningTime.AddMinutes(-_options.EmsPrepMinutesBefore);
                 _scheduler.RunAt(tomorrowDischargeTime, () => { _ = ExecuteTomorrowMorningDischargeAsync(tomorrowMorningTime); });
 
-                LogStatus("Scheduled tomorrow morning discharge at {0}",
-                    tomorrowMorningTime.ToString("HH:mm"));
-                LogStatus($"Rescheduled discharge to {tomorrowMorningTime.ToString("HH:mm")}");
+                LogStatus(FormatScheduledAction("Morning discharge", tomorrowMorningTime));
+                LogStatus($"Evening discharge moved to {FormatScheduledTime(tomorrowMorningTime).ToLower()}");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error rescheduling discharge to tomorrow morning");
-                LogStatus("Error rescheduling to morning");
+                LogStatus("Error rescheduling to morning", $"Error rescheduling discharge to tomorrow morning: {ex.Message}");
             }
         }
 
@@ -759,13 +820,7 @@ namespace NetDaemonApps.Apps.Energy
                 {
                     Periods = new List<ChargingPeriod>
                     {
-                        new ChargingPeriod
-                        {
-                            StartTime = dischargeTime.TimeOfDay,
-                            EndTime = dischargeTime.TimeOfDay.Add(TimeSpan.FromHours(1)),
-                            ChargeType = BatteryChargeType.Discharge,
-                            PowerInWatts = Math.Min(_options.DefaultDischargePowerW, _options.MaxInverterPowerW)
-                        }
+                        CreateMorningDischargePeriod(dischargeTime.TimeOfDay)
                     }
                 };
 
@@ -776,8 +831,7 @@ namespace NetDaemonApps.Apps.Energy
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error executing tomorrow morning discharge");
-                LogStatus("Error executing morning discharge");
+                LogStatus("Error executing morning discharge", $"Error executing tomorrow morning discharge: {ex.Message}");
             }
         }
 
@@ -785,25 +839,43 @@ namespace NetDaemonApps.Apps.Energy
 
         #region Helper Methods
 
-        private void LogStatus(string message, params object[] args)
+        /// <summary>
+        /// Logs status with separate dashboard and detailed messages.
+        /// </summary>
+        /// <param name="dashboardMessage">Clean, concise message for the dashboard display</param>
+        /// <param name="detailMessage">Optional detailed message for console/logging (includes context, errors, etc.)</param>
+        private void LogStatus(string dashboardMessage, string? detailMessage = null)
         {
-            var formattedMessage = args.Length > 0 ? string.Format(message, args) : message;
+            var consoleMessage = !string.IsNullOrEmpty(detailMessage) ? $"{dashboardMessage} | {detailMessage}" : dashboardMessage;
+            
             try
             {
-                Console.WriteLine($"[BATTERY] {formattedMessage}");
+                Console.WriteLine($"[BATTERY] {consoleMessage}");
             }
             catch { /* ignore console failures */ }
 
-            _logger.LogInformation(message, args);
+            // Log the detailed version to the logger
+            _logger.LogInformation(consoleMessage);
 
             try
             {
-                _entities.InputText.BatteryManagementStatus.SetValue(formattedMessage);
+                _entities.InputText.BatteryManagementStatus.SetValue(dashboardMessage);
             }
             catch (Exception ex)
             {
                 _logger.LogDebug(ex, "Failed to set BatteryManagementStatus");
             }
+        }
+
+        /// <summary>
+        /// Logs status with format string (backward compatibility).
+        /// </summary>
+        /// <param name="message">Message with format placeholders for dashboard</param>
+        /// <param name="args">Arguments for formatting</param>
+        private void LogStatus(string message, params object[] args)
+        {
+            var formattedMessage = args.Length > 0 ? string.Format(message, args) : message;
+            LogStatus(formattedMessage);
         }
 
         /// <summary>
@@ -814,7 +886,7 @@ namespace NetDaemonApps.Apps.Energy
         {
             if (!_saiPowerBatteryApi.IsConfigured)
             {
-                _logger.LogWarning("SAJ API not configured - battery mode monitoring disabled");
+                LogStatus("Battery monitoring disabled", "SAJ API not configured - battery mode monitoring disabled");
                 return;
             }
 
@@ -824,7 +896,7 @@ namespace NetDaemonApps.Apps.Energy
             // Schedule to run every 5 minutes
             _scheduler.RunEvery(TimeSpan.FromMinutes(5), DateTime.Now.AddMinutes(5), () => { _ = MonitorBatteryModeAsync(); });
             
-            _logger.LogInformation("Battery mode monitoring started - checking every 5 minutes");
+            LogStatus("Battery monitoring started", "Battery mode monitoring started - checking every 5 minutes");
         }
 
         /// <summary>
@@ -841,37 +913,132 @@ namespace NetDaemonApps.Apps.Energy
                 try
                 {
                     _entities.InputText.BatteryManagementMode.SetValue(modeText);
-                    _logger.LogDebug("Updated battery_management_mode to: {Mode}", modeText);
+                    // Debug-level logging can be omitted or kept minimal
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogWarning(ex, "Failed to update input_text.battery_management_mode entity");
+                    LogStatus("Battery status update failed", $"Failed to update input_text.battery_management_mode entity: {ex.Message}");
                 }
 
                 // Check if mode changed from last known state
                 var lastMode = AppStateManager.GetState<BatteryUserMode?>(nameof(Battery), "LastKnownMode");
                 if (lastMode != currentMode)
                 {
-                    _logger.LogInformation("Battery mode changed from {LastMode} to {CurrentMode}", 
-                        lastMode?.ToApiString() ?? "Unknown", modeText);
+                    LogStatus($"Battery mode: {modeText}", $"Battery mode changed from {lastMode?.ToApiString() ?? "Unknown"} to {modeText}");
                     AppStateManager.SetState(nameof(Battery), "LastKnownMode", currentMode);
                     AppStateManager.SetState(nameof(Battery), "LastModeChangeTime", DateTime.Now);
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Failed to monitor battery mode");
+                LogStatus("Battery monitoring error", $"Failed to monitor battery mode: {ex.Message}");
                 
                 // Update entity with error state
                 try
                 {
                     _entities.InputText.BatteryManagementMode.SetValue("Error - Check Logs");
                 }
-                catch (Exception entityEx)
+                catch
                 {
-                    _logger.LogDebug(entityEx, "Failed to update entity with error state");
+                    // Debug-level error can be omitted or kept minimal for entity update failures
                 }
             }
+        }
+
+        #region Utility Methods
+
+        /// <summary>
+        /// Formats a future scheduled time with relative context for dashboard messages.
+        /// Examples: "in 2h 15m (19:55)", "in 11 hours", "tomorrow at 02:30"
+        /// </summary>
+        private static string FormatScheduledTime(DateTime scheduledTime, string action = "")
+        {
+            var now = DateTime.Now;
+            var timeUntil = scheduledTime - now;
+            
+            if (timeUntil.TotalMinutes < 1)
+                return "now";
+                
+            // For times within the next 24 hours
+            if (timeUntil.TotalHours < 24)
+            {
+                if (timeUntil.TotalHours < 1)
+                {
+                    var minutes = (int)Math.Ceiling(timeUntil.TotalMinutes);
+                    return $"in {minutes}m ({scheduledTime:HH:mm})";
+                }
+                else if (timeUntil.TotalHours < 12)
+                {
+                    var hours = (int)timeUntil.TotalHours;
+                    var minutes = (int)(timeUntil.TotalMinutes % 60);
+                    if (minutes > 0)
+                        return $"in {hours}h {minutes}m ({scheduledTime:HH:mm})";
+                    else
+                        return $"in {hours}h ({scheduledTime:HH:mm})";
+                }
+                else
+                {
+                    // For longer times, just show hours and time
+                    var hours = (int)Math.Ceiling(timeUntil.TotalHours);
+                    return $"in {hours}h ({scheduledTime:HH:mm})";
+                }
+            }
+            
+            // For times beyond 24 hours (tomorrow+)
+            if (scheduledTime.Date == now.Date.AddDays(1))
+                return $"tomorrow at {scheduledTime:HH:mm}";
+            else
+                return $"{scheduledTime:MMM dd} at {scheduledTime:HH:mm}";
+        }
+
+        /// <summary>
+        /// Creates a status message for scheduled actions with better context and relative timing.
+        /// </summary>
+        private static string FormatScheduledAction(string actionType, DateTime scheduledTime, string context = "")
+        {
+            var timeInfo = FormatScheduledTime(scheduledTime, actionType);
+            var contextSuffix = string.IsNullOrEmpty(context) ? "" : $" ({context})";
+            
+            return $"{actionType} scheduled {timeInfo}{contextSuffix}";
+        }
+
+        /// <summary>
+        /// Creates a user-focused summary of the next significant battery event.
+        /// Prioritizes immediate upcoming actions over distant scheduling confirmations.
+        /// </summary>
+        private static string BuildNextEventSummary(ChargingSchema schedule)
+        {
+            var now = DateTime.Now.TimeOfDay;
+            var today = DateTime.Today;
+            
+            var allPeriods = schedule.Periods
+                .Select(p => new {
+                    Period = p,
+                    StartDateTime = today.Add(p.StartTime),
+                    EndDateTime = today.Add(p.EndTime),
+                    IsActive = now >= p.StartTime && now < p.EndTime,
+                    IsUpcoming = p.StartTime > now
+                })
+                .OrderBy(p => p.StartDateTime)
+                .ToList();
+
+            // Check if currently in any period
+            var activePeriod = allPeriods.FirstOrDefault(p => p.IsActive);
+            if (activePeriod != null)
+            {
+                var action = activePeriod.Period.ChargeType == BatteryChargeType.Charge ? "Charging" : "Discharging";
+                return $"{action} now - ends {FormatScheduledTime(activePeriod.EndDateTime)}";
+            }
+
+            // Find next upcoming period
+            var nextPeriod = allPeriods.FirstOrDefault(p => p.IsUpcoming);
+            if (nextPeriod != null)
+            {
+                var action = nextPeriod.Period.ChargeType == BatteryChargeType.Charge ? "Charging" : "Discharging";
+                return $"Next: {action} {FormatScheduledTime(nextPeriod.StartDateTime)}";
+            }
+
+            return "No battery activity planned today";
         }
 
         // Round up a DateTime to the next 5-minute boundary (e.g., 13:54 -> 13:55)
@@ -988,24 +1155,75 @@ namespace NetDaemonApps.Apps.Energy
             return (adjusted, summary);
         }
 
-        // Returns human-friendly suffix about next/ongoing charge
+        // Returns human-friendly suffix about next/ongoing charge/discharge activity
         private static string BuildNextChargeSuffix(ChargingSchema schedule)
         {
             var now = DateTime.Now.TimeOfDay;
+            var today = DateTime.Today;
+            
             var charges = schedule.Periods.Where(p => p.ChargeType == BatteryChargeType.Charge)
                 .OrderBy(p => p.StartTime)
                 .ToList();
+                
+            var discharges = schedule.Periods.Where(p => p.ChargeType == BatteryChargeType.Discharge)
+                .OrderBy(p => p.StartTime)
+                .ToList();
 
-            var current = charges.FirstOrDefault(p => now >= p.StartTime && now < p.EndTime);
-            if (current != null)
-                return $"charging now until {current.EndTime.ToString(@"hh\:mm")}";
+            // Check if currently in a charge period
+            var currentCharge = charges.FirstOrDefault(p => now >= p.StartTime && now < p.EndTime);
+            if (currentCharge != null)
+            {
+                var endTime = today.Add(currentCharge.EndTime);
+                return $"charging now, ends {FormatScheduledTime(endTime)}";
+            }
+            
+            // Check if currently in a discharge period
+            var currentDischarge = discharges.FirstOrDefault(p => now >= p.StartTime && now < p.EndTime);
+            if (currentDischarge != null)
+            {
+                var endTime = today.Add(currentDischarge.EndTime);
+                return $"discharging now, ends {FormatScheduledTime(endTime)}";
+            }
 
-            var next = charges.FirstOrDefault(p => p.StartTime >= now);
-            if (next != null)
-                return $"next charge {next.StartTime.ToString(@"hh\:mm")}";
+            // Find next activity (charge or discharge)
+            var nextCharge = charges.FirstOrDefault(p => p.StartTime >= now);
+            var nextDischarge = discharges.FirstOrDefault(p => p.StartTime >= now);
+            
+            DateTime? nextActivity = null;
+            string activityType = "";
+            
+            if (nextCharge != null && nextDischarge != null)
+            {
+                // Both exist, pick the earlier one
+                if (nextCharge.StartTime <= nextDischarge.StartTime)
+                {
+                    nextActivity = today.Add(nextCharge.StartTime);
+                    activityType = "charge";
+                }
+                else
+                {
+                    nextActivity = today.Add(nextDischarge.StartTime);
+                    activityType = "discharge";
+                }
+            }
+            else if (nextCharge != null)
+            {
+                nextActivity = today.Add(nextCharge.StartTime);
+                activityType = "charge";
+            }
+            else if (nextDischarge != null)
+            {
+                nextActivity = today.Add(nextDischarge.StartTime);
+                activityType = "discharge";
+            }
+            
+            if (nextActivity.HasValue)
+                return $"next {activityType} {FormatScheduledTime(nextActivity.Value)}";
 
-            return "no charge planned";
+            return "no activity planned today";
         }
+
+        #endregion
 
         #endregion
 
@@ -1019,7 +1237,8 @@ namespace NetDaemonApps.Apps.Energy
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Could not retrieve current applied schedule from state");
+                // State retrieval errors can be handled silently or with minimal logging
+                LogStatus("State retrieval failed", $"Could not retrieve current applied schedule from state: {ex.Message}");
                 return null;
             }
         }
@@ -1029,11 +1248,11 @@ namespace NetDaemonApps.Apps.Energy
             try
             {
                 AppStateManager.SetState(nameof(Battery), "CurrentAppliedSchema", schedule);
-                _logger.LogDebug("Saved current applied schedule to state");
+                // Debug-level state save logging can be omitted
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Could not save current applied schedule to state");
+                LogStatus("State save failed", $"Could not save current applied schedule to state: {ex.Message}");
             }
         }
 
@@ -1043,11 +1262,11 @@ namespace NetDaemonApps.Apps.Energy
             {
                 AppStateManager.SetState(nameof(Battery), "PreparedSchedule", schedule);
                 AppStateManager.SetState(nameof(Battery), "PreparedScheduleDate", DateTime.Today);
-                _logger.LogDebug("Saved prepared schedule to state");
+                // Debug-level state save logging can be omitted
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Could not save prepared schedule to state");
+                LogStatus("State save failed", $"Could not save prepared schedule to state: {ex.Message}");
             }
         }
 
@@ -1065,7 +1284,8 @@ namespace NetDaemonApps.Apps.Energy
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Could not retrieve prepared schedule from state");
+                // State retrieval errors can be handled silently or with minimal logging
+                LogStatus("State retrieval failed", $"Could not retrieve prepared schedule from state: {ex.Message}");
                 return null;
             }
         }
