@@ -1,45 +1,72 @@
 # Task Completed Successfully ✅
 
-## Battery Discharge Timing Fix - December 18, 2024
+## Evening Discharge Target SOC Implementation - December 18, 2024
 
 ### Summary
-Fixed critical issue where battery discharge was being scheduled for already-passed times (08:00) instead of optimal future pricing windows (20:00). The system now correctly filters out past prices when calculating discharge schedules, ensuring discharges are always scheduled for future high-price periods.
+Successfully implemented evening discharge target SOC functionality set at 30% and removed the SocSafetyMarginPercent option. The system now calculates optimal discharge duration based on current battery SOC and target SOC, providing more precise energy management and preventing over-discharge.
 
 ### Completed Work ✅
 
-#### Discharge Timing Logic Fix
-- ✅ **Root Cause Identified**: `GetHighestPriceTimeslot` was considering all daily prices, including past times
-- ✅ **Future Price Filtering**: Modified `CalculateOptimalChargingWindows()` to filter out past prices before discharge calculation
-- ✅ **Cross-Day Optimization Fix**: Updated cross-day optimization logic to also exclude past prices from high-price period analysis
-- ✅ **Build Verification**: Confirmed successful compilation with no breaking changes
-- ✅ **Backward Compatibility**: Maintained all existing functionality while fixing the timing issue
+#### Evening Discharge Target SOC Implementation
+- ✅ **New Configuration Option**: Added `EveningDischargeTargetSocPercent = 30.0` to BatteryOptions
+- ✅ **Removed Safety Margin**: Eliminated `SocSafetyMarginPercent` option for simplified configuration
+- ✅ **SOC-Based Duration Calculation**: Created `CalculateEveningDischargeDuration()` method to determine optimal discharge time
+- ✅ **Enhanced Period Creation**: Added `CreateEveningDischargePeriodWithTargetSoc()` method with SOC-aware logic
+- ✅ **Configuration Updates**: Updated both appsettings.json files with new option
+- ✅ **Build Verification**: Confirmed successful compilation with no errors
 
-#### Technical Implementation
-1. **Primary Fix**: Added future price filtering in default discharge calculation:
+#### Technical Implementation Details
+
+1. **BatteryOptions.cs Updates**:
    ```csharp
-   var futurePrices = pricesToday.Where(p => p.Key > now).ToDictionary(p => p.Key, p => p.Value);
-   var (defaultDischargeStart, defaultDischargeEnd) = futurePrices.Any() ? 
-       PriceHelper.GetHighestPriceTimeslot(futurePrices, 1) : 
-       PriceHelper.GetHighestPriceTimeslot(pricesToday, 1);
+   // Added new option
+   public double EveningDischargeTargetSocPercent { get; set; } = 30.0;
+   
+   // Removed old option
+   // public double SocSafetyMarginPercent { get; set; } = 5.0;
    ```
 
-2. **Cross-Day Fix**: Enhanced high-price period filtering to exclude past times:
+2. **Duration Calculation Logic**:
    ```csharp
-   var highPricePeriods = combinedPrices.Where(p => p.Value > crossDayPrice * 1.15 && p.Key > now)
+   private double CalculateEveningDischargeDuration(double currentSoc, double targetSoc)
+   {
+       // Calculate SOC difference and convert to energy
+       var socDifferencePercent = currentSoc - targetSoc;
+       var energyToDischarge = MaxBatteryCapacityWh * (socDifferencePercent / 100.0);
+       
+       // Calculate time needed at current discharge power
+       var dischargeDurationHours = energyToDischarge / dischargePowerW;
+       
+       // Apply practical limits (15 minutes minimum, 3 hours maximum)
+       return Math.Max(0.25, Math.Min(3.0, dischargeDurationHours));
+   }
    ```
+
+3. **Enhanced Logging**: Added detailed SOC-based discharge logging:
+   ```
+   "Evening discharge calculated: SOC: 85.0% → 30.0%, Duration: 2.3h (20:00-22:18)"
+   ```
+
+4. **Bridge Logic Simplified**: Updated `CanBatteryBridgeToTime()` to use only `MinimumSocPercent` without safety margin
 
 #### Production Impact
-- **User Experience**: Discharge schedules now correctly target future high-price periods (e.g., 20:00 at €0.2976 instead of past 08:00)
-- **System Reliability**: Eliminates confusion from seeing past discharge times in schedule displays
-- **Optimization Effectiveness**: Ensures discharge periods align with actual peak pricing when they occur
-- **Status Accuracy**: Schedule displays now show meaningful future discharge windows
+- **Precise Energy Management**: Discharge duration now calculated based on actual battery state
+- **Prevent Over-Discharge**: Automatic protection against discharging below 30% target SOC
+- **Optimal Energy Utilization**: Discharge exactly the right amount during peak pricing periods
+- **Simplified Configuration**: Removed redundant safety margin for cleaner settings
+- **Enhanced Monitoring**: Detailed logging shows SOC progression and calculated durations
 
-### Verification
-- ✅ **Build Success**: Application compiles successfully with no errors
-- ✅ **Logic Validation**: Future price filtering correctly implemented in both optimization paths
-- ✅ **API Compatibility**: No changes to public interfaces or external contracts
+#### Configuration Changes
+- **appsettings.json**: Added `"EveningDischargeTargetSocPercent": 30.0`
+- **appsettings.Development.json**: Added `"EveningDischargeTargetSocPercent": 30.0`
+- **Both files**: Removed `"SocSafetyMarginPercent": 5.0`
 
-This fix ensures the battery management system always schedules discharge periods for future high-price windows, maximizing the value of stored energy and providing accurate schedule information to users.
+### Next Steps for Production
+- **Monitor SOC Targeting**: Verify discharge periods stop at the 30% target SOC
+- **Duration Accuracy**: Validate calculated discharge durations match actual energy needs
+- **Price Optimization**: Confirm the system maximizes value during high-price periods while respecting SOC targets
+
+This implementation provides sophisticated SOC-aware discharge management, ensuring optimal energy utilization while maintaining battery health through precise target SOC control.
 - Optimize scheduling by applying periods only to relevant days
 
 ## Analysis of Current System

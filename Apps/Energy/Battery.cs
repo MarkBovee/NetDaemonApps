@@ -431,8 +431,8 @@ namespace NetDaemonApps.Apps.Energy
             // CHECKPOINT 2: Add optimized charge period (for tomorrow)
             periods.Add(CreateChargePeriod(optimizedChargeStart.TimeOfDay, optimizedChargeEnd.TimeOfDay, GetChargeWeekdayPattern()));
 
-            // CHECKPOINT 3: Add optimized discharge period (for today)
-            periods.Add(CreateEveningDischargePeriod(optimizedDischargeStart.TimeOfDay, optimizedDischargeEnd.TimeOfDay, GetDischargeWeekdayPattern()));
+            // CHECKPOINT 3: Add optimized discharge period (for today) with SOC target
+            periods.Add(CreateEveningDischargePeriodWithTargetSoc(optimizedDischargeStart.TimeOfDay, currentSoc, GetDischargeWeekdayPattern()));
 
             // Schedule evening check to potentially move discharge to tomorrow morning
             ScheduleEveningPriceCheck(optimizedDischargeStart);
@@ -580,13 +580,13 @@ namespace NetDaemonApps.Apps.Energy
             var estimatedSocDrop = (hoursUntilCharge / 24.0) * _options.DailyConsumptionSocPercent;
             var projectedSoc = currentSoc - estimatedSocDrop;
             
-            // Ensure we maintain at least minimum SOC plus some safety margin
-            var canBridge = projectedSoc >= (_options.MinimumSocPercent + _options.SocSafetyMarginPercent);
+            // Ensure we maintain at least minimum SOC
+            var canBridge = projectedSoc >= _options.MinimumSocPercent;
             
             if (Debugger.IsAttached)
             {
                 LogStatus($"🔍 Bridge analysis: {hoursUntilCharge:F1}h until charge", 
-                    $"Current: {currentSoc:F1}%, Estimated drop: {estimatedSocDrop:F1}%, Projected: {projectedSoc:F1}%, Min required: {_options.MinimumSocPercent + _options.SocSafetyMarginPercent:F1}%, Can bridge: {canBridge}");
+                    $"Current: {currentSoc:F1}%, Estimated drop: {estimatedSocDrop:F1}%, Projected: {projectedSoc:F1}%, Min required: {_options.MinimumSocPercent:F1}%, Can bridge: {canBridge}");
             }
             
             return canBridge;
@@ -929,6 +929,32 @@ namespace NetDaemonApps.Apps.Energy
         /// <returns>A configured ChargingPeriod for evening discharge</returns>
         private ChargingPeriod CreateEveningDischargePeriod(TimeSpan startTime, TimeSpan endTime, string weekdayPattern)
         {
+            return new ChargingPeriod
+            {
+                StartTime = startTime,
+                EndTime = endTime,
+                ChargeType = BatteryChargeType.Discharge,
+                PowerInWatts = Math.Min(_options.DefaultDischargePowerW, _options.MaxInverterPowerW),
+                Weekdays = weekdayPattern
+            };
+        }
+
+        /// <summary>
+        /// Creates an evening discharge period with optimal duration based on current SOC and target SOC.
+        /// </summary>
+        /// <param name="startTime">The start time for the discharge period</param>
+        /// <param name="currentSoc">Current battery state of charge percentage</param>
+        /// <param name="weekdayPattern">Weekday pattern (e.g., "1,1,1,1,1,0,0" for weekdays only)</param>
+        /// <returns>A configured ChargingPeriod for evening discharge with calculated duration</returns>
+        private ChargingPeriod CreateEveningDischargePeriodWithTargetSoc(TimeSpan startTime, double currentSoc, string weekdayPattern)
+        {
+            var dischargeDurationHours = CalculateEveningDischargeDuration(currentSoc, _options.EveningDischargeTargetSocPercent);
+            var endTime = startTime.Add(TimeSpan.FromHours(dischargeDurationHours));
+            
+            // Log the SOC-based discharge calculation
+            LogStatus($"Evening discharge calculated", 
+                $"SOC: {currentSoc:F1}% → {_options.EveningDischargeTargetSocPercent:F1}%, Duration: {dischargeDurationHours:F1}h ({startTime:hh\\:mm}-{endTime:hh\\:mm})");
+            
             return new ChargingPeriod
             {
                 StartTime = startTime,
@@ -1608,6 +1634,37 @@ namespace NetDaemonApps.Apps.Energy
             return validModules.Count != 0 ? validModules.Average(soc => soc!.Value) : 50.0;
         }
 
+        /// <summary>
+        /// Calculates the optimal discharge duration based on current SOC and target SOC.
+        /// </summary>
+        /// <param name="currentSoc">Current battery state of charge percentage</param>
+        /// <param name="targetSoc">Target state of charge percentage to discharge to</param>
+        /// <returns>Discharge duration in hours</returns>
+        private double CalculateEveningDischargeDuration(double currentSoc, double targetSoc)
+        {
+            // Ensure we don't discharge below the target SOC
+            if (currentSoc <= targetSoc)
+            {
+                return 0.0; // No discharge needed
+            }
+
+            // Calculate the SOC difference that needs to be discharged
+            var socDifferencePercent = currentSoc - targetSoc;
+            var socDifferenceFraction = socDifferencePercent / 100.0;
+            
+            // Calculate energy to discharge (Wh)
+            var energyToDischarge = _options.MaxBatteryCapacityWh * socDifferenceFraction;
+            
+            // Calculate discharge duration at current discharge power setting
+            var dischargePowerW = Math.Min(_options.DefaultDischargePowerW, _options.MaxInverterPowerW);
+            var dischargeDurationHours = energyToDischarge / dischargePowerW;
+            
+            // Ensure we have at least a minimum discharge period (15 minutes) and cap at maximum (3 hours)
+            var minimumHours = 0.25; // 15 minutes
+            var maximumHours = 3.0;   // 3 hours
+            
+            return Math.Max(minimumHours, Math.Min(maximumHours, dischargeDurationHours));
+        }
 
         // Compute minutes required to charge from current SOC to 100% at max inverter power
         private int CalculateRequiredChargeMinutes(double socPercent)

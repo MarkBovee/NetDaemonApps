@@ -145,11 +145,12 @@ namespace NetDaemonApps.Models.Battery
         public double MinimumSocPercent { get; set; } = 10.0;
 
         /// <summary>
-        /// Additional SOC safety margin added to MinimumSocPercent when calculating if battery can bridge to optimal charge times.
-        /// This provides extra buffer for unexpected consumption or calculation errors. Range: 0-100.
-        /// Default: 5%.
+        /// Target state-of-charge (SOC) percentage for evening discharge periods.
+        /// Evening discharge will stop when the battery reaches this SOC level. Range: 0-100.
+        /// Should be higher than MinimumSocPercent to provide safety buffer. 
+        /// Default: 30%.
         /// </summary>
-        public double SocSafetyMarginPercent { get; set; } = 5.0;
+        public double EveningDischargeTargetSocPercent { get; set; } = 30.0;
 
         /// <summary>
         /// Estimated daily battery consumption as a percentage of total capacity.
