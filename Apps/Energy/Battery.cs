@@ -208,17 +208,60 @@ namespace NetDaemonApps.Apps.Energy
                     .Where(p => p.ChargeType == BatteryChargeType.Charge)
                     .Sum(p => Math.Max(0, (int)Math.Ceiling((p.EndTime - (p.StartTime > now ? p.StartTime : now)).TotalMinutes)));
 
-                // If we have more scheduled charge time than needed, trim the schedule to just what we need
+                // If we have more scheduled charge time than needed, check if we should recalculate optimal window
                 var scheduleToApply = chargingSchedule;
                 if (remainingScheduledChargeMinutes > 0)
                 {
                     if (remainingScheduledChargeMinutes > requiredChargeMinutes)
                     {
-                        var (adjusted, summary) = TrimChargePeriodsToTotalMinutes(chargingSchedule, requiredChargeMinutes);
-                        scheduleToApply = adjusted ?? chargingSchedule;
-                        var suffix = BuildNextChargeSuffix(scheduleToApply);
-                        var detail = $"SOC {soc:F1}%, need ~{requiredChargeMinutes}m to full, had {remainingScheduledChargeMinutes}m scheduled. {summary} | {suffix}";
-                        LogStatus($"SOC {soc:F1}%, optimized schedule", detail);
+                        var requiredHours = requiredChargeMinutes / 60.0; // Allow fractional hours
+                        var currentScheduledHours = (int)Math.Ceiling(remainingScheduledChargeMinutes / 60.0);
+
+                        // If required time is significantly different (more than 1 hour difference), recalculate optimal window
+                        // Also recalculate if we need less than 1 hour but have much more scheduled
+                        var hoursDifference = Math.Abs(currentScheduledHours - Math.Ceiling(requiredHours));
+                        var shouldRecalculate = (hoursDifference > 1 || (requiredHours < 1.0 && currentScheduledHours > 1)) && _priceHelper.PricesToday != null;
+
+                        // 🔍 DIAGNOSTIC: Log recalculation decision logic
+                        if (Debugger.IsAttached || _simulationMode)
+                        {
+                            LogStatus($"🔍 Recalculation Decision",
+                                $"Required: {requiredHours:F1}h, Scheduled: {currentScheduledHours}h, HoursDiff: {hoursDifference}, " +
+                                $"Condition1: {hoursDifference > 1}, Condition2: {requiredHours < 1.0 && currentScheduledHours > 1}, " +
+                                $"PricesAvailable: {_priceHelper.PricesToday != null}, ShouldRecalc: {shouldRecalculate}");
+                        }
+
+                        if (shouldRecalculate)
+                        {
+                            LogStatus($"SOC {soc:F1}%, recalculating optimal window",
+                                $"Need {requiredHours:F1}h (was {currentScheduledHours}h), finding new optimal {requiredHours:F1}-hour window");
+
+                            // Get the optimal window for the required hours (fractional allowed)
+                            var (newChargeStart, newChargeEnd) = PriceHelper.GetLowestPriceTimeslot(_priceHelper.PricesToday, requiredHours);
+
+                            // Create new schedule with optimal window
+                            var newPeriods = chargingSchedule.Periods
+                                .Where(p => p.ChargeType != BatteryChargeType.Charge) // Keep non-charge periods
+                                .ToList();
+
+                            // Add the new optimal charge period
+                            newPeriods.Add(CreateChargePeriod(newChargeStart.TimeOfDay, newChargeEnd.TimeOfDay));
+
+                            scheduleToApply = new ChargingSchema { Periods = newPeriods };
+
+                            var suffix = BuildNextChargeSuffix(scheduleToApply);
+                            var detail = $"SOC {soc:F1}%, recalculated to optimal {requiredHours:F1}h window: {newChargeStart:HH:mm}-{newChargeEnd:HH:mm} | {suffix}";
+                            LogStatus($"SOC {soc:F1}%, new optimal window", detail);
+                        }
+                        else
+                        {
+                            // Small difference, just trim the existing schedule
+                            var (adjusted, summary) = TrimChargePeriodsToTotalMinutes(chargingSchedule, requiredChargeMinutes);
+                            scheduleToApply = adjusted ?? chargingSchedule;
+                            var suffix = BuildNextChargeSuffix(scheduleToApply);
+                            var detail = $"SOC {soc:F1}%, need ~{requiredChargeMinutes}m to full, had {remainingScheduledChargeMinutes}m scheduled. {summary} | {suffix}";
+                            LogStatus($"SOC {soc:F1}%, optimized schedule", detail);
+                        }
                     }
                     else
                     {
@@ -280,15 +323,20 @@ namespace NetDaemonApps.Apps.Energy
                     LogStatus($"{nextEventSummary}{(liveWrite ? string.Empty : " (sim)")}",
                         $"{scheduleToApply.Periods.Count} periods");
 
-                    if (liveWrite)
-                    {
-                        var chargePeriods = scheduleToApply.Periods.Where(p => p.ChargeType == BatteryChargeType.Charge).ToList();
-                        var dischargePeriods = scheduleToApply.Periods.Where(p => p.ChargeType == BatteryChargeType.Discharge).ToList();
+                    // Always update the schedule display entities, even in simulation mode
+                    var chargePeriods = scheduleToApply.Periods.Where(p => p.ChargeType == BatteryChargeType.Charge).ToList();
+                    var dischargePeriods = scheduleToApply.Periods.Where(p => p.ChargeType == BatteryChargeType.Discharge).ToList();
 
+                    try
+                    {
                         if (chargePeriods.Count > 0)
                         {
                             var chargeSchedule = $"{chargePeriods.First().StartTime.ToString(@"hh\:mm")}-{chargePeriods.Last().EndTime.ToString(@"hh\:mm")}";
                             _entities.InputText.BatteryChargeSchedule.SetValue(chargeSchedule);
+                        }
+                        else
+                        {
+                            _entities.InputText.BatteryChargeSchedule.SetValue("No charge scheduled");
                         }
 
                         if (dischargePeriods.Count > 0)
@@ -296,6 +344,14 @@ namespace NetDaemonApps.Apps.Energy
                             var dischargeSchedule = $"{dischargePeriods.First().StartTime.ToString(@"hh\:mm")}-{dischargePeriods.Last().EndTime.ToString(@"hh\:mm")}";
                             _entities.InputText.BatteryDischargeSchedule.SetValue(dischargeSchedule);
                         }
+                        else
+                        {
+                            _entities.InputText.BatteryDischargeSchedule.SetValue("No discharge scheduled");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        LogStatus("Schedule display update failed", $"Failed to update schedule display entities: {ex.Message}");
                     }
                 }
                 else
@@ -1083,6 +1139,8 @@ namespace NetDaemonApps.Apps.Energy
             }
         }
 
+        #endregion
+
         #region Utility Methods
 
         /// <summary>
@@ -1097,29 +1155,10 @@ namespace NetDaemonApps.Apps.Energy
             if (timeUntil.TotalMinutes < 1)
                 return "now";
 
-            // For times within the next 24 hours
+            // For times within the next 24 hours - simplified format
             if (timeUntil.TotalHours < 24)
             {
-                if (timeUntil.TotalHours < 1)
-                {
-                    var minutes = (int)Math.Ceiling(timeUntil.TotalMinutes);
-                    return $"in {minutes}m ({scheduledTime:HH:mm})";
-                }
-                else if (timeUntil.TotalHours < 12)
-                {
-                    var hours = (int)timeUntil.TotalHours;
-                    var minutes = (int)(timeUntil.TotalMinutes % 60);
-                    if (minutes > 0)
-                        return $"in {hours}h {minutes}m ({scheduledTime:HH:mm})";
-                    else
-                        return $"in {hours}h ({scheduledTime:HH:mm})";
-                }
-                else
-                {
-                    // For longer times, just show hours and time
-                    var hours = (int)Math.Ceiling(timeUntil.TotalHours);
-                    return $"in {hours}h ({scheduledTime:HH:mm})";
-                }
+                return $"at {scheduledTime:HH:mm}";
             }
 
             // For times beyond 24 hours (tomorrow+)
@@ -1361,7 +1400,6 @@ namespace NetDaemonApps.Apps.Energy
             return "no activity planned today";
         }
 
-        #endregion
 
         #endregion
 

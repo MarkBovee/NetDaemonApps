@@ -53,8 +53,4 @@
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </Content>
     </ItemGroup>
-        
-    <ItemGroup>
-      <Folder Include="helpers\" />
-    </ItemGroup>
 </Project>

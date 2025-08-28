@@ -329,16 +329,22 @@ public class PriceHelper : IPriceHelper
 
             if (day == "Vandaag" && double.TryParse(priceText, NumberStyles.Any, CultureInfo.InvariantCulture, out var priceToday))
             {
-                var date = DateTime.ParseExact(timeStart, "HH:mm", CultureInfo.InvariantCulture);
+                // Parse time and ensure it's in Dutch timezone context
+                var timeOnly = DateTime.ParseExact(timeStart, "HH:mm", CultureInfo.InvariantCulture);
+                var dutchDateTime = DateTime.SpecifyKind(DateTime.Today.Add(timeOnly.TimeOfDay), DateTimeKind.Unspecified);
 
-                pricesToday[date] = priceToday;
+                // Treat as Dutch time to maintain consistency with price data timezone
+                pricesToday[dutchDateTime] = priceToday;
             }
 
             if (day == "Morgen" && double.TryParse(priceText, NumberStyles.Any, CultureInfo.InvariantCulture, out var priceTomorrow))
             {
-                var date = DateTime.ParseExact(timeStart, "HH:mm", CultureInfo.InvariantCulture).AddDays(1);
+                // Parse time and ensure it's in Dutch timezone context
+                var timeOnly = DateTime.ParseExact(timeStart, "HH:mm", CultureInfo.InvariantCulture);
+                var dutchDateTime = DateTime.SpecifyKind(DateTime.Today.AddDays(1).Add(timeOnly.TimeOfDay), DateTimeKind.Unspecified);
 
-                pricesTomorrow[date] = priceTomorrow;
+                // Treat as Dutch time to maintain consistency with price data timezone
+                pricesTomorrow[dutchDateTime] = priceTomorrow;
             }
         }
 
@@ -351,62 +357,134 @@ public class PriceHelper : IPriceHelper
     /// Gets the lowest price timeslot using the specified prices
     /// </summary>
     /// <param name="prices">The prices</param>
-    /// <param name="windowHours">The window hours</param>
+    /// <param name="windowHours">The window hours (can be fractional)</param>
     /// <returns>The date time start date time end</returns>
-    public static (DateTime Start, DateTime End) GetLowestPriceTimeslot(IDictionary<DateTime, double> prices, int windowHours = 3)
+    public static (DateTime Start, DateTime End) GetLowestPriceTimeslot(IDictionary<DateTime, double> prices, double windowHours = 3.0)
     {
-        var sortedPrices = prices.OrderBy(p => p.Key).ToList();
-        var minSum = double.MaxValue;
-        var start = sortedPrices[0].Key;
-        var end = sortedPrices[windowHours - 1].Key;
+        if (prices == null || !prices.Any())
+            throw new ArgumentException("Prices dictionary cannot be null or empty", nameof(prices));
 
-        for (var i = 0; i <= sortedPrices.Count - windowHours; i++)
+        if (windowHours <= 0)
+            throw new ArgumentException("Window hours must be greater than 0", nameof(windowHours));
+
+        // Sort prices by time to maintain chronological order for window calculations
+        var sortedByTime = prices.OrderBy(p => p.Key).ToList();
+
+        // For sub-hour windows, find the single hour with the lowest price and create a window within it
+        if (windowHours < 1.0)
         {
-            var sum = 0d;
-            for (var j = 0; j < windowHours; j++)
-            {
-                sum += sortedPrices[i + j].Value;
-            }
-
-            if (!(sum < minSum)) continue;
-
-            minSum = sum;
-            start = sortedPrices[i].Key;
-            end = sortedPrices[i + windowHours - 1].Key.AddMinutes(59);
+            var lowestPriceHour = sortedByTime.OrderBy(p => p.Value).ThenBy(p => p.Key).First();
+            var windowMinutes = (int)Math.Ceiling(windowHours * 60);
+            return (lowestPriceHour.Key, lowestPriceHour.Key.AddMinutes(windowMinutes - 1));
         }
 
-        return (start, end);
+        var windowHoursInt = (int)Math.Ceiling(windowHours);
+
+        if (windowHoursInt >= sortedByTime.Count)
+        {
+            // If window is larger than available data, return the entire range
+            return (sortedByTime.First().Key, sortedByTime.Last().Key.AddMinutes(59));
+        }
+
+        var bestSum = double.MaxValue;
+        var bestStart = sortedByTime[0].Key;
+        var bestEnd = sortedByTime[windowHoursInt - 1].Key;
+
+        // Find the optimal consecutive window with the lowest total price
+        for (var i = 0; i <= sortedByTime.Count - windowHoursInt; i++)
+        {
+            var currentSum = 0d;
+            for (var j = 0; j < windowHoursInt; j++)
+            {
+                currentSum += sortedByTime[i + j].Value;
+            }
+
+            if (currentSum < bestSum)
+            {
+                bestSum = currentSum;
+                bestStart = sortedByTime[i].Key;
+
+                // For fractional hours, calculate the exact end time
+                if (windowHours < windowHoursInt)
+                {
+                    var exactMinutes = (int)Math.Ceiling(windowHours * 60);
+                    bestEnd = sortedByTime[i].Key.AddMinutes(exactMinutes - 1);
+                }
+                else
+                {
+                    bestEnd = sortedByTime[i + windowHoursInt - 1].Key.AddMinutes(59);
+                }
+            }
+        }
+
+        return (bestStart, bestEnd);
     }
 
     /// <summary>
     /// Finds the timeslot with the highest total price over a specified window of hours.
     /// </summary>
     /// <param name="prices">Dictionary of prices by DateTime.</param>
-    /// <param name="windowHours">Number of consecutive hours in the window.</param>
+    /// <param name="windowHours">Number of consecutive hours in the window (can be fractional)</param>
     /// <returns>Tuple with start and end DateTime of the highest price window.</returns>
-    public static (DateTime Start, DateTime End) GetHighestPriceTimeslot(IDictionary<DateTime, double> prices, int windowHours = 1)
+    public static (DateTime Start, DateTime End) GetHighestPriceTimeslot(IDictionary<DateTime, double> prices, double windowHours = 1.0)
     {
-        var sortedPrices = prices.OrderBy(p => p.Key).ToList();
-        var maxSum = double.MinValue;
-        var start = sortedPrices[0].Key;
-        var end = sortedPrices[windowHours - 1].Key;
+        if (prices == null || !prices.Any())
+            throw new ArgumentException("Prices dictionary cannot be null or empty", nameof(prices));
 
-        for (var i = 0; i <= sortedPrices.Count - windowHours; i++)
+        if (windowHours <= 0)
+            throw new ArgumentException("Window hours must be greater than 0", nameof(windowHours));
+
+        // Sort prices by time to maintain chronological order for window calculations
+        var sortedByTime = prices.OrderBy(p => p.Key).ToList();
+
+        // For sub-hour windows, find the single hour with the highest price and create a window within it
+        if (windowHours < 1.0)
         {
-            var sum = 0d;
-            for (var j = 0; j < windowHours; j++)
-            {
-                sum += sortedPrices[i + j].Value;
-            }
-
-            if (!(sum > maxSum)) continue;
-
-            maxSum = sum;
-            start = sortedPrices[i].Key;
-            end = sortedPrices[i + windowHours - 1].Key.AddMinutes(59);
+            var highestPriceHour = sortedByTime.OrderByDescending(p => p.Value).ThenBy(p => p.Key).First();
+            var windowMinutes = (int)Math.Ceiling(windowHours * 60);
+            return (highestPriceHour.Key, highestPriceHour.Key.AddMinutes(windowMinutes - 1));
         }
 
-        return (start, end);
+        var windowHoursInt = (int)Math.Ceiling(windowHours);
+
+        if (windowHoursInt >= sortedByTime.Count)
+        {
+            // If window is larger than available data, return the entire range
+            return (sortedByTime.First().Key, sortedByTime.Last().Key.AddMinutes(59));
+        }
+
+        var bestSum = double.MinValue;
+        var bestStart = sortedByTime[0].Key;
+        var bestEnd = sortedByTime[windowHoursInt - 1].Key;
+
+        // Find the optimal consecutive window with the highest total price
+        for (var i = 0; i <= sortedByTime.Count - windowHoursInt; i++)
+        {
+            var currentSum = 0d;
+            for (var j = 0; j < windowHoursInt; j++)
+            {
+                currentSum += sortedByTime[i + j].Value;
+            }
+
+            if (currentSum > bestSum)
+            {
+                bestSum = currentSum;
+                bestStart = sortedByTime[i].Key;
+
+                // For fractional hours, calculate the exact end time
+                if (windowHours < windowHoursInt)
+                {
+                    var exactMinutes = (int)Math.Ceiling(windowHours * 60);
+                    bestEnd = sortedByTime[i].Key.AddMinutes(exactMinutes - 1);
+                }
+                else
+                {
+                    bestEnd = sortedByTime[i + windowHoursInt - 1].Key.AddMinutes(59);
+                }
+            }
+        }
+
+        return (bestStart, bestEnd);
     }
 
     /// <summary>

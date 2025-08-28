@@ -26,8 +26,9 @@ namespace NetDaemonApps.Models.EnergyPrices
 
         /// <summary>
         /// Parses the time string and returns the corresponding DateTime value.
+        /// Energy prices are always in Dutch time (CET/CEST), so we convert to that timezone.
         /// </summary>
-        /// <returns>The parsed DateTime value.</returns>
+        /// <returns>The parsed DateTime value in Dutch timezone.</returns>
         public DateTime GetTimeValue()
         {
             try
@@ -35,19 +36,12 @@ namespace NetDaemonApps.Models.EnergyPrices
                 // Parse the timestamp string to a DateTimeOffset using a format provider
                 DateTimeOffset dateTimeOffset = DateTimeOffset.ParseExact(Time, "yyyy-MM-ddTHH:mm:sszzz", CultureInfo.InvariantCulture);
 
-                // Convert DateTimeOffset to DateTime, considering the local time zone
-                DateTime dateTime = dateTimeOffset.LocalDateTime;
+                // Convert to Dutch timezone (CET/CEST) since energy prices are always in Dutch time
+                // This ensures consistent time interpretation regardless of system timezone
+                TimeZoneInfo dutchTimeZone = TimeZoneInfo.FindSystemTimeZoneById("W. Europe Standard Time");
+                DateTime dutchTime = TimeZoneInfo.ConvertTime(dateTimeOffset, dutchTimeZone).DateTime;
 
-                //// Check for an error in the date, this can happen when we dont have any new data
-                //if (dateTime.Date < DateTime.Today.Date)
-                //{
-                //    // Calculate the difference in days
-                //    int daysDifference = (DateTime.Today.Date - dateTime.Date).Days;
-                //    // Add it to the current date
-                //    dateTime = dateTime.AddDays(daysDifference);
-                //}
-
-                return dateTime;
+                return dutchTime;
             }
             catch (FormatException)
             {
