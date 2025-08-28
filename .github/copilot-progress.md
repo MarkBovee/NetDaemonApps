@@ -353,7 +353,7 @@ var scheduleParameters = SAJPowerBatteryApi.BuildBatteryScheduleParameters(order
 
 ### Summary
 
-✅ **Task Completed Successfully** - Fixed water heater logic to prevent heating during high-price periods and improve scheduling intelligence. The system now considers current price context rather than just absolute lowest prices, preventing energy waste during peak pricing periods like 08:00 (€0.311).
+✅ **Task Completed Successfully** - Fixed water heater logic to prevent heating during high-price periods and focus on practical daytime heating windows (10:00-20:00). The system now uses intelligent scheduling that considers both current price context and optimal daytime heating periods.
 
 ### Detailed Steps
 
