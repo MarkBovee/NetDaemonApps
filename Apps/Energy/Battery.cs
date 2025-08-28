@@ -105,7 +105,7 @@ namespace NetDaemonApps.Apps.Energy
                 if (schedule == null)
                 {
                     // Retry shortly in case price data arrives a bit later
-                    LogStatus("No price data yet; will retry in 10 min", "Could not calculate schedule for today");
+                    LogStatus("No price data yet - retrying", "Could not calculate schedule for today");
 
                     _scheduler.RunIn(TimeSpan.FromMinutes(10), () => { _ = PrepareScheduleForDayAsync(); });
                     return;
@@ -164,15 +164,15 @@ namespace NetDaemonApps.Apps.Energy
                             _scheduler.RunAt(retryAt, () =>
                             {
                                 _applyRetryScheduled = false;
-                                LogStatus("Retrying schedule apply now (after EMS Mode delay)...");
+                                LogStatus("Applying schedule");
                                 _ = ApplyChargingScheduleAsync(chargingSchedule, simulateOnly: _simulationMode);
                             });
 
-                            LogStatus($"EMS Mode active - {FormatScheduledAction("retry", retryAt).ToLower()}");
+                            LogStatus("EMS Mode active - retry scheduled");
                         }
                         else
                         {
-                            LogStatus("EMS Mode active - retry already scheduled", "Schedule apply blocked by EMS Mode; retry already scheduled");
+                            LogStatus("EMS Mode active", "Schedule apply blocked by EMS Mode; retry already scheduled");
                         }
 
                         return;
@@ -180,12 +180,12 @@ namespace NetDaemonApps.Apps.Energy
                     else
                     {
                         var modeDescription = currentUserMode.ToApiString();
-                        LogStatus($"Mode OK ({modeDescription}) - applying...");
+                        LogStatus("Applying schedule");
                     }
                 }
                 catch (Exception ex)
                 {
-                    LogStatus("Mode check failed - proceeding...", $"Failed to verify battery user mode; proceeding with schedule application: {ex.Message}");
+                    LogStatus("Applying schedule", $"Failed to verify battery user mode; proceeding with schedule application: {ex.Message}");
                 }
             }
 
@@ -367,6 +367,9 @@ namespace NetDaemonApps.Apps.Energy
             // Schedule evening check to potentially move discharge to tomorrow morning
             ScheduleEveningPriceCheck(dischargeStart);
 
+        // Validate and fix any overlapping periods before creating the schedule
+        periods = ValidateAndFixOverlaps(periods);
+
         var schedule = new ChargingSchema { Periods = periods };
 
         var periodsDescription = string.Join(", ", periods.Select(p => $"{p.ChargeType} {p.StartTime.ToString(@"hh\:mm")}-{p.EndTime.ToString(@"hh\:mm")}"));
@@ -479,11 +482,11 @@ namespace NetDaemonApps.Apps.Energy
                         _ = PrepareForBatteryPeriodAsync(period);
                 });
 
-                LogStatus($"{blockReason} - {FormatScheduledAction("retry", retryAt).ToLower()}");
+                LogStatus($"{blockReason} - retry scheduled");
             }
             else
             {
-                LogStatus($"{blockReason}; retry already scheduled");
+                LogStatus($"{blockReason}");
             }
         }
 
@@ -534,7 +537,7 @@ namespace NetDaemonApps.Apps.Energy
                 if (windowStart > DateTime.Now)
                 {
                     _scheduler.RunAt(windowStart, () => { _ = PrepareForBatteryPeriodAsync(null); });
-                    LogStatus(FormatScheduledAction("Battery window", windowStart));
+                    LogStatus("Battery schedule active");
                 }
 
                 if (windowEnd > DateTime.Now)
@@ -546,7 +549,7 @@ namespace NetDaemonApps.Apps.Energy
         }
 
         /// <summary>
-        /// Prepares for a battery charge/discharge window by shutting down EMS and applying the schedule.
+        /// Prepares for a battery charge/discharge period by shutting down EMS and applying the schedule.
         /// </summary>
         private async Task PrepareForBatteryPeriodAsync(ChargingPeriod? period)
         {
@@ -555,7 +558,7 @@ namespace NetDaemonApps.Apps.Energy
                 if (period != null)
                     LogStatus($"{period.ChargeType} period {period.StartTime.ToString(@"hh\:mm")}-{period.EndTime.ToString(@"hh\:mm")}");
                 else
-                    LogStatus("Battery window starting");
+                    LogStatus("Battery schedule starting");
 
                 // 1. Validate and turn off EMS
                 if (!await ValidateAndTurnOffEmsAsync("battery period", period))
@@ -583,7 +586,7 @@ namespace NetDaemonApps.Apps.Energy
             }
             catch (Exception ex)
             {
-                LogStatus("Error preparing battery window");
+                LogStatus("Error preparing battery schedule", ex.Message);
             }
         }
 
@@ -609,13 +612,13 @@ namespace NetDaemonApps.Apps.Energy
         }
 
         /// <summary>
-        /// Restores EMS after a battery charge/discharge window ends.
+        /// Restores EMS after a battery charge/discharge period ends.
         /// </summary>
         private async Task RestoreEmsAfterWindowAsync()
         {
             try
             {
-                LogStatus("Restoring EMS after battery window");
+                LogStatus("Restoring EMS after battery schedule");
 
                 // Turn EMS back on (always allowed)
                 var emsState = _entities.Switch.Ems.State;
@@ -634,7 +637,7 @@ namespace NetDaemonApps.Apps.Energy
             }
             catch (Exception ex)
             {
-                LogStatus("Error restoring EMS");
+                LogStatus("Error restoring EMS", ex.Message);
             }
         }
 
@@ -689,6 +692,63 @@ namespace NetDaemonApps.Apps.Energy
             };
         }
 
+        /// <summary>
+        /// Validates and fixes overlapping periods by merging or adjusting them.
+        /// </summary>
+        /// <param name="periods">List of periods to validate</param>
+        /// <returns>Validated list with no overlapping periods</returns>
+        private List<ChargingPeriod> ValidateAndFixOverlaps(List<ChargingPeriod> periods)
+        {
+            if (periods.Count <= 1)
+                return periods;
+
+            // Sort periods by start time
+            var sortedPeriods = periods.OrderBy(p => p.StartTime).ToList();
+            var result = new List<ChargingPeriod>();
+
+            foreach (var period in sortedPeriods)
+            {
+                var lastPeriod = result.LastOrDefault();
+                
+                // If no overlap with previous period, add as-is
+                if (lastPeriod == null || lastPeriod.EndTime <= period.StartTime)
+                {
+                    result.Add(period);
+                    continue;
+                }
+
+                // Handle overlap
+                if (lastPeriod.ChargeType == period.ChargeType)
+                {
+                    // Same type: merge periods by extending the end time
+                    var mergedEndTime = period.EndTime > lastPeriod.EndTime ? period.EndTime : lastPeriod.EndTime;
+                    lastPeriod.EndTime = mergedEndTime;
+                    LogStatus("Merged overlapping periods", 
+                        $"Merged {period.ChargeType} periods: {lastPeriod.StartTime:hh\\:mm}-{lastPeriod.EndTime:hh\\:mm}");
+                }
+                else
+                {
+                    // Different types: adjust the overlapping period to start after the previous one ends
+                    var adjustedStart = lastPeriod.EndTime;
+                    if (adjustedStart < period.EndTime)
+                    {
+                        period.StartTime = adjustedStart;
+                        result.Add(period);
+                        LogStatus("Adjusted overlapping period", 
+                            $"Adjusted {period.ChargeType} period to start at {period.StartTime:hh\\:mm} (was overlapping with {lastPeriod.ChargeType})");
+                    }
+                    else
+                    {
+                        // Period would be invalid after adjustment, skip it
+                        LogStatus("Removed invalid overlapping period", 
+                            $"Removed {period.ChargeType} period {period.StartTime:hh\\:mm}-{period.EndTime:hh\\:mm} (would be invalid after overlap adjustment)");
+                    }
+                }
+            }
+
+            return result;
+        }
+
         #endregion
 
         #region Price Evaluation
@@ -703,7 +763,7 @@ namespace NetDaemonApps.Apps.Energy
             if (checkTime > DateTime.Now)
             {
                 _scheduler.RunAt(checkTime, () => { _ = EvaluateEveningToMorningShiftAsync(); });
-                LogStatus(FormatScheduledAction("Evening price check", checkTime, "discharge timing evaluation"));
+                LogStatus("Evening price check scheduled");
             }
         }
 
@@ -798,8 +858,8 @@ namespace NetDaemonApps.Apps.Energy
                 var tomorrowDischargeTime = tomorrowMorningTime.AddMinutes(-_options.EmsPrepMinutesBefore);
                 _scheduler.RunAt(tomorrowDischargeTime, () => { _ = ExecuteTomorrowMorningDischargeAsync(tomorrowMorningTime); });
 
-                LogStatus(FormatScheduledAction("Morning discharge", tomorrowMorningTime));
-                LogStatus($"Evening discharge moved to {FormatScheduledTime(tomorrowMorningTime).ToLower()}");
+                LogStatus("Morning discharge scheduled");
+                LogStatus("Evening discharge moved to morning");
             }
             catch (Exception ex)
             {
@@ -814,15 +874,42 @@ namespace NetDaemonApps.Apps.Energy
         {
             try
             {
-                LogStatus($"Executing morning discharge {dischargeTime.ToString("HH:mm")}");
+                LogStatus("Executing morning discharge", $"Starting morning discharge at {dischargeTime.ToString("HH:mm")}");
 
-                var morningDischargeSchedule = new ChargingSchema
+                // Check if we already have an existing schedule for today
+                var existingSchedule = GetPreparedSchedule();
+                List<ChargingPeriod> allPeriods;
+
+                if (existingSchedule?.Periods != null)
                 {
-                    Periods = new List<ChargingPeriod>
-                    {
-                        CreateMorningDischargePeriod(dischargeTime.TimeOfDay)
-                    }
-                };
+                    // Add to existing schedule, but remove any overlapping discharge periods first
+                    allPeriods = existingSchedule.Periods.ToList();
+                    
+                    // Remove existing discharge periods that would overlap with the new morning discharge
+                    var newDischargeStart = dischargeTime.TimeOfDay;
+                    var newDischargeEnd = newDischargeStart.Add(TimeSpan.FromHours(1));
+                    
+                    var periodsToKeep = allPeriods.Where(p => 
+                        p.ChargeType != BatteryChargeType.Discharge ||
+                        p.EndTime <= newDischargeStart ||
+                        p.StartTime >= newDischargeEnd).ToList();
+                    
+                    allPeriods = periodsToKeep;
+                    LogStatus("Removed overlapping discharge periods", 
+                        $"Removed {existingSchedule.Periods.Count - periodsToKeep.Count} overlapping discharge periods for new morning discharge");
+                }
+                else
+                {
+                    allPeriods = new List<ChargingPeriod>();
+                }
+
+                // Add the new morning discharge period
+                allPeriods.Add(CreateMorningDischargePeriod(dischargeTime.TimeOfDay));
+
+                // Validate and fix any remaining overlaps
+                allPeriods = ValidateAndFixOverlaps(allPeriods);
+
+                var morningDischargeSchedule = new ChargingSchema { Periods = allPeriods };
 
                 await PrepareForScheduleAsync(morningDischargeSchedule, label: "Morning Discharge");
 
@@ -924,7 +1011,8 @@ namespace NetDaemonApps.Apps.Energy
                 var lastMode = AppStateManager.GetState<BatteryUserMode?>(nameof(Battery), "LastKnownMode");
                 if (lastMode != currentMode)
                 {
-                    LogStatus($"Battery mode: {modeText}", $"Battery mode changed from {lastMode?.ToApiString() ?? "Unknown"} to {modeText}");
+                    // Note: Battery mode is already displayed in input_text.battery_management_mode entity
+                    // No status logging needed - mode changes are visible in the dedicated sensor
                     AppStateManager.SetState(nameof(Battery), "LastKnownMode", currentMode);
                     AppStateManager.SetState(nameof(Battery), "LastModeChangeTime", DateTime.Now);
                 }
