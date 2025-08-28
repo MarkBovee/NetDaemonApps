@@ -127,11 +127,8 @@ namespace NetDaemonApps.Apps.Energy
                 var nextEventSummary = BuildNextEventSummary(schedule);
                 LogStatus(nextEventSummary, $"Prepared {schedule.Periods.Count} periods for today");
 
-                // Optionally, in simulation mode apply immediately for visibility
-                if (_simulationMode)
-                {
-                    await ApplyChargingScheduleAsync(schedule, simulateOnly: true);
-                }
+                // Apply the schedule immediately (with proper simulation mode flag)
+                await ApplyChargingScheduleAsync(schedule, simulateOnly: _simulationMode);
             }
             catch (Exception ex)
             {
@@ -301,10 +298,15 @@ namespace NetDaemonApps.Apps.Energy
 
                 var scheduleParameters = SAJPowerBatteryApi.BuildBatteryScheduleParameters(orderedPeriods);
                 var liveWrite = !simulateOnly && _saiPowerBatteryApi.IsConfigured;
+                
+                LogStatus($"[BATTERY DEBUG] About to apply schedule", $"liveWrite: {liveWrite}, simulateOnly: {simulateOnly}, IsConfigured: {_saiPowerBatteryApi.IsConfigured}");
+                
                 bool saved;
                 if (liveWrite)
                 {
+                    LogStatus($"[BATTERY DEBUG] Calling SAJ API to save schedule", $"Periods: {orderedPeriods.Count}");
                     saved = await _saiPowerBatteryApi.SaveBatteryScheduleAsync(scheduleParameters);
+                    LogStatus($"[BATTERY DEBUG] SAJ API call completed", $"Result: {saved}");
                 }
                 else
                 {
@@ -312,6 +314,7 @@ namespace NetDaemonApps.Apps.Energy
                     {
                         LogStatus("SAJ API not configured; simulating", $"Skipping live API write: SAJ API not configured ({_saiPowerBatteryApi.ConfigurationError}); simulating apply");
                     }
+                    LogStatus($"[BATTERY DEBUG] Using simulation mode", $"simulateOnly: {simulateOnly}, IsConfigured: {_saiPowerBatteryApi.IsConfigured}");
                     saved = true; // treat as success for simulated apply
                 }
 

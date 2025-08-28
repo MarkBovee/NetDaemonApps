@@ -450,13 +450,17 @@ namespace NetDaemonApps.Models.Battery
         /// <returns>True if successful, false otherwise.</returns>
         public async Task<bool> SaveBatteryScheduleAsync(BatteryScheduleParameters batterySchedule)
         {
+            Console.WriteLine("[SAJ API DEBUG] Starting SaveBatteryScheduleAsync");
+            
             if (!IsConfigured)
             {
-                Console.Error.WriteLine($"Cannot save schedule: SAJ API not configured ({ConfigurationError})");
+                Console.Error.WriteLine($"[SAJ API DEBUG] Cannot save schedule: SAJ API not configured ({ConfigurationError})");
                 return false;
             }
 
+            Console.WriteLine("[SAJ API DEBUG] API is configured, ensuring authentication...");
             await EnsureAuthenticatedAsync();
+            Console.WriteLine("[SAJ API DEBUG] Authentication completed");
 
             try
             {
@@ -465,6 +469,10 @@ namespace NetDaemonApps.Models.Battery
                 var clientDate = DateTime.UtcNow.ToString("yyyy-MM-dd");
                 var timeStamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString();
                 var random = Guid.NewGuid().ToString("N");
+
+                Console.WriteLine($"[SAJ API DEBUG] Preparing request to URL: {url}");
+                Console.WriteLine($"[SAJ API DEBUG] Schedule parameters - CommAddress: {batterySchedule.CommAddress}, ComponentId: {batterySchedule.ComponentId}, TransferId: {batterySchedule.TransferId}");
+                Console.WriteLine($"[SAJ API DEBUG] Schedule value: {batterySchedule.Value}");
 
                 // Prepare parameters for signing
                 var signParamsDict = new Dictionary<string, string>
@@ -487,20 +495,27 @@ namespace NetDaemonApps.Models.Battery
                 signedParams["transferId"] = batterySchedule.TransferId;
                 signedParams["value"] = batterySchedule.Value;
 
+                Console.WriteLine($"[SAJ API DEBUG] Sending POST request with {signedParams.Count} parameters");
                 var content = new FormUrlEncodedContent(signedParams);
                 var response = await _httpClient.PostAsync(url, content);
+                
+                Console.WriteLine($"[SAJ API DEBUG] HTTP Response Status: {response.StatusCode}");
                 var json = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"[SAJ API DEBUG] Response JSON: {json}");
+                
                 var doc = JsonDocument.Parse(json);
                 var errCode = doc.RootElement.GetProperty("errCode").GetInt32();
 
                 var success = errCode == 0;
 
-                Console.WriteLine(success ? "Battery schedule saved successfully." : $"Failed to save battery schedule. Error code: {errCode}, Message: {doc.RootElement.GetProperty("errMsg").GetString()}");
+                Console.WriteLine(success ? "[SAJ API DEBUG] Battery schedule saved successfully." : $"[SAJ API DEBUG] Failed to save battery schedule. Error code: {errCode}, Message: {doc.RootElement.GetProperty("errMsg").GetString()}");
 
                 return success;
             }
             catch (Exception e)
             {
+                Console.WriteLine($"[SAJ API DEBUG] Exception in SaveBatteryScheduleAsync: {e.Message}");
+                Console.WriteLine($"[SAJ API DEBUG] Exception stack trace: {e.StackTrace}");
                 Console.WriteLine(e);
                 throw;
             }
