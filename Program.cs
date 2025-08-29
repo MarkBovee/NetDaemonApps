@@ -10,6 +10,8 @@ using NetDaemon.Extensions.Scheduler;
 using NetDaemon.Extensions.Tts;
 using NetDaemon.Runtime;
 using System.Reflection;
+using System.Diagnostics;
+using System.Threading.Tasks;
 
 using NetDaemonApps.Models.EnergyPrices;
 using NetDaemonApps.Models.Battery;
@@ -21,7 +23,7 @@ try
     //SAJPowerBatteryApi.RunElekeeperSelfTests();
 
     // Create and configure the host builder
-    await Host.CreateDefaultBuilder(args)
+    var host = Host.CreateDefaultBuilder(args)
         .UseNetDaemonAppSettings()                                      // Load NetDaemon app settings
         .UseNetDaemonDefaultLogging()                                   // Configure logging
         .UseNetDaemonRuntime()                                          // Add NetDaemon runtime
@@ -55,9 +57,25 @@ try
                 )
             )
         )
-        .Build()
-        .RunAsync()
-        .ConfigureAwait(false);
+        .Build();
+
+    // If in development environment, allow apps to initialize then terminate
+    var environment = host.Services.GetRequiredService<IHostEnvironment>();
+    if (environment.IsDevelopment())
+    {
+        Console.WriteLine("Development mode: Starting host for app initialization...");
+        await host.StartAsync();
+        
+        // Give apps time to initialize and run their startup logic
+        await Task.Delay(TimeSpan.FromSeconds(10));
+        
+        Console.WriteLine("Development mode: Stopping host after initialization...");
+        await host.StopAsync();
+        return;
+    }
+    
+    // Normal production run
+    await host.RunAsync().ConfigureAwait(false);
 }
 catch (Exception e)
 {

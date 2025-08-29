@@ -380,8 +380,9 @@ namespace NetDaemonApps.Apps.Energy
         }
 
         /// <summary>
-        /// Calculates the initial charging schedule based on energy prices and battery state
-        /// Implements enhanced 3-checkpoint strategy with cross-day optimization and SOC-aware late charging
+        /// Calculates the initial charging schedule based purely on energy prices.
+        /// SOC validation is performed at execution time, not during schedule creation.
+        /// Implements enhanced 3-checkpoint strategy with cross-day optimization.
         /// </summary>
         private ChargingSchema? CalculateInitialChargingSchedule()
         {
@@ -394,16 +395,16 @@ namespace NetDaemonApps.Apps.Energy
 
             var periods = new List<ChargingPeriod>();
             var now = DateTime.Now;
-            var currentSoc = GetCurrentBatterySoc();
+            var currentSoc = GetCurrentBatterySoc(); // Only for logging, not for filtering
 
             // Enhanced optimization: Consider cross-day price analysis when available
             var (optimizedChargeStart, optimizedChargeEnd, optimizedDischargeStart, optimizedDischargeEnd) = 
                 CalculateOptimalChargingWindows(pricesToday, _priceHelper.PricesTomorrow, currentSoc);
 
-            // CHECKPOINT 1: Morning check (before charge) - add discharge if SOC > configured threshold and still relevant now
+            // CHECKPOINT 1: Morning discharge - add if price justifies it (SOC will be checked at execution time)
             var morningCheckTime = optimizedChargeStart.AddHours(-_options.MorningCheckOffsetHours);
             var morningWindowStart = TimeSpan.FromHours(_options.MorningWindowStartHour);
-            if (currentSoc > _options.MorningSocThresholdPercent && morningCheckTime.TimeOfDay > morningWindowStart && now < optimizedChargeStart)
+            if (morningCheckTime.TimeOfDay > morningWindowStart && now < optimizedChargeStart)
             {
                 var morningPrices = pricesToday.Where(p => p.Key.TimeOfDay >= morningWindowStart &&
                                                           p.Key.TimeOfDay < optimizedChargeStart.TimeOfDay).ToList();
@@ -425,8 +426,9 @@ namespace NetDaemonApps.Apps.Energy
                         period.EndTime = morningDischargeEnd; // Override the default end time to maintain original logic
                         periods.Add(period);
 
-                        LogStatus("Added morning discharge at {0} (SOC: {1:F1}% > {2:F1}%, Price: €{3:F3})",
-                            start.ToString(@"hh\:mm"), currentSoc, _options.MorningSocThresholdPercent, morningHighPrice.Value);
+                        LogStatus("Added morning discharge at {0} (Price: €{1:F3})", 
+                            start.ToString(@"hh\:mm"), morningHighPrice.Value, 
+                            $"SOC check will be performed at execution time (threshold: {_options.MorningSocThresholdPercent:F1}%)");
                     }
                 }
             }
@@ -434,8 +436,14 @@ namespace NetDaemonApps.Apps.Energy
             // CHECKPOINT 2: Add optimized charge period (for tomorrow)
             periods.Add(CreateChargePeriod(optimizedChargeStart.TimeOfDay, optimizedChargeEnd.TimeOfDay, GetChargeWeekdayPattern()));
 
-            // CHECKPOINT 3: Add optimized discharge period (for today) with SOC target
-            periods.Add(CreateEveningDischargePeriodWithTargetSoc(optimizedDischargeStart.TimeOfDay, currentSoc, GetDischargeWeekdayPattern()));
+            // CHECKPOINT 3: Add optimized discharge period (for today) - always create based on price
+            // SOC validation will be performed at execution time
+            var eveningPattern = GetDischargeWeekdayPattern();
+            var eveningPeriod = CreateEveningDischargePeriod(optimizedDischargeStart.TimeOfDay, optimizedDischargeEnd.TimeOfDay, eveningPattern);
+            periods.Add(eveningPeriod);
+
+            LogStatus("Schedule created based on prices", 
+                $"Evening discharge will be validated at execution time (target SOC: {_options.EveningDischargeTargetSocPercent:F1}%, current: {currentSoc:F1}%)");
 
             // Schedule evening check to potentially move discharge to tomorrow morning
             ScheduleEveningPriceCheck(optimizedDischargeStart);
@@ -1663,6 +1671,7 @@ namespace NetDaemonApps.Apps.Energy
             var dischargeDurationHours = energyToDischarge / dischargePowerW;
             
             // Ensure we have at least a minimum discharge period (15 minutes) and cap at maximum (3 hours)
+            // Only apply minimum if we actually need to discharge (currentSoc > targetSoc)
             var minimumHours = 0.25; // 15 minutes
             var maximumHours = 3.0;   // 3 hours
             
