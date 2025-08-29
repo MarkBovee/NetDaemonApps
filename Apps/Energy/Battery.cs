@@ -121,6 +121,9 @@ namespace NetDaemonApps.Apps.Energy
                 }
                 SavePreparedSchedule(schedule);
 
+                // Update the schedule display entities immediately when schedule is prepared
+                UpdateScheduleDisplayEntities(schedule);
+
                 // Schedule EMS management for each charge/discharge period (merged windows)
                 ScheduleEmsManagementForPeriods(schedule);
 
@@ -330,43 +333,7 @@ namespace NetDaemonApps.Apps.Energy
                         $"{scheduleToApply.Periods.Count} periods");
 
                     // Always update the schedule display entities, even in simulation mode
-                    var chargePeriods = scheduleToApply.Periods.Where(p => p.ChargeType == BatteryChargeType.Charge).ToList();
-                    var dischargePeriods = scheduleToApply.Periods.Where(p => p.ChargeType == BatteryChargeType.Discharge).ToList();
-
-                    try
-                    {
-                        if (chargePeriods.Count > 0)
-                        {
-                            var firstCharge = chargePeriods.First();
-                            var lastCharge = chargePeriods.Last();
-                            var dayAbbreviation = GetDayAbbreviationFromPattern(firstCharge.Weekdays);
-                            var dayDisplay = !string.IsNullOrEmpty(dayAbbreviation) ? $" {dayAbbreviation}" : "";
-                            var chargeSchedule = $"{firstCharge.StartTime.ToString(@"hh\:mm")}-{lastCharge.EndTime.ToString(@"hh\:mm")}{dayDisplay}";
-                            _entities.InputText.BatteryChargeSchedule.SetValue(chargeSchedule);
-                        }
-                        else
-                        {
-                            _entities.InputText.BatteryChargeSchedule.SetValue("No charge scheduled");
-                        }
-
-                        if (dischargePeriods.Count > 0)
-                        {
-                            var firstDischarge = dischargePeriods.First();
-                            var lastDischarge = dischargePeriods.Last();
-                            var dayAbbreviation = GetDayAbbreviationFromPattern(firstDischarge.Weekdays);
-                            var dayDisplay = !string.IsNullOrEmpty(dayAbbreviation) ? $" {dayAbbreviation}" : "";
-                            var dischargeSchedule = $"{firstDischarge.StartTime.ToString(@"hh\:mm")}-{lastDischarge.EndTime.ToString(@"hh\:mm")}{dayDisplay}";
-                            _entities.InputText.BatteryDischargeSchedule.SetValue(dischargeSchedule);
-                        }
-                        else
-                        {
-                            _entities.InputText.BatteryDischargeSchedule.SetValue("No discharge scheduled");
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        LogStatus("Schedule display update failed", $"Failed to update schedule display entities: {ex.Message}");
-                    }
+                    UpdateScheduleDisplayEntities(scheduleToApply);
                 }
                 else
                 {
@@ -1262,6 +1229,51 @@ namespace NetDaemonApps.Apps.Energy
         {
             var formattedMessage = args.Length > 0 ? string.Format(message, args) : message;
             LogStatus(formattedMessage);
+        }
+
+        /// <summary>
+        /// Updates the Home Assistant input text entities that display the charging and discharging schedule times.
+        /// </summary>
+        /// <param name="schedule">The charging schedule to display</param>
+        private void UpdateScheduleDisplayEntities(ChargingSchema schedule)
+        {
+            var chargePeriods = schedule.Periods.Where(p => p.ChargeType == BatteryChargeType.Charge).ToList();
+            var dischargePeriods = schedule.Periods.Where(p => p.ChargeType == BatteryChargeType.Discharge).ToList();
+
+            try
+            {
+                if (chargePeriods.Count > 0)
+                {
+                    var firstCharge = chargePeriods.First();
+                    var lastCharge = chargePeriods.Last();
+                    var dayAbbreviation = GetDayAbbreviationFromPattern(firstCharge.Weekdays);
+                    var dayDisplay = !string.IsNullOrEmpty(dayAbbreviation) ? $" {dayAbbreviation}" : "";
+                    var chargeSchedule = $"{firstCharge.StartTime.ToString(@"hh\:mm")}-{lastCharge.EndTime.ToString(@"hh\:mm")}{dayDisplay}";
+                    _entities.InputText.BatteryChargeSchedule.SetValue(chargeSchedule);
+                }
+                else
+                {
+                    _entities.InputText.BatteryChargeSchedule.SetValue("No charge scheduled");
+                }
+
+                if (dischargePeriods.Count > 0)
+                {
+                    var firstDischarge = dischargePeriods.First();
+                    var lastDischarge = dischargePeriods.Last();
+                    var dayAbbreviation = GetDayAbbreviationFromPattern(firstDischarge.Weekdays);
+                    var dayDisplay = !string.IsNullOrEmpty(dayAbbreviation) ? $" {dayAbbreviation}" : "";
+                    var dischargeSchedule = $"{firstDischarge.StartTime.ToString(@"hh\:mm")}-{lastDischarge.EndTime.ToString(@"hh\:mm")}{dayDisplay}";
+                    _entities.InputText.BatteryDischargeSchedule.SetValue(dischargeSchedule);
+                }
+                else
+                {
+                    _entities.InputText.BatteryDischargeSchedule.SetValue("No discharge scheduled");
+                }
+            }
+            catch (Exception ex)
+            {
+                LogStatus("Schedule display update failed", $"Failed to update schedule display entities: {ex.Message}");
+            }
         }
 
         /// <summary>

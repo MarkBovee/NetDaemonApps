@@ -36,6 +36,7 @@
   },
   "Battery": {
     "LastStatusMessage": "No battery activity planned today",
+    "PreparedScheduleDate": "2025-08-29T00:00:00+02:00",
     "PreparedSchedule": {
       "Periods": [
         {
@@ -53,11 +54,10 @@
           "Weekdays": "0,0,0,0,1,0,0"
         }
       ],
-      "CreatedAt": "2025-08-29T09:43:28.3188958+02:00",
+      "CreatedAt": "2025-08-29T09:49:03.034698+02:00",
       "AppliedAt": null,
       "Source": "Unknown"
     },
-    "PreparedScheduleDate": "2025-08-29T00:00:00+02:00",
     "LastKnownMode": 3,
     "LastModeChangeTime": "2025-08-28T16:47:22.5808703\u002B02:00"
   }
