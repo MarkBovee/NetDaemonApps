@@ -1546,20 +1546,31 @@ namespace NetDaemonApps.Apps.Energy
         }
 
         /// <summary>
-        /// Gets the optimal weekday pattern for charge periods (tomorrow only).
+        /// Gets weekday pattern for charging periods based on whether charge time is today or tomorrow.
         /// </summary>
-        /// <returns>Weekday pattern string for tomorrow</returns>
+        /// <returns>Weekday pattern string for the appropriate day</returns>
         private string GetChargeWeekdayPattern()
         {
             if (!_options.EnableDaySpecificScheduling)
                 return GetAllDaysPattern();
 
-            var tomorrow = DateTime.Now.AddDays(1).DayOfWeek;
-            var pattern = GetSingleDayPattern(tomorrow);
+            // Determine if we should charge today or tomorrow based on timing
+            var now = DateTime.Now;
+            var targetDay = now.DayOfWeek;
+            var dayLabel = "today";
+            
+            // Simple logic: if it's after 16:00, schedule for tomorrow, otherwise today
+            if (now.Hour >= 16)
+            {
+                targetDay = now.AddDays(1).DayOfWeek;
+                dayLabel = "tomorrow";
+            }
+            
+            var pattern = GetSingleDayPattern(targetDay);
             
             if (Debugger.IsAttached)
             {
-                LogStatus($"Charge pattern: {tomorrow} only", $"Using pattern: {pattern}");
+                LogStatus($"Charge pattern: {targetDay} ({dayLabel})", $"Using pattern: {pattern}");
             }
             
             return pattern;
