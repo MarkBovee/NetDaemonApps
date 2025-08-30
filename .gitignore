@@ -6,6 +6,8 @@ bin
 
 # Sensitive configuration files
 SAJ-token
+git-crypt-key.key
+*.encrypted.backup
 
 # State files - contains runtime state that shouldn't be versioned
 State/
