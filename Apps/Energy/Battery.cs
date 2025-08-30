@@ -77,13 +77,8 @@ namespace NetDaemonApps.Apps.Energy
 
                     // If no upcoming windows remain (e.g., late restart), recompute today’s schedule
                     var upcoming = BuildMergedEmsWindows(existingSchedule);
-                    if (upcoming.Count == 0) {
-                        LogStatus("Recalculating schedule", "Prepared schedule has no upcoming windows; recalculating schedule for today");
-                        _ = PrepareScheduleForDayAsync();
-                    }
-                    else {
-                        ScheduleEmsManagementForPeriods(existingSchedule);
-                    }
+                    // Only schedule EMS management for existing schedule; do not recalculate to prevent multiple discharges
+                    ScheduleEmsManagementForPeriods(existingSchedule);
                 }
                 else {
                     LogStatus("Creating schedule", "No existing schedule found, preparing new schedule");
@@ -368,9 +363,14 @@ namespace NetDaemonApps.Apps.Energy
             var (optimizedChargeStart, optimizedChargeEnd, optimizedDischargeStart, optimizedDischargeEnd) = 
                 CalculateOptimalChargingWindows(pricesToday, _priceHelper.PricesTomorrow, currentSoc);
 
-            // CHECKPOINT 1: Morning discharge - add if price justifies it (SOC will be checked at execution time)
+            // CHECKPOINT 1: Morning discharge - add if price justifies it AND there's no conflict with evening discharge
             var morningCheckTime = optimizedChargeStart.AddHours(-_options.MorningCheckOffsetHours);
             var morningWindowStart = TimeSpan.FromHours(_options.MorningWindowStartHour);
+            
+            // First check if we should add an evening discharge period
+            var eveningPattern = GetDischargeWeekdayPattern();
+            var eveningPeriod = CreateEveningDischargePeriod(optimizedDischargeStart.TimeOfDay, optimizedDischargeEnd.TimeOfDay, eveningPattern);
+            
             if (morningCheckTime.TimeOfDay > morningWindowStart && now < optimizedChargeStart)
             {
                 var morningPrices = pricesToday.Where(p => p.Key.TimeOfDay >= morningWindowStart &&
@@ -382,8 +382,10 @@ namespace NetDaemonApps.Apps.Energy
                     var morningDischargeStart = morningHighPrice.Key.TimeOfDay;
                     var morningDischargeEnd = morningDischargeStart.Add(TimeSpan.FromHours(1));
 
-                    // Skip if the period already fully passed; trim if we're in the middle of it
-                    if (now.TimeOfDay < morningDischargeEnd)
+                    // Ensure no overlap with evening discharge and the period hasn't fully passed
+                    bool overlapsWithEvening = morningDischargeStart < eveningPeriod.EndTime && morningDischargeEnd > eveningPeriod.StartTime;
+                    
+                    if (!overlapsWithEvening && now.TimeOfDay < morningDischargeEnd)
                     {
                         var start = now.TimeOfDay > morningDischargeStart ? now.TimeOfDay : morningDischargeStart;
                         var morningPattern = _options.EnableDaySpecificScheduling ? 
@@ -397,6 +399,10 @@ namespace NetDaemonApps.Apps.Energy
                             start.ToString(@"hh\:mm"), morningHighPrice.Value, 
                             $"SOC check will be performed at execution time (threshold: {_options.MorningSocThresholdPercent:F1}%)");
                     }
+                    else if (overlapsWithEvening)
+                    {
+                        LogStatus("Skipped morning discharge", "Would overlap with evening discharge period");
+                    }
                 }
             }
 
@@ -405,18 +411,13 @@ namespace NetDaemonApps.Apps.Energy
 
             // CHECKPOINT 3: Add optimized discharge period (for today) - always create based on price
             // SOC validation will be performed at execution time
-            var eveningPattern = GetDischargeWeekdayPattern();
-            var eveningPeriod = CreateEveningDischargePeriod(optimizedDischargeStart.TimeOfDay, optimizedDischargeEnd.TimeOfDay, eveningPattern);
             periods.Add(eveningPeriod);
 
             LogStatus("Schedule created based on prices", 
                 $"Evening discharge will be validated at execution time (target SOC: {_options.EveningDischargeTargetSocPercent:F1}%, current: {currentSoc:F1}%)");
 
-            // Schedule evening check to potentially move discharge to tomorrow morning
-            ScheduleEveningPriceCheck(optimizedDischargeStart);
-
-        // Validate and fix any overlapping periods before creating the schedule
-        periods = ValidateAndFixOverlaps(periods);
+            // Validate and fix any overlapping periods before creating the schedule
+            periods = ValidateAndFixOverlaps(periods);
 
         var schedule = new ChargingSchema { Periods = periods };
 

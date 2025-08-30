@@ -1,6 +1,10 @@
-# Battery Schedule Logic Refactoring - August 29, 2025
-**Status**: ✅ **DEPLOYED TO PRODUCTION**  
-**Date**: August 29, 2025
+# Battery Schedule Bug Fix - Multiple Evening Discharges
+
+**Date:** August 30, 2025  
+**Status:** ✅ **DEPLOYED TO PRODUCTION** 
+
+## Summary
+Successfully fixed and deployed a critical bug in the battery management system that was causing multiple evening discharge periods to be scheduled on the same day. The system was incorrectly adding a second discharge at 21:00 if the price was higher than the next morning's potential discharge price.
 
 ## ✅ Task Completed Successfully & Deployed
 
